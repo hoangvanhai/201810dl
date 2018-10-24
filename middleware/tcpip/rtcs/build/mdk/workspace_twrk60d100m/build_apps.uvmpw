@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ProjectWorkspace xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="project_mpw.xsd">
+  <SchemaVersion>1.0</SchemaVersion>
+  <Header>### uVision Project, (C) Keil Software</Header>
+  <WorkspaceName>WorkSpace</WorkspaceName>
+<project><PathAndName>..\..\..\examples\snmp\build\mdk\snmp_twrk60d100m\snmp_twrk60d100m.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project><project><PathAndName>..\..\..\examples\shell\build\mdk\shell_twrk60d100m\shell_twrk60d100m.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project><project><PathAndName>..\..\..\examples\httpsrv\build\mdk\httpsrv_wolfssl_twrk60d100m\httpsrv_wolfssl_twrk60d100m.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project><project><PathAndName>..\..\..\examples\httpsrv\build\mdk\httpsrv_twrk60d100m\httpsrv_twrk60d100m.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project><project><PathAndName>..\..\..\examples\eth_to_serial\build\mdk\eth_to_serial_twrk60d100m\eth_to_serial_twrk60d100m.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project></ProjectWorkspace>

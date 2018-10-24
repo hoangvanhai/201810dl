@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ProjectWorkspace xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="project_mpw.xsd">
+  <SchemaVersion>1.0</SchemaVersion>
+  <Header>### uVision Project, (C) Keil Software</Header>
+  <WorkspaceName>WorkSpace</WorkspaceName>
+<project><PathAndName>..\..\..\examples\usbdisk\build\mdk\usbdisk_frdmk64f\usbdisk_frdmk64f.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project><project><PathAndName>..\..\..\examples\sdbench\build\mdk\sdbench_frdmk64f\sdbench_frdmk64f.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project><project><PathAndName>..\..\..\examples\sdcard\build\mdk\sdcard_frdmk64f\sdcard_frdmk64f.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project><project><PathAndName>..\..\..\examples\ramdisk\build\mdk\ramdisk_frdmk64f\ramdisk_frdmk64f.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project></ProjectWorkspace>

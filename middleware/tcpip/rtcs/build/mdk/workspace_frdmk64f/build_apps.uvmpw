@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ProjectWorkspace xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="project_mpw.xsd">
+  <SchemaVersion>1.0</SchemaVersion>
+  <Header>### uVision Project, (C) Keil Software</Header>
+  <WorkspaceName>WorkSpace</WorkspaceName>
+<project><PathAndName>..\..\..\examples\snmp\build\mdk\snmp_frdmk64f\snmp_frdmk64f.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project><project><PathAndName>..\..\..\examples\shell\build\mdk\shell_frdmk64f\shell_frdmk64f.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project><project><PathAndName>..\..\..\examples\httpsrv\build\mdk\httpsrv_wolfssl_frdmk64f\httpsrv_wolfssl_frdmk64f.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project><project><PathAndName>..\..\..\examples\httpsrv\build\mdk\httpsrv_frdmk64f\httpsrv_frdmk64f.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project><project><PathAndName>..\..\..\examples\eth_to_serial\build\mdk\eth_to_serial_frdmk64f\eth_to_serial_frdmk64f.uvprojx</PathAndName><NodeIsActive>0</NodeIsActive></project></ProjectWorkspace>
