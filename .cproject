@@ -223,7 +223,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="a" artifactName="libksdk_platform_ucosiii" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib" cleanCommand="${cross_rm} -rf" description="" id="ilg.gnuarmeclipse.managedbuild.cross.config.lib.release.355096884" name="release" parent="ilg.gnuarmeclipse.managedbuild.cross.config.lib.release">
+				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="${cross_rm} -rf" description="" id="ilg.gnuarmeclipse.managedbuild.cross.config.lib.release.355096884" name="release" parent="ilg.gnuarmeclipse.managedbuild.cross.config.lib.release">
 					<folderInfo id="ilg.gnuarmeclipse.managedbuild.cross.config.lib.release.355096884." name="/" resourcePath="">
 						<toolChain id="ilg.gnuarmeclipse.managedbuild.cross.toolchain.lib.release.121994247" name="Cross ARM GCC" superClass="ilg.gnuarmeclipse.managedbuild.cross.toolchain.lib.release">
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level.264777520" name="Optimization Level" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level" value="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level.size" valueType="enumerated"/>
@@ -276,22 +276,65 @@
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.61055435" name="Cross ARM C Compiler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.176352601" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.5206354267" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="../../../../../rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/GNU"/>
-									<listOptionValue builtIn="false" value="../../../../../rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/GNU"/>
-									<listOptionValue builtIn="false" value="../../../../../rtos"/>
-									<listOptionValue builtIn="false" value="../../../../../rtos/uCOSIII/src/config"/>
-									<listOptionValue builtIn="false" value="../../../../../rtos/uCOSIII/src/uCOS-III/Source"/>
-									<listOptionValue builtIn="false" value="../../../../../rtos/uCOSIII/src/uC-LIB"/>
-									<listOptionValue builtIn="false" value="../../../../../rtos/uCOSIII/src/uC-CPU"/>
-									<listOptionValue builtIn="false" value="../../../../../platform/CMSIS/Include"/>
-									<listOptionValue builtIn="false" value="../../../../../platform/devices"/>
-									<listOptionValue builtIn="false" value="../../../../../platform/devices/MK64F12/include"/>
-									<listOptionValue builtIn="false" value="../../../../../platform/devices/MK64F12/startup"/>
-									<listOptionValue builtIn="false" value="../../../../../platform/utilities/inc"/>
-									<listOptionValue builtIn="false" value="../../../../../platform/hal/inc"/>
-									<listOptionValue builtIn="false" value="../../../../../platform/drivers/inc"/>
-									<listOptionValue builtIn="false" value="../../../../../platform/system/inc"/>
-									<listOptionValue builtIn="false" value="../../../../../platform/osa/inc"/>
+									<listOptionValue builtIn="false" value="../"/>
+									<listOptionValue builtIn="false" value="../bsp"/>
+									<listOptionValue builtIn="false" value="../shell"/>
+									<listOptionValue builtIn="false" value="../application"/>
+									<listOptionValue builtIn="false" value="../platform/osa/inc"/>
+									<listOptionValue builtIn="false" value="../platform/utilities/inc"/>
+									<listOptionValue builtIn="false" value="../platform/CMSIS/Include"/>
+									<listOptionValue builtIn="false" value="../platform/devices"/>
+									<listOptionValue builtIn="false" value="../platform/devices/MK64F12/include"/>
+									<listOptionValue builtIn="false" value="../platform/devices/MK64F12/startup"/>
+									<listOptionValue builtIn="false" value="../platform/hal/inc"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/inc"/>
+									<listOptionValue builtIn="false" value="../platform/system/inc"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/adc16"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/cmp"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/cmt"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/crc"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/dac"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/dspi"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/edma"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/enet"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/ewm"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/flexbus"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/flexcan"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/ftm"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/gpio"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/i2c"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/lptmr"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/mpu"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/pdb"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/pit"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/rnga"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/rtc"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/sai"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/sdhc"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/uart"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/vref"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/wdog"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/smartcard"/>
+									<listOptionValue builtIn="false" value="../platform/drivers/src/smartcard/interface"/>
+									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/GNU"/>
+									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/GNU"/>
+									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/config"/>
+									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uCOS-III/Source"/>
+									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uC-CPU"/>
+									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uC-LIB"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/port"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/port/arch"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include/ipv4"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include/ipv4/lwip"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include/ipv6"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include/ipv6/lwip"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include/lwip"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include/netif"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include/posix"/>
+									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.9790269020" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="NDEBUG"/>
@@ -305,6 +348,20 @@
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler.158203914" name="Cross ARM C++ Compiler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.linker.1982152690" name="Cross ARM C Linker" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.linker">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.gcsections.1143389664" name="Remove unused sections (-Xlinker --gc-sections)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.gcsections" value="true" valueType="boolean"/>
+								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.libs.1348812815" name="Libraries (-l)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="m"/>
+									<listOptionValue builtIn="false" value="g"/>
+									<listOptionValue builtIn="false" value="gcc"/>
+									<listOptionValue builtIn="false" value="nosys"/>
+								</option>
+								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.scriptfile.186999497" name="Script files (-T)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.scriptfile" valueType="stringList">
+									<listOptionValue builtIn="false" value="../platform/devices/MK64F12/linker/gcc/MK64FN1M0xxx12_flash.ld"/>
+								</option>
+								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.other.475514778" name="Other linker flags" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.other" value="-Xlinker -z  -Xlinker muldefs --stats  --specs=nano.specs  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -mapcs  -Xlinker -static  -Xlinker --defsym=__stack_size__=0x2000  -Xlinker --defsym=__heap_size__=0x8000 " valueType="string"/>
+								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.linker.input.174833683" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.linker.input">
+									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
+								</inputType>
 							</tool>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.linker.1152494802" name="Cross ARM C++ Linker" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.linker">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.gcsections.2075046614" name="Remove unused sections (-Xlinker --gc-sections)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.gcsections" value="true" valueType="boolean"/>
@@ -322,6 +379,9 @@
 							</tool>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.printsize.1780072657" name="Cross ARM GNU Print Size" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.printsize">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.printsize.format.1097716643" name="Size format" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.printsize.format"/>
+								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.printsize.hex.1544882846" name="Hex" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.printsize.hex" value="true" valueType="boolean"/>
+								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.printsize.totals.1123297564" name="Show totals" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.printsize.totals" value="true" valueType="boolean"/>
+								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.printsize.other.245869771" name="Other flags" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.printsize.other" value="-print-memory-usage" valueType="string"/>
 							</tool>
 						</toolChain>
 					</folderInfo>
@@ -331,6 +391,7 @@
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+			<storageModule moduleId="ilg.gnuarmeclipse.managedbuild.packs"/>
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">

@@ -558,12 +558,12 @@ int debug_scanf(const char  *fmt_ptr, ...)
 int debug_getchar(void)
 {
     unsigned char c;
-
     /* Do nothing if the debug uart is not initialized.*/
     if (s_debugConsole.type == kDebugConsoleNone)
     {
         return -1;
     }
+
     s_debugConsole.ops.rx_union.Receive(s_debugConsole.base, &c, 1);
 
     return c;

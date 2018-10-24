@@ -143,5 +143,6 @@ void task_slave(task_param_t param)
         {
             handle_cmd(bufRecv[1]);
         }
+        LREP("#");
     }
 }

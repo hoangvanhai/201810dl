@@ -122,10 +122,13 @@ void task_master(task_param_t param)
 {
 	uint8_t in_val;
 	shell_init(cmd_table, my_shell_init);
-
+	LREP(SHELL_PROMPT);
 	while(1) {
+
 		in_val = GETCHAR();
+
 		shell_push_command(in_val);
 		shell_task(NULL);
+
 	}
 }

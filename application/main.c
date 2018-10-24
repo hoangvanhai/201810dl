@@ -94,11 +94,8 @@ OSA_TASK_DEFINE(task_sample, TASK_SAMPLE_STACK_SIZE);
 // Code
 ///////////////////////////////////////////////////////////////////////////////
 
-#if (FSL_RTOS_MQX) && (MQX_COMMON_CONFIG != MQX_LITE_CONFIG)
-    void main_task(uint32_t param)
-#else /* (FSL_RTOS_MQX) && (MQX_COMMON_CONFIG != MQX_LITE_CONFIG) */
-    int main(void)
-#endif /* (FSL_RTOS_MQX) && (MQX_COMMON_CONFIG != MQX_LITE_CONFIG) */
+
+int main(void)
 {
     osa_status_t result = kStatus_OSA_Error;
 
@@ -122,12 +119,7 @@ OSA_TASK_DEFINE(task_sample, TASK_SAMPLE_STACK_SIZE);
 #if (I2C_INSTANCE_COUNT >= 2)
     NVIC_SetPriority(I2C1_IRQn, 6U);
 #endif
-#if (FSL_RTOS_MQX) && (MQX_COMMON_CONFIG != MQX_LITE_CONFIG)
-    OSA_InstallIntHandler(I2C0_IRQn, MQX_I2C0_IRQHandler);
-#if (I2C_INSTANCE_COUNT >= 2)
-    OSA_InstallIntHandler(I2C1_IRQn, MQX_I2C1_IRQHandler);
-#endif
-#endif
+
 
 #if USE_RTOS
     result = OSA_TaskCreate(task_slave,
@@ -141,11 +133,7 @@ OSA_TASK_DEFINE(task_sample, TASK_SAMPLE_STACK_SIZE);
     if(result != kStatus_OSA_Success)
     {
         PRINTF("Failed to create slave task\r\n\r\n");
-#if (FSL_RTOS_MQX) && (MQX_COMMON_CONFIG != MQX_LITE_CONFIG)
-        return;
-#else
         return -1;
-#endif
     }
 
     result = OSA_TaskCreate(task_sample,
@@ -159,11 +147,7 @@ OSA_TASK_DEFINE(task_sample, TASK_SAMPLE_STACK_SIZE);
     if (result != kStatus_OSA_Success)
     {
         PRINTF("Failed to create sample task\r\n\r\n");
-#if (FSL_RTOS_MQX) && (MQX_COMMON_CONFIG != MQX_LITE_CONFIG)
-        return;
-#else
         return -1;
-#endif
     }
 #endif /* USE_RTOS */
 
@@ -179,11 +163,7 @@ OSA_TASK_DEFINE(task_sample, TASK_SAMPLE_STACK_SIZE);
     if (result != kStatus_OSA_Success)
     {
         PRINTF("Failed to create master task\r\n\r\n");
-#if (FSL_RTOS_MQX) && (MQX_COMMON_CONFIG != MQX_LITE_CONFIG)
-        return;
-#else
         return -1;
-#endif
     }
 
     OSA_Start();

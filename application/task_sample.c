@@ -36,6 +36,7 @@
 #include "fsl_interrupt_manager.h"
 #include "i2c_rtos.h"
 #include "fsl_pmc_hal.h"
+#include "fsl_debug_console.h"
 ///////////////////////////////////////////////////////////////////////////////
 // Definitions
 ///////////////////////////////////////////////////////////////////////////////
@@ -183,6 +184,7 @@ void task_sample(task_param_t param)
         INT_SYS_EnableIRQGlobal();
         // sleep 4s
         OSA_TimeDelay(4000);
+        LREP("^");
     }
 }
 
