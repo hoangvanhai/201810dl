@@ -38,7 +38,6 @@
 #include "fsl_os_abstraction.h"
 #include "print_scan.h"
 #include "fsl_uart_driver.h"
-#include "drv_object.h"
 #include "shell.h"
 #include "app.h"
 
@@ -149,7 +148,7 @@ void debug_rx_handle(uint32_t instance, void * uartState) {
 	//debug_putchar(state->rxBuff[0]);
 	if(shell_push_command(state->rxBuff[0]) == true) {
 		OS_ERR err;
-		OSTaskSemPost(&TCB_task_master, OS_OPT_POST_NONE, &err);
+		OSTaskSemPost(&TCB_task_shell, OS_OPT_POST_NONE, &err);
 		if(err != OS_ERR_NONE) {
 			LREP("sem post failed\r\n");
 		}

@@ -1,4 +1,4 @@
-/** @FILE NAME:    template.c
+/** @FILE NAME:    template.h
  *  @DESCRIPTION:  This file for ...
  *
  *  Copyright (c) 2018 EES Ltd.
@@ -21,33 +21,40 @@
  *</pre>
  ******************************************************************************/
 
+#ifndef APPLICATION_APP_CFG_H_
+#define APPLICATION_APP_CFG_H_
+
+
+
 /***************************** Include Files *********************************/
-#include <app.h>
+
 /************************** Constant Definitions *****************************/
 
 /**************************** Type Definitions *******************************/
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
-
 /************************** Function Prototypes ******************************/
 
 /************************** Variable Definitions *****************************/
 
 /*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
 
 
 
 
+// task prio
+#define TASK_SHELL_PRIO         		6U
+#define TASK_MODBUS_PRIO          		4U
+#define TASK_FILESYSTEM_PRIO         	5U
 
 
 
+// task size
+#define TASK_SHELL_STACK_SIZE   		1536U
+#define TASK_MODBUS_STACK_SIZE    		1024U
+#define TASK_FILESYSTEM_STACK_SIZE   	512U
 
 
+
+#endif /* APPLICATION_APP_CFG_H_ */

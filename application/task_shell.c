@@ -33,9 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // SDK Included Files
-#include "fsl_i2c_master_driver.h"
-#include "i2c_rtos.h"
-#include "fsl_debug_console.h"
+#include <includes.h>
 #include "shell.h"
 
 
@@ -118,7 +116,7 @@ void help_cmd(int32_t argc, char **argv)
 }
 
 
-void task_master(task_param_t param)
+void task_shell(task_param_t param)
 {
 	OS_ERR err;
 	shell_init(cmd_table, my_shell_init);

@@ -27,46 +27,31 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __I2C_RTOS_H__
-#define __I2C_RTOS_H__
 
-///////////////////////////////////////////////////////////////////////////////
-//  Includes
-///////////////////////////////////////////////////////////////////////////////
-// Standard C Included Files
-#include <stdio.h>
-// SDK Included Files
-#include "fsl_os_abstraction.h"
+#include <assert.h>
+#include "fsl_gpio_driver.h"
 #include "board.h"
-#include "fsl_smc_hal.h"
+#include <app.h>
 
 ///////////////////////////////////////////////////////////////////////////////
-// Definitions
+// Code
 ///////////////////////////////////////////////////////////////////////////////
-#define I2C_RTOS_SLAVE_ADDRESS    (0x7F)
-#define I2C_RTOS_LIGHT_CMD        1
-#define I2C_RTOS_TEMP_CMD         2
-#define I2C_RTOS_SLEEP_CMD        3
-#define I2C_RTOS_READID_CMD       4
+extern void sdhc_card_detection(void);
 
-// Definition for boards with only 1 I2C.
-#if USE_RTOS
-  #ifdef FRDM_K82F
-#define I2C_RTOS_MASTER_INSTANCE  (0)
-#define I2C_RTOS_SLAVE_INSTANCE   (3U)
-  #elif defined(FRDM_K66F)
-#define I2C_RTOS_MASTER_INSTANCE  (3U)
-#define I2C_RTOS_SLAVE_INSTANCE   (1U)
-  #else
-#define I2C_RTOS_MASTER_INSTANCE  (0)
-#define I2C_RTOS_SLAVE_INSTANCE   (1U)
-  #endif // FRDM_K82F
-#else
-#define I2C_RTOS_SLAVE_INSTANCE   (BOARD_I2C_INSTANCE)
-#define I2C_RTOS_MASTER_INSTANCE  (BOARD_I2C_INSTANCE)
-#endif
 
-#define I2C_RTOS_MAGIC            0xBB
-#define ADC_INSTANCE              HWADC_INSTANCE
 
-#endif /* __I2C_RTOS_H__ */
+/*!
+ * @brief gpio IRQ handler with the same name in startup code
+ */
+void PORTE_IRQHandler(void)
+{
+    PORT_Type * gpioBase = g_portBase[GPIO_EXTRACT_PORT(kGpioSdhc0Cd)];
+    uint32_t pin = GPIO_EXTRACT_PIN(kGpioSdhc0Cd);
+
+    if(PORT_HAL_GetPortIntFlag(gpioBase) == (1 << pin)) {
+        sdhc_card_detection();
+    }
+    /* Clear interrupt flag.*/
+    PORT_HAL_ClearPortIntFlag(gpioBase);
+}
+

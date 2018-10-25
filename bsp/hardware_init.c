@@ -32,7 +32,6 @@
 #include "pin_mux.h"
 #include "fsl_clock_manager.h"
 #include "fsl_debug_console.h"
-#include "i2c_rtos.h"
 
 void hardware_init(void) {
 

@@ -1,16 +1,59 @@
-/*
- * app.h
- *
- *  Created on: Oct 25, 2018
- *      Author: PC
- */
-
 #ifndef APPLICATION_APP_H_
 #define APPLICATION_APP_H_
 
-#include <fsl_os_abstraction.h>
+/** @FILE NAME:    template.h
+ *  @DESCRIPTION:  This file for ...
+ *
+ *  Copyright (c) 2018 EES Ltd.
+ *  All Rights Reserved This program is the confidential and proprietary
+ *  product of EES Ltd. Any Unauthorized use, reproduction or transfer
+ *  of this program is strictly prohibited.
+ *
+ *  @Author: HaiHoang
+ *  @NOTE:   No Note at the moment
+ *  @BUG:    No known bugs.
+ *
+ *<pre>
+ *  MODIFICATION HISTORY:
+ *
+ *  Ver   Who       Date                Changes
+ *  ----- --------- ------------------  ----------------------------------------
+ *  1.00  HaiHoang  August 1, 2018      First release
+ *
+ *
+ *</pre>
+ ******************************************************************************/
 
-extern OS_TCB 	TCB_task_master;
-extern OS_TCB 	TCB_task_sample;
-extern OS_TCB 	TCB_task_slave;
+/***************************** Include Files *********************************/
+#include <includes.h>
+
+/************************** Constant Definitions *****************************/
+
+
+/**************************** Type Definitions *******************************/
+typedef struct SApp_ {
+
+}SApp;
+
+/***************** Macros (Inline Functions) Definitions *********************/
+
+/************************** Function Prototypes ******************************/
+extern void 	task_shell(task_param_t );
+extern void 	task_filesystem(task_param_t );
+extern void 	task_modbus(task_param_t );
+/************************** Variable Definitions *****************************/
+extern OS_TCB 	TCB_task_shell;
+extern OS_TCB 	TCB_task_filesystem;
+extern OS_TCB 	TCB_task_modbus;
+extern bool 	sdCardDetect;
+/*****************************************************************************/
+
+
+
+
+
+
+
+
+
 #endif /* APPLICATION_APP_H_ */

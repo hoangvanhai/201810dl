@@ -83,6 +83,8 @@
 									<listOptionValue builtIn="false" value="../"/>
 									<listOptionValue builtIn="false" value="../bsp"/>
 									<listOptionValue builtIn="false" value="../shell"/>
+									<listOptionValue builtIn="false" value="../library"/>
+									<listOptionValue builtIn="false" value="../modbus"/>
 									<listOptionValue builtIn="false" value="../application"/>
 									<listOptionValue builtIn="false" value="../platform/osa/inc"/>
 									<listOptionValue builtIn="false" value="../platform/utilities/inc"/>
@@ -120,6 +122,7 @@
 									<listOptionValue builtIn="false" value="../platform/drivers/src/wdog"/>
 									<listOptionValue builtIn="false" value="../platform/drivers/src/smartcard"/>
 									<listOptionValue builtIn="false" value="../platform/drivers/src/smartcard/interface"/>
+									<listOptionValue builtIn="false" value="../platform/composite/inc"/>
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/GNU"/>
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/GNU"/>
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/config"/>
