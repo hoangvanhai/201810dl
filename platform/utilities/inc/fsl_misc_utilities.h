@@ -52,15 +52,38 @@
 #define BSWAP_16(x)   (uint16_t)((((x) & 0xFF00) >> 0x8) | (((x) & 0xFF) << 0x8))
 #define BSWAP_32(val) (uint32_t)((BSWAP_16((uint32_t)(val) & (uint32_t)0xFFFF) << 0x10) |  \
                                  (BSWAP_16((uint32_t)((val) >> 0x10))))
+/* A helper macro used by \ref TOSTRING.	*/
+#define _TOSTRING(x) #x
+/** Macro to convert a number to a string.	 */
+#define TOSTRING(x) _TOSTRING(x)
+
+
+
+#ifdef DEBUG
+	#define ASSERT_NONVOID(con,ret)	{if(!(con))	{LREP("\r\nASSERT in file " __FILE__ " at line "  TOSTRING(__LINE__) "\r\n"); return ret;}	}
+	#define ASSERT_VOID(con)        {if(!(con))	{LREP("\r\nASSERT in file " __FILE__ " at line "  TOSTRING(__LINE__) "\r\n"); return;	 }	}
+	#define ASSERT(con)				{if(!(con))	{LREP("\r\nASSERT in file " __FILE__ " at line "  TOSTRING(__LINE__) "\r\n");			 }	}
+
+	#define RS485_DEBUG_TX_EN()		{_LATB8 = 1;}
+	#define RS485_DEBUG_RX_EN()		{_LATB8 = 0;}
+
+#else
+	#define ASSERT_NONVOID(con,ret)
+	#define ASSERT_VOID(con)
+	#define ASSERT(con)
+	#define LREP(...)
+#endif
+
 
 
 #ifdef NDEBUG           /* required by ANSI standard */
 #define debug_assert(expression)  ((void)0)
 #else
-#define debug_assert(expression)  ((expression) ? (void)0 : assert_func (__FILE__, __LINE__, NULL, #expression))
+//#define debug_assert(expression)  ((expression) ? (void)0 : assert_func (__FILE__, __LINE__, NULL, #expression))
+
 #endif
 
-#define ASSERT(x)   debug_assert(x)
+//#define ASSERT(x)   debug_assert(x)
 
 /*!
  * @brief Print out failure messages.

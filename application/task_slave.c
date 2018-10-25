@@ -104,14 +104,14 @@ static void handle_cmd(uint8_t cmd)
         slaveId = *(uint8_t *)&bufRecv[0];
         if (slaveId == gSlaveId)
         {
-            PRINTF("Can not sleep on yourself\r\n");
+            LREP("Can not sleep on yourself\r\n");
             break;
         }
-        PRINTF("Master tell me to go sleep..\r\n");
+        LREP("Master tell me to go sleep..\r\n");
         // TODO: stop the sys tick, and let OS know change mode
         // Enter VLPS mode
         SMC_HAL_SetMode(SMC_BASE_PTR, &smc_config_data);
-        PRINTF("Wake up from sleep\r\n");
+        LREP("Wake up from sleep\r\n");
         break;
     case I2C_RTOS_TEMP_CMD:
         pTemper = get_temp_pointer();

@@ -49,15 +49,15 @@
 #define IO_MAXLINE  20
 
 #if (defined (FSL_RTOS_MQX) && (MQX_COMMON_CONFIG != MQX_LITE_CONFIG))
-#define PRINTF          printf
+#define LREP          printf
 #define SCANF           scanf
 #define PUTCHAR         putchar
 #define GETCHAR         getchar
 #include <stdio.h>
 #else
 /*Configuration for toolchain's printf/scanf or KSDK version printf/scanf */
-#define PRINTF          debug_printf
-//#define PRINTF          printf
+#define LREP          debug_printf
+//#define LREP          printf
 #define SCANF           debug_scanf
 //#define SCANF           scanf
 #define PUTCHAR         debug_putchar
@@ -65,44 +65,6 @@
 #define GETCHAR         debug_getchar
 //#define GETCHAR         getchar
 #endif
-
-
-
-
-
-
-#ifdef DEBUG
-		/* A helper macro used by \ref TOSTRING.	*/
-	#define _TOSTRING(x) #x
-	/** Macro to convert a number to a string.	 */
-	#define TOSTRING(x) _TOSTRING(x)
-	#define ASSERT_NONVOID(con,ret)	{if(!(con))	{LREP("\r\nASSERT in file " __FILE__ " at line "  TOSTRING(__LINE__) "\r\n"); return ret;}	}
-	#define ASSERT_VOID(con)        {if(!(con))	{LREP("\r\nASSERT in file " __FILE__ " at line "  TOSTRING(__LINE__) "\r\n"); return;	 }	}
-
-	//#define ASSERT(con)				{if(!(con))	{LREP("\r\nASSERT in file " __FILE__ " at line "  TOSTRING(__LINE__) "\r\n");			 }	}
-
-	#define LREP	 				PRINTF
-
-	#define RS485_DEBUG_TX_EN()		{_LATB8 = 1;}
-	#define RS485_DEBUG_RX_EN()		{_LATB8 = 0;}
-
-#else
-	#define ASSERT_NONVOID(con,ret)
-	#define ASSERT_VOID(con)
-	#define ASSERT(con)
-	#define LREP(...)
-#endif
-
-
-
-
-
-
-
-
-
-
-
 
 
 /*! @brief Error code for the debug console driver. */

@@ -92,7 +92,7 @@ _sbrk (int incr)
  *END**************************************************************************/
 void assert_func(const char *file, int line, const char *func, const char *failedExpr)
 {
-    PRINTF("ASSERT ERROR \" %s \": file \"%s\" Line \"%d\" function name \"%s\" \n", failedExpr, file , line, func);
+    LREP("ASSERT ERROR \" %s \": file \"%s\" Line \"%d\" function name \"%s\" \n", failedExpr, file , line, func);
 
     for (;;)
     {}

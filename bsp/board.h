@@ -109,7 +109,7 @@
  * power_manager_hal_demo and power_manager_rtos_demo
  */
 #define PRINT_LLWU_SW_NUM \
-  PRINTF("SW1")
+  LREP("SW1")
 
 #define BOARD_MAX3353_INT_PORT       (PORTD_BASE)        /* BOARD_MAX3353_INT_PORT */
 #define BOARD_MAX3353_INT_PIN        (14U)               /* BOARD_MAX3353_INT_PIN */

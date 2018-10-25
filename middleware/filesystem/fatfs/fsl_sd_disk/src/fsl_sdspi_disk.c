@@ -390,7 +390,7 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
     if (DSPI_DRV_EdmaMasterConfigureBus(g_spi.spiInstance, &g_edmaDspiDevice, &calculatedBaudRate)
         != kStatus_DSPI_Success)
     {
-        PRINTF("\r  edma configure bus failed\n");
+        LREP("\r  edma configure bus failed\n");
 
     }
     g_spi.spiState = &g_edmaDspiMasterState;

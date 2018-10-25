@@ -1557,7 +1557,7 @@ static uint32_t create_chain_for_clusts
                 ++ncl;
                 if(ncl >= fs->n_fatent)/* Wrap around*/
                 {
-//                    USB_PRINTF("wrap around\n");
+//                    USB_LREP("wrap around\n");
                     ncl = 2;
                     num = 0;
                     ++try;
@@ -1602,7 +1602,7 @@ static uint32_t create_chain_for_clusts
         }
         if (num != 0)/* get some continuous free clusters in the most front */
         {
-//            USB_PRINTF("get desired clusters %d-%d\n", ncl, for_num);
+//            USB_LREP("get desired clusters %d-%d\n", ncl, for_num);
             *get_num = num;
 //                if(clst != 0)
 //                    res = put_fat(fs, clst, ncl - num + 1);
@@ -1663,7 +1663,7 @@ static uint32_t create_chain_for_clusts
         }
         else
         {
-//            USB_PRINTF("not get desired cluster\n");
+//            USB_LREP("not get desired cluster\n");
                 if(first_idle != 0)
 				    fs->last_clust = first_idle;
                     ncl = create_chain(fs, clst);

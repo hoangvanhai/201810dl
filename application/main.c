@@ -132,7 +132,7 @@ int main(void)
                     &task_slave_task_handler);
     if(result != kStatus_OSA_Success)
     {
-        PRINTF("Failed to create slave task\r\n\r\n");
+        LREP("Failed to create slave task\r\n\r\n");
         return -1;
     }
 
@@ -146,7 +146,7 @@ int main(void)
                     &task_sample_task_handler);
     if (result != kStatus_OSA_Success)
     {
-        PRINTF("Failed to create sample task\r\n\r\n");
+        LREP("Failed to create sample task\r\n\r\n");
         return -1;
     }
 #endif /* USE_RTOS */
@@ -162,7 +162,7 @@ int main(void)
                     &task_master_task_handler);
     if (result != kStatus_OSA_Success)
     {
-        PRINTF("Failed to create master task\r\n\r\n");
+        LREP("Failed to create master task\r\n\r\n");
         return -1;
     }
 
