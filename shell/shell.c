@@ -15,7 +15,6 @@
 /************************** Function Prototypes ******************************/
 
 /************************** Variable Definitions *****************************/
-volatile uint8_t isGetCmd = false;
 volatile uint8_t isPwdMode = false;
 static const shell_command_t *shell_cmd_table;
 uint32_t shell_cmdline_pos;
@@ -32,13 +31,10 @@ char shell_cmdline[SHELL_CMDLINE_SIZE];
  */
 
 void shell_task(void *arg) {
-	(void)arg;
-	if(isGetCmd) {
-		shell_exec();
-		shell_clear_buffer();		
-		isGetCmd = false;
-		LREP(SHELL_PROMPT);
-	}
+
+	shell_exec();
+	shell_clear_buffer();
+	LREP(SHELL_PROMPT);
 }
 
 /*****************************************************************************/
@@ -52,8 +48,7 @@ void shell_task(void *arg) {
 
 uint8_t shell_push_command(uint8_t ch)
 {
-	if(ch != EOF)
-	{
+	if(ch != EOF) {
 		//if (((char)ch != SHELL_CR) && (shell_cmdline_pos < SHELL_CMDLINE_SIZE))
 		if (((char)ch != SHELL_CR) && (char)ch != SHELL_LF && 
 				(shell_cmdline_pos < SHELL_CMDLINE_SIZE))
@@ -72,8 +67,7 @@ uint8_t shell_push_command(uint8_t ch)
 			break;
 
 			default:
-			if ((shell_cmdline_pos + 1U) < SHELL_CMDLINE_SIZE)
-			{
+			if ((shell_cmdline_pos + 1U) < SHELL_CMDLINE_SIZE) {
 				/* Only printable characters. */
 				if (((char)ch >= SHELL_SPACE) && ((char)ch <= SHELL_DELETE))
 				{
@@ -88,20 +82,17 @@ uint8_t shell_push_command(uint8_t ch)
 			}
 			  break;
 			}
-		}
-		else
-		{
+		} else {
 			shell_cmdline[shell_cmdline_pos] = '\0';
 			debug_putchar(SHELL_CR);
 			debug_putchar(SHELL_LF);
-			isGetCmd = true;
 			return true;
 		}
 
-		return true;
+		return false;
 	}
 
-	return true;
+	return false;
 }
 /*****************************************************************************/
 /** @brief 
@@ -211,7 +202,6 @@ void shell_set_command(const char *cmd, uint32_t size) {
 	shell_cmdline_pos = size;
 	memcpy((char*)shell_cmdline, (const char*)cmd, size);
 	shell_cmdline[size] = '\0';
-	isGetCmd = false;
 }
 
 void shell_push_buffer(const char *cmd, uint32_t size) {

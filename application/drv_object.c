@@ -10,12 +10,3 @@
 #include <board.h>
 
 
-
-const uart_user_config_t debug_uart_cfg = {
-  .baudRate = BOARD_DEBUG_UART_BAUD,
-  .parityMode = kUartParityDisabled,
-  .stopBitCount = kUartTwoStopBit,
-  .bitCountPerChar = kUart8BitsPerChar,
-};
-
-uart_state_t debug_uart_state;

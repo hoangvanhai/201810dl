@@ -120,15 +120,13 @@ void help_cmd(int32_t argc, char **argv)
 
 void task_master(task_param_t param)
 {
-	uint8_t in_val;
+	OS_ERR err;
 	shell_init(cmd_table, my_shell_init);
 	LREP(SHELL_PROMPT);
 	while(1) {
-
-		in_val = GETCHAR();
-
-		shell_push_command(in_val);
-		shell_task(NULL);
-
+		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, 0, &err);
+		if(err == OS_ERR_NONE) {
+			shell_task(NULL);
+		}
 	}
 }
