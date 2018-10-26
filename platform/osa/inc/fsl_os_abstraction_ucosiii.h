@@ -31,7 +31,7 @@
 #define __FSL_OS_ABSTRACTION_UCOSIII_H__
 
 #include "os.h"
-
+#include "os_helper.h"
 /*!
 * @addtogroup os_abstraction_ucosiii
 * @{

@@ -35,9 +35,11 @@
 // SDK Included Files
 #include <includes.h>
 #include "shell.h"
+#include <app.h>
 
 
 void clear_screen(int32_t argc, char**argv);
+void send_queue(int32_t argc, char**argv);
 void help_cmd(int32_t argc, char **argv);
 void restart(int32_t argc, char**argv);
 void my_shell_init(void);
@@ -47,6 +49,7 @@ const shell_command_t cmd_table[] =
 {
 	{"help", 	0u, 0u, help_cmd, 		"display this help message", ""},
 	{"clear", 	0u, 0u, clear_screen, 	"clear screen", ""},
+	{"send", 	1u, 1u, send_queue, 	"send queue message", "<tcb>"},
 	{"reset", 	0u, 0u, restart, 		"reset system", ""},
 	{0, 0u, 0u, 0, 0, 0}
 };
@@ -64,6 +67,58 @@ void my_shell_init(void)
 	LREP("shell init done\r\n");
 }
 
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void send_queue(int32_t argc, char**argv) {
+	if (argc == 2)
+	{
+		if(strcmp(argv[1], "modbus") == 0) {
+			int i = 0;
+			for(; i < 100; i++) {
+			LREP("send data to modbus task\r\n");
+			uint8_t *p_msg = OSA_MemFixedMalloc(100);
+			if(p_msg != NULL) {
+				OS_ERR err;
+				OSTaskQPost(&TCB_task_modbus, p_msg, 100, OS_OPT_POST_FIFO, &err);
+				if(err != OS_ERR_NONE) {
+					LREP("task queue post failed \r\n");
+				} else {
+					LREP("task queue post ok \r\n");
+				}
+			} else {
+				LREP("malloc failed \r\n");
+			}
+			OSA_SleepMs(100);
+			}
+		} else if(strcmp(argv[1], "fs") == 0) {
+			int i = 0;
+			for(;i < 100; i++) {
+			LREP("send data to file system task\r\n");
+			uint8_t *p_msg = OSA_MemFixedMalloc(100);
+			if(p_msg != NULL) {
+				OS_ERR err;
+				OSTaskQPost(&TCB_task_filesystem, p_msg, 100, OS_OPT_POST_FIFO, &err);
+				if(err != OS_ERR_NONE) {
+					LREP("task queue post failed \r\n");
+				} else {
+					LREP("task queue post ok \r\n");
+				}
+			} else {
+				LREP("malloc failed \r\n");
+			}
+			OSA_SleepMs(100);
+			}
+		} else {
+			LREP("argument not supported\r\n\n");
+		}
+	}
+}
 
 #define SHELL_CFG_TERMINAL_HIGH         120
 /*****************************************************************************/

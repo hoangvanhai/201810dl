@@ -8,8 +8,9 @@ extern "C" {
 /***************************** Include Files *********************************/
 #include <string.h>
 #include "typedefs.h"
-#include "TransFiFo.h"
+#include "fifo.h"
 #include "app_cfg.h"
+#include <includes.h>
 
 
 #if (TRANSL1_VER == TRANSL1_V1)
@@ -63,6 +64,35 @@ typedef enum E_TRANSL1_EVENT_
 
 }EL1Event;
 
+
+typedef enum
+{
+    /*General return values*/
+    SUCCESS 			= 	0,
+    FAILURE				=	1,
+
+    TRANS_ERR_MEM		=  	2,
+
+    /*return value and error code for TransL1 & TransL2*/
+    TRANS_ERR_BUSY		=	10,
+    TRANS_ERR_NOT_STARTED 	= 	11,
+    TRANS_ERR_L1_TIMEOUT	=	12,
+    TRANS_ERR_L2_TIMEOUT	=	13,
+    TRANS_ERR_INVALID_PTR	=	14,
+    TRANS_ERR_INVALID_DATA 	= 	15,
+    TRANS_ERR_CRCH		=	16,
+    TRANS_ERR_CRCD		=	17,
+    TRANS_ERR_PARAM		=	18,
+    TRANS_ERR_REMOTE		= 	19,
+    TRANS_ERR_REMOTE_DLEN	= 	20,
+    TRANS_ERR_REMOTE_CRCH	= 	21,
+    TRANS_ERR_REMOTE_CRCD	= 	22,
+
+    TRANS_ERR_UNKNOWN		=	30
+
+}ETransReturn, ETransErrorCode, ETransStatus;
+
+
 typedef struct _S_L1_FLAG
 {
 	uint8_t u8All;
@@ -86,7 +116,8 @@ typedef struct _STransL1
 {
 	SL1Flag				sFlag;
 	
-	uint32_t   			u32UartPort;
+	uint32_t   			uartInstance;
+	void*   			uartBase;
 	uint32_t			u32BaudRate;
 	
 	uint8_t				*pSendBuff;			// Buffer waiting to be sent
@@ -104,7 +135,7 @@ typedef struct _STransL1
 	
 	uint8_t 			arrRecvFIFO[SIZE_FIFO_RECV];
 	
-	SRS485DE			sRS485DE;			// To drive RS485
+	uint32_t			rs485Pin;
 		
 	#ifdef DEBUG_TRANSL1
 		STransL1DBG		sDBG;
@@ -118,8 +149,8 @@ typedef struct _STransL1
 
 /************************** Function Prototypes ******************************/
 
-void 		TransL1_UARTInit(uint32_t u32UartPort, uint32_t u32Baudrate, uint8_t u8TxPrio, uint8_t u8RxPrio);
-uint8_t  	TransL1_Init( STransL1 *pTransL1,  uint32_t u32UartPort,
+void 		TransL1_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxPrio, uint8_t u8RxPrio);
+uint8_t  	TransL1_Init( STransL1 *pTransL1,  uint32_t uartInstance,
 							uint32_t u32BaudRate, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio);
 
 void 		TransL1_Stop				(STransL1 *pTransL1);

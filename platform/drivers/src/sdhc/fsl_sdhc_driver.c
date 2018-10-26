@@ -38,6 +38,8 @@
 #include "fsl_sdhc_hal.h"
 #include "fsl_sdhc_driver.h"
 #include "fsl_sdhc.h"
+#include "fsl_debug_console.h"
+
 #if FSL_FEATURE_SOC_SDHC_COUNT
 
 static sdhc_host_t volatile *g_hosts[SDHC_INSTANCE_COUNT] = {0};
@@ -1455,6 +1457,7 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
     /* Wait until last time sdhc send operation complete */
     while(!SDHC_HAL_GetCurState(g_sdhcBase[instance], kSdhcHalGetDataLine0Level)){}
     
+    LREP("passed blocking check !\r\n");
     host = g_hosts[instance];
     ret = kStatus_SDHC_NoError;
     req->error = 0;
@@ -1494,6 +1497,7 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
 #endif
 
     SDHC_DRV_SetClock(instance, true);
+    LREP("set clock done \r\n");
 
     if (host->currentReq)
     {
@@ -1526,6 +1530,7 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
         return kStatus_SDHC_Failed;
     }
 
+    LREP("start check condition from IRQ\r\n");
 #if defined BSP_FSL_SDHC_USING_IRQ
     do
     {
@@ -1543,6 +1548,8 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
     {
         req->error |= FSL_SDHC_REQ_ERR_TIMEOUT;
     }
+
+    LREP("check complete !\r\n");
 
     OSA_SemaDestroy(req->complete);
 #if defined BSP_FSL_SDHC_USING_DYNALLOC
@@ -1616,6 +1623,8 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
 
     host->currentReq = 0;
     SDHC_DRV_SetClock(instance, false);
+
+    LREP("return %d\r\n", ret);
     return ret;
 }
 #endif

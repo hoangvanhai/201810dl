@@ -100,6 +100,9 @@ typedef void (*osa_int_handler_t)(void);
 extern "C" {
 #endif
 
+#define OSA_SleepMs		OSA_TimeDelay
+
+
 /*!
  * @name Counting Semaphore
  * @{

@@ -85,6 +85,7 @@
 									<listOptionValue builtIn="false" value="../shell"/>
 									<listOptionValue builtIn="false" value="../library"/>
 									<listOptionValue builtIn="false" value="../modbus"/>
+									<listOptionValue builtIn="false" value="../filesystem"/>
 									<listOptionValue builtIn="false" value="../application"/>
 									<listOptionValue builtIn="false" value="../platform/osa/inc"/>
 									<listOptionValue builtIn="false" value="../platform/utilities/inc"/>
@@ -129,6 +130,7 @@
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uCOS-III/Source"/>
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uC-CPU"/>
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uC-LIB"/>
+									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uC-Helper"/>
 									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip"/>
 									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/port"/>
 									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/port/arch"/>

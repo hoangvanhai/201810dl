@@ -34,6 +34,7 @@
 #include "fsl_os_abstraction.h"
 #include "fsl_sdhc_card.h"
 #include "fsl_sdmmc_card.h"
+#include "fsl_debug_console.h"
 
 #if defined(FSL_SDHC_USING_BIG_ENDIAN)
 #define swap_be32(x) (x)
@@ -965,9 +966,11 @@ static sdhc_status_t SDCARD_DRV_GoIdle(sdhc_card_t *card)
     }
 #endif
     req->cmdIndex = kGoIdleState;
+    LREP("__________ISSUE REQ BLOCKING START ...\r\n");
     err = SDHC_DRV_IssueRequestBlocking(card->hostInstance,
                                         req,
                                         FSL_SDCARD_REQUEST_TIMEOUT);
+    LREP("___________ RET: %d\r\n", err);
 #if defined BSP_FSL_SDHC_USING_DYNALLOC
     OSA_MemFree(req);
 #endif
@@ -1388,14 +1391,18 @@ sdhc_status_t SDCARD_DRV_Init(sdhc_host_t *host, sdhc_card_t *card)
         return kStatus_SDHC_SetClockFailed;
     }
 
+    LREP("config clock done !\r\n");
     err = SDCARD_DRV_GoIdle(card);
+    LREP("go idle done err = %d\r\n", err);
     if (err)
     {
         return kStatus_SDHC_SetCardToIdle;
     }
     acmd41Arg = card->host->ocrSupported;
 
+
     err = SDCARD_DRV_SendIfCond(card);
+    LREP("config send if cond done err = %d\r\n", err);
     if (err == kStatus_SDHC_NoError)
     {
         /* SDHC or SDXC card */
@@ -1412,7 +1419,12 @@ sdhc_status_t SDCARD_DRV_Init(sdhc_host_t *host, sdhc_card_t *card)
         }
     }
 
+
+
     err = SDCARD_DRV_AppSendOpCond(card, acmd41Arg);
+
+    LREP("send op cond done !\r\n");
+
     if (kStatus_SDHC_TimeoutError == err)
     {
         /* MMC card */
@@ -1423,6 +1435,7 @@ sdhc_status_t SDCARD_DRV_Init(sdhc_host_t *host, sdhc_card_t *card)
         return kStatus_SDHC_SendAppOpCondFailed;
     }
 
+    LREP("start init sd \r\n");
     return SDCARD_DRV_InitSd(card);
 }
 

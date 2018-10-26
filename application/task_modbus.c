@@ -35,7 +35,7 @@
 void Clb_TimerControl(void *p_tmr, void *p_arg);
 
 void Clb_TimerControl(void *p_tmr, void *p_arg) {
-	LREP("timer clb\r\n");
+//	LREP("timer clb\r\n");
 }
 
 
@@ -43,8 +43,11 @@ OS_TMR hTimer;
 
 void task_modbus(task_param_t param)
 {
-	OS_ERR err;
 
+	OS_ERR err;
+	void 	*p_msg;
+	OS_MSG_SIZE msg_size;
+	CPU_TS	ts;
 	LREP("start create timer\r\n");
 	OSTmrCreate(&hTimer,
 				(CPU_CHAR *)"timer",
@@ -70,9 +73,19 @@ void task_modbus(task_param_t param)
 		LREP("timer create failed\r\n");
 	}
 
-    while (1)
-    {
-        OSA_TimeDelay(4000);
-        LREP("modbus \r\n");
-    }
+
+
+	while (1)
+	{
+		p_msg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
+		if(err == OS_ERR_NONE) {
+			LREP("modbus get msg size = %d ts = %d\r\n", msg_size, ts);
+			OSA_MemFixedFree((uint8_t*)p_msg);
+//			LREP("sd card detect: %d\r\n", cardInserted);
+//			if(cardInserted == true) {
+//				demo_card_data_access();
+//			}
+		}
+	}
+
 }

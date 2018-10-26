@@ -33,6 +33,7 @@
 
 #include <stdint.h>
 #include "fsl_os_abstraction.h"
+#include "fsl_misc_utilities.h"
 
 /*
  * @addtogroup debug_console
@@ -43,18 +44,9 @@
  * Definitions
  ******************************************************************************/
 
-
-
-
 #define IO_MAXLINE  20
 
-#if (defined (FSL_RTOS_MQX) && (MQX_COMMON_CONFIG != MQX_LITE_CONFIG))
-#define LREP          printf
-#define SCANF           scanf
-#define PUTCHAR         putchar
-#define GETCHAR         getchar
-#include <stdio.h>
-#else
+
 /*Configuration for toolchain's printf/scanf or KSDK version printf/scanf */
 #define LREP          debug_printf
 //#define LREP          printf
@@ -62,9 +54,8 @@
 //#define SCANF           scanf
 #define PUTCHAR         debug_putchar
 //#define PUTCHAR         putchar
-#define GETCHAR         debug_getchar
+//#define GETCHAR         debug_getchar
 //#define GETCHAR         getchar
-#endif
 
 
 /*! @brief Error code for the debug console driver. */

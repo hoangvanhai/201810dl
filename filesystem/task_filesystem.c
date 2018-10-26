@@ -28,23 +28,16 @@
 #include <includes.h>
 #include <fsl_sdhc_card.h>
 #include <app.h>
+#include <task_filesystem.h>
 
 /************************** Constant Definitions *****************************/
-#define TEST_BLOCK_NUM          4U
-#define TEST_START_BLOCK        4U
+
 /**************************** Type Definitions *******************************/
-typedef enum
-{
-    kTestResultPassed = 0U,
-    kTestResultFailed,
-    kTestResultInitFailed,
-    kTestResultAborted,
-} test_result_t;
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
 /************************** Function Prototypes ******************************/
-static test_result_t demo_card_data_access(void);
+
 /************************** Variable Definitions *****************************/
 
 /*****************************************************************************/
@@ -71,18 +64,25 @@ static volatile uint32_t cardInited = 0; /*!< Flag to indicate the card has been
 
 void task_filesystem(task_param_t param)
 {
-
-	GPIO_DRV_Init(sdhcCdPin, NULL);
-
 	OS_ERR err;
+	void 	*p_msg;
+	OS_MSG_SIZE msg_size;
+	CPU_TS	ts;
     while (1)
     {
-		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, 0, &err);
+		//OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, 0, &err);
+
+    	p_msg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
 		if(err == OS_ERR_NONE) {
-			LREP("sd card detect: %d\r\n", cardInserted);
-			if(cardInserted == true) {
-				demo_card_data_access();
-			}
+
+			LREP("filesystem get msg size = %d ts = %d\r\n", msg_size, ts);
+
+			OSA_MemFixedFree((uint8_t*)p_msg);
+
+//			LREP("sd card detect: %d\r\n", cardInserted);
+//			if(cardInserted == true) {
+//				demo_card_data_access();
+//			}
 		}
     }
 }
@@ -645,7 +645,7 @@ void sdhc_card_detection(void)
 {
 	OS_ERR err;
 	cardInserted = BOARD_IsSDCardDetected();
-    OSTaskSemPost(&TCB_task_filesystem, 0, &err);
+    //OSTaskSemPost(&TCB_task_filesystem, 0, &err);
 }
 
 
@@ -657,7 +657,7 @@ void sdhc_card_detection(void)
  *  @return Void.
  *  @note
  */
-static test_result_t demo_card_data_access(void)
+test_result_t demo_card_data_access(void)
 {
     sdhc_card_t card = {0};
     sdhc_host_t host = {0};
@@ -680,6 +680,7 @@ static test_result_t demo_card_data_access(void)
 
     // wait for a card detection
     sdhc_card_detection();
+
 
     if (cardInserted) {
         LREP("A card is detected\r\n");

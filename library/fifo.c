@@ -1,7 +1,7 @@
 
 
 /***************************** Include Files *********************************/
-#include "TransFiFo.h"
+#include "fifo.h"
 
 
 /************************** Constant Definitions *****************************/
@@ -33,7 +33,7 @@ void FIFO_Create(SFIFO *pFF, uint8_t *arrBuff, uint16_t u16Size) {
 	pFF->u16Tail = 0;
 	pFF->bEnProtect    = FALSE;
 	pFF->u16ProtectPtr = 0;
-	pFF->u16MaxSize    = u16Size;//sizeof(pFF->arrBuff);
+	pFF->u16MaxSize    = u16Size;
 }
 
 void FIFO_Destroy(SFIFO *pFF){
@@ -198,5 +198,6 @@ BOOL FIFO_Reset(SFIFO *pFF) {
 	pFF->u16Head 		= 0;
 	pFF->u16Tail 		= 0;
 	pFF->bEnProtect     = FALSE;
-	pFF->u16ProtectPtr  = 0;	
+	pFF->u16ProtectPtr  = 0;
+	return TRUE;
 }
