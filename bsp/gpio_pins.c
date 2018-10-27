@@ -88,28 +88,21 @@ const gpio_input_pin_user_config_t sdhcCdPin[] = {
 
 const gpio_output_pin_user_config_t ledPins[] = {
   {
-    .pinName = kGpioLED1,
+    .pinName = kGpioLEDRED,
     .config.outputLogic = 1,
     .config.slewRate = kPortSlowSlewRate,
     .config.isOpenDrainEnabled = false,
     .config.driveStrength = kPortLowDriveStrength,
   },
   {
-    .pinName = kGpioLED2,
+    .pinName = kGpioLEDGREEN,
     .config.outputLogic = 1,
     .config.slewRate = kPortSlowSlewRate,
     .config.isOpenDrainEnabled = false,
     .config.driveStrength = kPortLowDriveStrength,
   },
   {
-    .pinName = kGpioLED3,
-    .config.outputLogic = 1,
-    .config.slewRate = kPortSlowSlewRate,
-    .config.isOpenDrainEnabled = false,
-    .config.driveStrength = kPortLowDriveStrength,
-  },
-  {
-    .pinName = kGpioLED4,
+    .pinName = kGpioLEDBLUE,
     .config.outputLogic = 1,
     .config.slewRate = kPortSlowSlewRate,
     .config.isOpenDrainEnabled = false,
@@ -128,6 +121,22 @@ gpio_input_pin_user_config_t sdcardCardDectionPin[] = {
         .config.pullSelect = kPortPullDown,
         .config.isPassiveFilterEnabled = false,
         .config.interrupt = kPortIntEitherEdge
+    },
+    {
+        .pinName = GPIO_PINS_OUT_OF_RANGE,
+    }
+};
+
+
+
+/* Declare SPI1 Card Detection pins for the spi sd card */
+const gpio_output_pin_user_config_t mbRs485Pin[] = {
+    {
+    	    .pinName = kGpioMbRs485,
+    	    .config.outputLogic = 1,
+    	    .config.slewRate = kPortSlowSlewRate,
+    	    .config.isOpenDrainEnabled = false,
+    	    .config.driveStrength = kPortLowDriveStrength,
     },
     {
         .pinName = GPIO_PINS_OUT_OF_RANGE,

@@ -310,7 +310,55 @@ uint8_t usb_otg_board_init(uint8_t controller_id)
     return error;
 }
 
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void TRAP_HardFault(void) {
+	LREP("HARD FAULT \r\n");
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void TRAP_BusFault(void) {
+	LREP("BUS FAULT \r\n");
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void TRAP_UsageFault(void) {
+	LREP("USAGE FAULT \r\n");
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void BOARD_InstallDebugIsr(void) {
+	OSA_InstallIntHandler(HardFault_IRQn, TRAP_HardFault);
+	OSA_InstallIntHandler(BusFault_IRQn, TRAP_HardFault);
+	OSA_InstallIntHandler(UsageFault_IRQn, TRAP_HardFault);
+}
+
 /*******************************************************************************
  * EOF
  ******************************************************************************/
+
 

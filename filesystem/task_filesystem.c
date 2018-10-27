@@ -77,7 +77,7 @@ void task_filesystem(task_param_t param)
 
 			LREP("filesystem get msg size = %d ts = %d\r\n", msg_size, ts);
 
-			OSA_MemFixedFree((uint8_t*)p_msg);
+			OSA_FixedMemFree((uint8_t*)p_msg);
 
 //			LREP("sd card detect: %d\r\n", cardInserted);
 //			if(cardInserted == true) {

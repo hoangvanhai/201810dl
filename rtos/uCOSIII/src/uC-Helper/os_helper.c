@@ -103,7 +103,7 @@ uint8_t		*g_ucMemStorage250[OS_MEM_PARTITION_250_TOTAL_NUM_BLOCK][252];
 //				data structure that has some big data elements(int, long, ...). This problem is
 //				introduced by the Stack Pointer MUST point to even address, not odd address.
 // ---------------------------------------------------------------------------------------------------
-void* OSA_MemFixedMalloc(uint32_t uiSize)
+void* OSA_FixedMemMalloc(uint32_t uiSize)
 {
 	uint8_t* 	pucAllocMem = NULL;
 	OS_ERR		ucError		= OS_ERR_NONE;
@@ -212,7 +212,7 @@ void* OSA_MemFixedMalloc(uint32_t uiSize)
 //	@return	: 	Void
 //	@note	:
 // ---------------------------------------------------------------------------------------------------
-void OSA_MemFixedFree(uint8_t* pucAllocMem)
+void OSA_FixedMemFree(uint8_t* pucAllocMem)
 {
 	OS_ERR	ucError = OS_ERR_NONE;
 
@@ -268,11 +268,11 @@ void OSA_MemFixedFree(uint8_t* pucAllocMem)
 }
 
 
-uint8_t OSA_MemFixedInit(void)
+uint8_t OSA_FixedMemInit(void)
 {
     OS_ERR   ucError = OS_ERR_NONE;
 
-    #if OS_MEM_PARTITION_8_TOTAL_NUM_BLOCK > 0
+#if OS_MEM_PARTITION_8_TOTAL_NUM_BLOCK > 0
     OSMemCreate(&g_hMemPartition8,
     			(CPU_CHAR*)"mem8",
 				&g_ucMemStorage8[0][0],
@@ -285,8 +285,8 @@ uint8_t OSA_MemFixedInit(void)
         LREP("\r\nCan not Create Partition 8 bytes");
         return ucError;
     }
-    #endif
-    #if OS_MEM_PARTITION_16_TOTAL_NUM_BLOCK > 0
+#endif
+#if OS_MEM_PARTITION_16_TOTAL_NUM_BLOCK > 0
 
     OSMemCreate(&g_hMemPartition16,
     			(CPU_CHAR*)"mem16",
@@ -300,8 +300,8 @@ uint8_t OSA_MemFixedInit(void)
         LREP("\r\nCan not Create Partition 16 bytes");
         return ucError;
     }
-    #endif
-    #if OS_MEM_PARTITION_32_TOTAL_NUM_BLOCK > 0
+#endif
+#if OS_MEM_PARTITION_32_TOTAL_NUM_BLOCK > 0
 
     OSMemCreate(&g_hMemPartition32,
        			(CPU_CHAR*)"mem32",
@@ -316,8 +316,8 @@ uint8_t OSA_MemFixedInit(void)
         LREP("\r\nCan not Create Partition 32 bytes");
         return ucError;
     }
-    #endif
-    #if OS_MEM_PARTITION_64_TOTAL_NUM_BLOCK > 0
+#endif
+#if OS_MEM_PARTITION_64_TOTAL_NUM_BLOCK > 0
 
     OSMemCreate(&g_hMemPartition64,
        			(CPU_CHAR*)"mem64",
@@ -331,8 +331,8 @@ uint8_t OSA_MemFixedInit(void)
         LREP("\r\nCan not Create Partition 64 bytes");
         return ucError;
     }
-    #endif
-    #if OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK > 0
+#endif
+#if OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK > 0
     OSMemCreate(&g_hMemPartition128,
        			(CPU_CHAR*)"mem128",
    				&g_ucMemStorage128[0][0],
@@ -344,7 +344,7 @@ uint8_t OSA_MemFixedInit(void)
     {
         LREP("\r\nCan not Create Partition 128 bytes");
     }
-    #endif
+#endif
     //LREP("\r\nMemory is initialized!");
     return ucError;
 }

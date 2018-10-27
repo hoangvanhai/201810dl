@@ -78,7 +78,7 @@ osa_status_t OSA_TaskCreate(task_t          task,
                  stackMem,          /* Stack's base.                               */
                  0,                 /* Stack limit.                                */
                  stackSizeLocal,    /* Stack size.                                 */
-                 0,                 /* Number of messages can be sent to the task. */
+                 10,                 /* Number of messages can be sent to the task. */
                  0,                 /* Default time_quanta.                        */
                  0,                 /* TCB extension, not used.                    */
                  usesFloat ? OS_OPT_TASK_SAVE_FP : 0,

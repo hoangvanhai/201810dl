@@ -26,18 +26,17 @@
  */
 void FIFO_Create(SFIFO *pFF, uint8_t *arrBuff, uint16_t u16Size) {
 	
-	pFF->arrBuff	= arrBuff;//malloc(u16Size*sizeof(unsigned char));
-	
-	pFF->u16Size = 0;
-	pFF->u16Head = 0;
-	pFF->u16Tail = 0;
-	pFF->bEnProtect    = FALSE;
-	pFF->u16ProtectPtr = 0;
-	pFF->u16MaxSize    = u16Size;
+	pFF->arrBuff		= arrBuff;
+	pFF->u16Size 		= 0;
+	pFF->u16Head 		= 0;
+	pFF->u16Tail 		= 0;
+	pFF->bEnProtect    	= FALSE;
+	pFF->u16ProtectPtr 	= 0;
+	pFF->u16MaxSize    	= u16Size;
 }
 
 void FIFO_Destroy(SFIFO *pFF){
-	//free(pFF->arrBuff);
+
 }	
 /** @brief 
  *

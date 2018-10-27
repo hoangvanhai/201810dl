@@ -33,6 +33,7 @@
 #include "fsl_uart_driver.h"
 #include "fsl_clock_manager.h"
 #include "fsl_interrupt_manager.h"
+#include "fsl_debug_console.h"
 
 #if FSL_FEATURE_SOC_UART_COUNT
 /*******************************************************************************

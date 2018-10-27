@@ -35,7 +35,8 @@
 #define  MICRIUM_SOURCE
 #include "os.h"
 #include <os_app_hooks.h>
-
+#include "board.h"
+#include <fsl_debug_console.h>
 
 /*
 ************************************************************************************************************************
@@ -65,6 +66,8 @@ void  App_OS_SetAllHooks (void)
     OS_AppTaskSwHookPtr     = App_OS_TaskSwHook;
     OS_AppTimeTickHookPtr   = App_OS_TimeTickHook;
     CPU_CRITICAL_EXIT();
+
+    LREP("app set all hook\r\n");
 #endif
 }
 
@@ -97,6 +100,8 @@ void  App_OS_ClrAllHooks (void)
     OS_AppTaskSwHookPtr     = (OS_APP_HOOK_VOID)0;
     OS_AppTimeTickHookPtr   = (OS_APP_HOOK_VOID)0;
     CPU_CRITICAL_EXIT();
+
+    LREP("app clear all hook\r\n");
 #endif
 }
 
@@ -248,5 +253,10 @@ void  App_OS_TaskSwHook (void)
 
 void  App_OS_TimeTickHook (void)
 {
-
+	static uint32_t count = 0;
+	if(count++ >= 1000) {
+		LREP("app tick hook on\r\n");
+		GPIO_DRV_TogglePinOutput(kGpioLEDBLUE);
+		count = 0;
+	}
 }

@@ -31,15 +31,19 @@
 
 #include <includes.h>
 #include "fsl_debug_console.h"
+#include <app.h>
+#include <board.h>
+#include <layer1.h>
 
 void Clb_TimerControl(void *p_tmr, void *p_arg);
 
 void Clb_TimerControl(void *p_tmr, void *p_arg) {
-//	LREP("timer clb\r\n");
+	GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
 }
 
 
 OS_TMR hTimer;
+SModbus sModbus;
 
 void task_modbus(task_param_t param)
 {
@@ -74,17 +78,26 @@ void task_modbus(task_param_t param)
 	}
 
 
+	Modbus_Init(&sModbus, BOARD_MODBUS_UART_INSTANCE, BOARD_MODBUS_UART_BAUD, 0, 0);
+
+	uint8_t rx_buf[100];
+	uint16_t rx_length;
 
 	while (1)
 	{
 		p_msg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
 		if(err == OS_ERR_NONE) {
+			uint8_t retVal;
+
 			LREP("modbus get msg size = %d ts = %d\r\n", msg_size, ts);
-			OSA_MemFixedFree((uint8_t*)p_msg);
-//			LREP("sd card detect: %d\r\n", cardInserted);
-//			if(cardInserted == true) {
-//				demo_card_data_access();
-//			}
+
+			retVal = Modbus_SendAndRecv(&sModbus, (uint8_t*)p_msg, 100, rx_buf, &rx_length, 100);
+
+			if(retVal != SUCCESS) {
+				LREP("Modbus send err: %d\r\n", retVal);
+			}
+
+			OSA_FixedMemFree((uint8_t*)p_msg);
 		}
 	}
 

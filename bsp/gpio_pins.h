@@ -66,6 +66,8 @@ extern const gpio_input_pin_user_config_t sdhcCdPin[];
 /*! @brief Configuration structure 0 for output pins */
 extern const gpio_output_pin_user_config_t ledPins[];
 
+extern const gpio_output_pin_user_config_t mbRs485Pin[];
+
 
 ///*! @brief Pin names */
 //enum _gpio_pins_pinNames{
@@ -85,11 +87,11 @@ enum _gpio_pins_pinNames{
   kGpioSW1                    = GPIO_MAKE_PIN(GPIOC_IDX, 6U),
   kGpioSW3                    = GPIO_MAKE_PIN(GPIOA_IDX, 4U),
   kGpioSdhc0Cd                = GPIO_MAKE_PIN(GPIOE_IDX, 6U),
-  kGpioLED1                   = GPIO_MAKE_PIN(GPIOB_IDX, 20U),
-  kGpioLED2                   = GPIO_MAKE_PIN(GPIOE_IDX, 7U),
-  kGpioLED3                   = GPIO_MAKE_PIN(GPIOE_IDX, 8U),
-  kGpioLED4                   = GPIO_MAKE_PIN(GPIOE_IDX, 9U),
+  kGpioLEDRED                 = GPIO_MAKE_PIN(GPIOB_IDX, 22U),
+  kGpioLEDGREEN               = GPIO_MAKE_PIN(GPIOE_IDX, 26U),
+  kGpioLEDBLUE                = GPIO_MAKE_PIN(GPIOB_IDX, 21U),
   kGpioSdcardCardDetection    = GPIO_MAKE_PIN(PORTD_IDX, 15U),  /* Connects the TWR_MEM, this's SPI Card detector pin */
+  kGpioMbRs485                = GPIO_MAKE_PIN(GPIOE_IDX, 10U),
 };
 
 extern gpio_input_pin_user_config_t sdcardCardDectionPin[];

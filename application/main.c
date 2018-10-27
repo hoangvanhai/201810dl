@@ -90,7 +90,7 @@ int main(void)
 
     OSA_Init();
 
-    OSA_MemFixedInit();
+    OSA_FixedMemInit();
 
     result = OSA_TaskCreate(task_modbus,
                     (uint8_t *)"modbus",

@@ -4,7 +4,8 @@
 #include "layer1.h"
 #include <fsl_debug_console.h>
 #include <fsl_uart_driver.h>
-#if (TRANSL1_VER	== TRANSL1_V1)
+#include <gpio_pins.h>
+#include <board.h>
 /************************** Constant Definitions *****************************/
 
 /**************************** Type Definitions *******************************/
@@ -12,23 +13,28 @@
 /***************** Macros (Inline Functions) Definitions *********************/
 
 
-#define UART_RX_ENTER_CRITICAL()     	UART_HAL_SetIntMode((UART_Type*)pTransL1->uartBase,kUartIntRxDataRegFull, false)
-#define UART_RX_EXIT_CRITICAL()			UART_HAL_SetIntMode((UART_Type*)pTransL1->uartBase,kUartIntRxDataRegFull, true)
+#define UART_RX_ENTER_CRITICAL()     	//UART_HAL_SetIntMode((UART_Type*)pModbus->uartBase,kUartIntRxDataRegFull, false)
+#define UART_RX_EXIT_CRITICAL()			//UART_HAL_SetIntMode((UART_Type*)pModbus->uartBase,kUartIntRxDataRegFull, true)
 
-#define UART_TX_ENTER_CRITICAL()		UART_HAL_SetIntMode((UART_Type*)pTransL1->uartBase,kUartIntTxComplete, true)
-#define UART_TX_EXIT_CRITICAL()			UART_HAL_SetIntMode((UART_Type*)pTransL1->uartBase,kUartIntTxComplete, false)
+#define UART_TX_ENTER_CRITICAL()		//UART_HAL_SetIntMode((UART_Type*)pModbus->uartBase,kUartIntTxComplete, true)
+#define UART_TX_EXIT_CRITICAL()			//UART_HAL_SetIntMode((UART_Type*)pModbus->uartBase,kUartIntTxComplete, false)
+
+
+#define Modbus_IsSendReady(pModbus)  \
+									((pModbus)->uFlag.Bits.bStarted == TRUE && (pModbus)->uFlag.Bits.bSending == FALSE)
+
+#define Modbus_IsSendDone(pModbus) 	(!(pModbus)->uFlag.Bits.bSending)
 
 /************************** Function Prototypes ******************************/
-extern void   		UART_SetIsrL1Handle(uint32_t uartInstance, STransL1 *pTransL1);
-inline void 		RS485_RX(STransL1 *pTransL1);
-inline void 		RS485_TX(STransL1 *pTransL1);
+inline void 		RS485_RX(SModbus *pModbus);
+inline void 		RS485_TX(SModbus *pModbus);
 inline void 		RS485_Init();
 static void 		modbus_rx_handle(uint32_t instance, void * uartState);
 static void 		modbus_tx_handle(uint32_t instance, void * uartState);
 /************************** Variable Definitions *****************************/
 uart_state_t modbus_uart_state;
 static uint8_t rx_char, tx_char;
-STransL1 			*pThisL1;
+SModbus 			*pThisL1;
 /*****************************************************************************/
 /** @brief
  *		   init UART port
@@ -39,7 +45,7 @@ STransL1 			*pThisL1;
  */
 
 
-void TransL1_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxPrio, uint8_t u8RxPrio)
+void Modbus_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxPrio, uint8_t u8RxPrio)
 {
 	uart_user_config_t modbus_uart_cfg = {
 					.baudRate = u32Baudrate,
@@ -47,6 +53,8 @@ void TransL1_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8Tx
 					.stopBitCount = kUartTwoStopBit,
 					.bitCountPerChar = kUart8BitsPerChar,
 				};
+
+	configure_uart_pins(BOARD_MODBUS_UART_INSTANCE);
 
 	UART_Type * g_Base[UART_INSTANCE_COUNT] = UART_BASE_PTRS;
 	UART_Type * base = g_Base[uartInstance];
@@ -69,7 +77,7 @@ void TransL1_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8Tx
  */
 void RS485_Init()
 {
-//	GPIO_DRV_Init()
+	GPIO_DRV_Init(NULL, mbRs485Pin);
 }
 /*****************************************************************************/
 /** @brief
@@ -79,9 +87,9 @@ void RS485_Init()
  *  @return Void.
  *  @note
  */
-void RS485_TX(STransL1 *pTransL1)
+void RS485_TX(SModbus *pModbus)
 {
-	GPIO_DRV_SetPinOutput(pTransL1->rs485Pin);
+	GPIO_DRV_SetPinOutput(pModbus->rs485Pin);
 }
 /*****************************************************************************/
 /** @brief
@@ -91,13 +99,23 @@ void RS485_TX(STransL1 *pTransL1)
  *  @return Void.
  *  @note
  */
-void RS485_RX(STransL1 *pTransL1)
+void RS485_RX(SModbus *pModbus)
 {
 	uint32_t remain;
 	/*wait until last byte is shifted out*/
-	while(UART_DRV_GetTransmitStatus(pTransL1->uartInstance, &remain) == kStatus_UART_TxBusy);
-
-	GPIO_DRV_ClearPinOutput(pTransL1->rs485Pin);
+	while(UART_DRV_GetTransmitStatus(pModbus->uartInstance, &remain) == kStatus_UART_TxBusy);
+	GPIO_DRV_ClearPinOutput(pModbus->rs485Pin);
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Modbus_SetSending (SModbus *pModbus, BOOL send) {
+	pModbus->uFlag.Bits.bSending = send;
 }
 /*****************************************************************************/
 /** @brief
@@ -107,215 +125,99 @@ void RS485_RX(STransL1 *pTransL1)
  *  @return Void.
  *  @note
  */
-uint8_t  TransL1_Init(STransL1 *pTransL1, uint32_t uartInstance,
+uint8_t  Modbus_Init(SModbus *pModbus, uint32_t uartInstance,
 		uint32_t u32BaudRate, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio)
 {
-
-	ASSERT_NONVOID(pTransL1 != 0, TRANS_ERR_PARAM);
-
+	pThisL1 = pModbus;
 	//FIFO Queue to store received data from UART
-	FIFO_Create(&pTransL1->sRecvFIFO,pTransL1->arrRecvFIFO,SIZE_FIFO_RECV);
-
+	FIFO_Create(&pModbus->sRecvFIFO,pModbus->arrRecvFIFO, SIZE_FIFO_RECV);
+	pModbus->rs485Pin = kGpioMbRs485;
 	RS485_Init();
-
-	RS485_TX(pTransL1);	// do not want to receice any thing
-
-	//init some data of TransL1
-	pTransL1->uartInstance	 	= uartInstance;
-	pTransL1->u32BaudRate 		= u32BaudRate;
-
-	pTransL1->fClbL1SendDone 	= NULL;
-	pTransL1->fClbL1RecvData	= NULL;
-	pTransL1->fClbL1Error		= NULL;
-	pTransL1->pClbSendDoneParam	= NULL;
-	pTransL1->pClbRecvByteParam	= NULL;
-	pTransL1->pClbErrorParam	= NULL;
-
-	pTransL1->sFlag.u8All		= 0;
-
-	//set handle for uart isr
-	UART_SetIsrL1Handle(uartInstance,pTransL1);
-
+	RS485_TX(pModbus);	// do not want to receice any thing
+	//init some data of Modbus
+	pModbus->uartInstance	 	= uartInstance;
+	pModbus->u32BaudRate 		= u32BaudRate;
 	// init UART
-	TransL1_Uart_Init(uartInstance, u32BaudRate, u8TxIntPrio, u8RxIntPrio);
+	LREP("init uart port: %d\r\n", uartInstance);
+	Modbus_Uart_Init(uartInstance, u32BaudRate, u8TxIntPrio, u8RxIntPrio);
+	RS485_RX(pModbus);
 
-	RS485_RX(pTransL1);//RS485_RECV_ENABLE;
+	pModbus->uFlag.all = 0;
+	pModbus->uFlag.Bits.bStarted = true;
 
-	pTransL1->sFlag.Bits.bStarted = TRUE;
-	pThisL1 = pTransL1;
 	return SUCCESS;
 }
-/*****************************************************************************/
-/** @brief 
- *		   
- *
- *  @param
- *  @return Void.
- *  @note
- */
-void TransL1_RegisterClbEvent(STransL1 *pTransL1, EL1Event event, FClbL1Event pFunction, void *pParam)
-{
-	switch(event)
-	{
-		case TRANSL1_EVT_NONE: 												
-			break;
-		case TRANSL1_EVT_SEND_DONE: 
-			pTransL1->fClbL1SendDone 	= pFunction; 
-			pTransL1->pClbSendDoneParam = pParam;
-			break;
-		case TRANSL1_EVT_RECV_BYTE:	
-			pTransL1->fClbL1RecvData 	= pFunction; 
-			pTransL1->pClbRecvByteParam = pParam;
-			break;
-		case TRANSL1_EVT_ERROR: 	
-			pTransL1->fClbL1Error		= pFunction; 
-			pTransL1->pClbErrorParam 	= pParam;
-			break;
-		default: 					
-			ASSERT(FALSE); 							
-			break;
-	}	
-}	
-/*****************************************************************************/
-/** @brief TransL1_Stop
- *		   Stop the TransL1 service
- *
- *  @param
- *  @return Void.
- *  @note
- */
-void TransL1_Stop(STransL1 *pTransL1) 
-{
-	ASSERT_VOID(pTransL1 != 0);
 
-	pTransL1->sFlag.Bits.bStarted = FALSE;
-
-	//UART_DisableInt(pTransL1->uartInstance,UART_INT_TX | UART_INT_RX);
-
-	FIFO_Destroy(&pTransL1->sRecvFIFO);
-}
-
-/*****************************************************************************/
-/** @brief TransL1_IsSendReady
- *		   Check if ready to send next datat or not
- *
- *  @param
- *  @return BOOL.
- *  @note
- */
-BOOL TransL1_IsSendReady(STransL1 *pTransL1) 
-{
-	ASSERT_NONVOID(pTransL1 != 0, FALSE);
-
-	return (pTransL1->sFlag.Bits.bStarted == TRUE && pTransL1->sFlag.Bits.bSending == FALSE);
+uint8_t		Modbus_SendAndRecv		(SModbus *pModbus, uint8_t *psData,
+									 uint16_t sSize, uint8_t *prData,
+									 uint16_t *rSize, uint16_t timeout) {
+	Modbus_RecvFF_Reset(pModbus);
+	uint8_t retVal;
+	retVal = Modbus_Send(pModbus, psData, sSize);
+	if(retVal == SUCCESS) {
+		OSA_SleepMs(timeout);
+		uint32_t recvCount = Modbus_GetRecvCount(pModbus);
+		if(recvCount > 0) {
+			*rSize = Modbus_Recv(pModbus, prData, recvCount);
+			if(*rSize <= 0) {
+				retVal = TRANS_ERR_FIFO;
+			}
+		} else {
+			retVal = TRANS_ERR_TIMEOUT;
+		}
+	}
+	return retVal;
 }
 /*****************************************************************************/
-/** @brief 
- *		   
- *
- *  @param
- *  @return BOOL.
- *  @note
- */
-BOOL TransL1_IsReceiving(STransL1 *pTransL1)
-{
-	BOOL bRet;
-	
-	UART_RX_ENTER_CRITICAL();
-	bRet = pTransL1->sFlag.Bits.bNewByte;
-	UART_RX_EXIT_CRITICAL();
-	
-	return bRet;
-}
-/*****************************************************************************/
-/** @brief 
- *		   
- *
- *  @param
- *  @return BOOL.
- *  @note
- */	
-void TransL1_ClearNewByteFlag(STransL1 *pTransL1)
-{
-	UART_RX_ENTER_CRITICAL();
-	pTransL1->sFlag.Bits.bNewByte = FALSE;
-	UART_RX_EXIT_CRITICAL();
-}	
-/*****************************************************************************/
-/** @brief TransL1_Send
+/** @brief Modbus_Send
  *		   Try to send first byte of frame
  *
  *  @param
  *  @return BOOL.
  *  @note
  */
-int TransL1_Send(STransL1 *pTransL1, uint8_t* pData, uint16_t u16Size) 
+int Modbus_Send(SModbus *pModbus, uint8_t* pData, uint16_t u16Size) 
 {
 
-	ASSERT_NONVOID(pTransL1 != 0, TRANS_ERR_INVALID_PTR);
+	ASSERT_NONVOID(pModbus != 0, TRANS_ERR_INVALID_PTR);
+	ASSERT_NONVOID(u16Size <= SIZE_FIFO_SEND, TRANS_ERR_INVALID_DATA);
+	ASSERT_NONVOID(Modbus_IsSendReady(pModbus), TRANS_ERR_BUSY);
 
-	if(pTransL1->sFlag.Bits.bStarted == FALSE)
-	{
-		ASSERT(FALSE);
-		return TRANS_ERR_NOT_STARTED;
+	int i = 0;
+	for(; i < u16Size; i++) {
+		pModbus->pSendBuff[i] = pData[i];
 	}
 
-	if(pTransL1->sFlag.Bits.bSending == TRUE)
-	{
-		ASSERT(FALSE);
-		return TRANS_ERR_BUSY;
+	pModbus->u16SendSize = u16Size;
+
+	Modbus_SetSending(pModbus, TRUE);
+	RS485_TX(pModbus);
+
+	if(UART_DRV_SendData(pModbus->uartInstance,
+						 pModbus->pSendBuff,
+						 pModbus->u16SendSize) == kStatus_UART_Success) {
+		return SUCCESS;
 	}
 
-	if(pData == NULL || u16Size <= 0)
-	{
-		ASSERT(FALSE);
-		return TRANS_ERR_PARAM;
-	}
-
-	UART_TX_ENTER_CRITICAL();
-		pTransL1->pSendBuff   = pData;
-		pTransL1->u16SendSize = u16Size;
-		pTransL1->u16SendPtr  = 0;
-	UART_TX_EXIT_CRITICAL();
-
-	RS485_TX(pTransL1);
-
-//        UART_RX_ENTER_CRITICAL();
-
-	pTransL1->sFlag.Bits.bSending = TRUE;
-
-
-	UART_TX_ENTER_CRITICAL();
-
-//	uint8_t u8Send = pTransL1->pSendBuff[u16NumSent++];
-//	pTransL1->u16SendPtr += u16NumSent;
-
-	UART_TX_EXIT_CRITICAL();
-
-	//wait until there is any space in Tx buffer
-
-	UART_DRV_SendData(pTransL1->uartInstance, pTransL1->pSendBuff, u16Size);
-
-	return SUCCESS;
-
+	return FAILURE;
 }
 /*****************************************************************************/
-/** @brief TransL1_Send
+/** @brief Modbus_Send
  *		   Try to receive a number of bytes from the receving FIFO.
  *
  *  @param
  *  @return actual number of received bytes
  *  @note
  */
-int TransL1_Recv(STransL1 *pTransL1, uint8_t* pData, uint16_t u16Size) 
+int Modbus_Recv(SModbus *pModbus, uint8_t* pData, uint16_t u16Size) 
 {
-	uint16_t u16Idx;
-	SFIFO *pFF;
-	uint8_t  u8Data;
+	uint16_t 	u16Idx;
+	SFIFO 		*pFF;
+	uint8_t  	u8Data;
 	
-	ASSERT_NONVOID(pTransL1 != 0, 0);
+	ASSERT_NONVOID(pModbus != 0, 0);
 
-	pFF = &pTransL1->sRecvFIFO;
+	pFF = &pModbus->sRecvFIFO;
 
 	UART_RX_ENTER_CRITICAL();
 	if(u16Size > FIFO_GetCount(pFF))
@@ -335,79 +237,72 @@ int TransL1_Recv(STransL1 *pTransL1, uint8_t* pData, uint16_t u16Size)
 	
 	return u16Size;
 }
-/*****************************************************************************/
-/** @brief 	TransL1_RecvFF_EnProtect
- *			Enable/Disable protection mode for the receving FIFO.
- *  @param
- *  @return Void.
- *  @note
- */
-void TransL1_RecvFF_EnProtect(STransL1 *pTransL1, BOOL bEn) 
+
+void Modbus_RecvFF_EnProtect(SModbus *pModbus, BOOL bEn) 
 {
-	ASSERT_VOID(pTransL1 != 0);
+	ASSERT_VOID(pModbus != 0);
 
 	UART_RX_ENTER_CRITICAL();
-	if(bEn) FIFO_EnableProtect(&pTransL1->sRecvFIFO);
-	else    FIFO_DisableProtect(&pTransL1->sRecvFIFO);
+	if(bEn) FIFO_EnableProtect(&pModbus->sRecvFIFO);
+	else    FIFO_DisableProtect(&pModbus->sRecvFIFO);
 	UART_RX_EXIT_CRITICAL();
 }
 /*****************************************************************************/
-/** @brief 	TransL1_RecvFF_RewindHead
+/** @brief 	Modbus_RecvFF_RewindHead
  *			Rewind head pointer to the protected value
  *  @param
  *  @return Void.
  *  @note
  */
-void TransL1_RecvFF_RewindHead(STransL1 *pTransL1) 
+void Modbus_RecvFF_RewindHead(SModbus *pModbus) 
 {
-	ASSERT_VOID(pTransL1 != 0);
+	ASSERT_VOID(pModbus != 0);
 
 	UART_RX_ENTER_CRITICAL();
-	FIFO_RewindHead(&pTransL1->sRecvFIFO);
+	FIFO_RewindHead(&pModbus->sRecvFIFO);
 	UART_RX_EXIT_CRITICAL();
 }
 /*****************************************************************************/
-/** @brief 	TransL1_RecvFF_Pop
+/** @brief 	Modbus_RecvFF_Pop
  *			Try to pop one byte from the received FIFO
  *  @param
  *  @return value.
  *  @note
  */
-BYTE TransL1_RecvFF_Pop(STransL1 *pTransL1) 
+BYTE Modbus_RecvFF_Pop(SModbus *pModbus) 
 {
 	BYTE b;
 
-	ASSERT_NONVOID(pTransL1 != 0, 0xFF);
+	ASSERT_NONVOID(pModbus != 0, 0xFF);
 
 	UART_RX_ENTER_CRITICAL();
-	FIFO_Pop(&pTransL1->sRecvFIFO, &b);
+	FIFO_Pop(&pModbus->sRecvFIFO, &b);
 	UART_RX_EXIT_CRITICAL();
 
 	return b;
 }
 
 /*****************************************************************************/
-/** @brief 	TransL1_GetRecvCount
+/** @brief 	Modbus_GetRecvCount
  *			Get size of the receving FIFO
  *  @param
  *  @return size of FIFO.
  *  @note
  */
-int TransL1_GetRecvCount(STransL1 *pTransL1) 
+int Modbus_GetRecvCount(SModbus *pModbus) 
 {
-	ASSERT_NONVOID(pTransL1 != 0, 0);
-
-	return FIFO_GetCount( &pTransL1->sRecvFIFO );
+	ASSERT_NONVOID(pModbus != 0, 0);
+	return FIFO_GetCount( &pModbus->sRecvFIFO );
 }
 /*****************************************************************************/
-/** @brief 	TransL1_GetRecvCount
+/** @brief 	Modbus_GetRecvCount
  *			Get size of the receving FIFO
  *  @param
  *  @return size of FIFO.
  *  @note
  */
-void TransL1_RecvFF_Reset (STransL1 *pTransL1) {
-	FIFO_Reset(&pTransL1->sRecvFIFO);
+void Modbus_RecvFF_Reset (SModbus *pModbus) {
+	FIFO_Reset(&pModbus->sRecvFIFO);
 }
 
 /*****************************************************************************/
@@ -434,10 +329,18 @@ static void modbus_rx_handle(uint32_t instance, void * uartState) {
  *  @note
  */
 static void modbus_tx_handle(uint32_t instance, void * uartState) {
-
+	uart_state_t *state = (uart_state_t*)uartState;
+	if(state->txSize > 0) {
+		state->txBuff++;
+		state->txSize--;
+		if(state->txSize == 0) {
+			LREP("tx done ! ____________________\r\n");
+			Modbus_SetSending(pThisL1, FALSE);
+			RS485_RX(pThisL1);
+		}
+	}
 }
 
 /*****************************************************************************/
-#endif //#if (TRANSL1_VER	== TRANSL1_V1)
 
 

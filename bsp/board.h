@@ -67,6 +67,11 @@ uint8_t usb_host_board_init(uint8_t controller_id);
 /*Function to handle board-specified initialization*/
 uint8_t usb_otg_board_init(uint8_t controller_id);
 
+void TRAP_HardFault(void);
+void TRAP_BusFault(void);
+void TRAP_UsageFault(void);
+void BOARD_InstallDebugIsr(void);
+
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */

@@ -1,5 +1,5 @@
-#ifndef TRANSL1_V1_H_
-#define TRANSL1_V1_H_
+#ifndef MODBUS_LAYER1_H_
+#define MODBUS_LAYER1_H_
 
 
 #ifdef __cplusplus
@@ -19,34 +19,10 @@ extern "C" {
 //#define DEBUG_TRANSL1
 
 #define SIZE_FIFO_RECV		512
+#define SIZE_FIFO_SEND		512
 
 /**************************** Type Definitions *******************************/
 
-/* Struct for debug layer 1*/
-#ifdef DEBUG_TRANSL1
-
-	#define L1DBG_INC(n)	pTransL1->sDBG.n++
-
-	typedef struct _STransL1DBG {
-
-		uint32_t  u32FIFOFull;
-		uint32_t 	u32FIFOPushOK;
-		uint32_t 	u32FIFOPushNotOK;
-
-		uint32_t	u32SendedBytes;
-		uint32_t	u32RecvBytes;
-		
-		uint32_t  u32RxInterrupt;
-		uint32_t  u32TxInterrupt;
-
-	}STransL1DBG;
-
-#else
-
-	#define TransL1_PrintLog(a)
-	#define L1DBG_INC(n)
-
-#endif
 
 typedef struct _SRS485Drive
 {
@@ -68,80 +44,50 @@ typedef enum E_TRANSL1_EVENT_
 typedef enum
 {
     /*General return values*/
-    SUCCESS 			= 	0,
-    FAILURE				=	1,
+    SUCCESS 				= 	0,
+    FAILURE					=	1,
 
-    TRANS_ERR_MEM		=  	2,
+    TRANS_ERR_MEM			=  	2,
 
-    /*return value and error code for TransL1 & TransL2*/
-    TRANS_ERR_BUSY		=	10,
+    /*return value and error code for Modbus & TransL2*/
+    TRANS_ERR_BUSY			=	10,
     TRANS_ERR_NOT_STARTED 	= 	11,
-    TRANS_ERR_L1_TIMEOUT	=	12,
-    TRANS_ERR_L2_TIMEOUT	=	13,
+    TRANS_ERR_TIMEOUT		=	12,
     TRANS_ERR_INVALID_PTR	=	14,
     TRANS_ERR_INVALID_DATA 	= 	15,
-    TRANS_ERR_CRCH		=	16,
-    TRANS_ERR_CRCD		=	17,
-    TRANS_ERR_PARAM		=	18,
-    TRANS_ERR_REMOTE		= 	19,
-    TRANS_ERR_REMOTE_DLEN	= 	20,
-    TRANS_ERR_REMOTE_CRCH	= 	21,
-    TRANS_ERR_REMOTE_CRCD	= 	22,
-
-    TRANS_ERR_UNKNOWN		=	30
+	TRANS_ERR_FIFO			=   16,
+    TRANS_ERR_CRCD			=	17,
 
 }ETransReturn, ETransErrorCode, ETransStatus;
 
 
-typedef struct _S_L1_FLAG
-{
-	uint8_t u8All;
-    struct
-    {
-        unsigned bStarted    		:   1;
-        unsigned bSending    		:   1;
-        unsigned bNewByte    		:   1;	//???
-        unsigned b3		    		:   1;
-        unsigned b4					:   1;
-        unsigned b5    				:   1;
-        unsigned b6    				:   1;
-        unsigned b7    				:   1;
-    }Bits;
-}SL1Flag;
-	
-typedef void (*FClbL1Event)(void *pParam);	/*format of callback function */
+typedef union UMbFlag_ {
+	uint8_t all;
+	struct {
+		unsigned bStarted: 1;
+		unsigned bSending: 1;
+		unsigned b3 : 1;
+		unsigned b4 : 1;
+		unsigned b5 : 1;
+		unsigned b6 : 1;
+		unsigned b7 : 1;
+	}Bits;
+}UMbFlag;
 
 /* Layer 1 data struct*/
-typedef struct _STransL1 
+typedef struct _SModbus 
 {
-	SL1Flag				sFlag;
-	
+	UMbFlag				uFlag;
 	uint32_t   			uartInstance;
 	void*   			uartBase;
 	uint32_t			u32BaudRate;
-	
-	uint8_t				*pSendBuff;			// Buffer waiting to be sent
+	uint8_t				pSendBuff[SIZE_FIFO_SEND];			// Buffer waiting to be sent
 	uint16_t			u16SendSize;		// Sending size in BYTEs
 	uint16_t			u16SendPtr;			// Current sending index
-	
 	SFIFO				sRecvFIFO;			// Receving FIFO
-	
-	FClbL1Event			fClbL1SendDone;		// Callback when all data sent
-	FClbL1Event			fClbL1RecvData;		// Callback when received data
-	FClbL1Event			fClbL1Error;		// Callback when error
-	void* 				pClbSendDoneParam;	// Parameter to pass to the callback functions
-	void* 				pClbRecvByteParam;	// Parameter to pass to the callback functions
-	void* 				pClbErrorParam;		// Parameter to pass to the callback functions
-	
 	uint8_t 			arrRecvFIFO[SIZE_FIFO_RECV];
-	
 	uint32_t			rs485Pin;
-		
-	#ifdef DEBUG_TRANSL1
-		STransL1DBG		sDBG;
-	#endif
-
-} STransL1;
+} SModbus;
 
 
 /***************** Macros (Inline Functions) Definitions *********************/
@@ -149,32 +95,20 @@ typedef struct _STransL1
 
 /************************** Function Prototypes ******************************/
 
-void 		TransL1_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxPrio, uint8_t u8RxPrio);
-uint8_t  	TransL1_Init( STransL1 *pTransL1,  uint32_t uartInstance,
+void 		Modbus_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxPrio, uint8_t u8RxPrio);
+uint8_t  	Modbus_Init( SModbus *pModbus,  uint32_t uartInstance,
 							uint32_t u32BaudRate, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio);
 
-void 		TransL1_Stop				(STransL1 *pTransL1);
-BOOL 		TransL1_IsSendReady			(STransL1 *pTransL1);
-int  		TransL1_Send				(STransL1 *pTransL1, uint8_t* pData, uint16_t nSize);
-int  		TransL1_Recv				(STransL1 *pTransL1, uint8_t* pData, uint16_t nSize);
-int	 		TransL1_GetRecvCount		(STransL1 *pTransL1);
-void 		TransL1_RecvFF_EnProtect	(STransL1 *pTransL1, BOOL bEn);
-void 		TransL1_RecvFF_RewindHead	(STransL1 *pTransL1);
-uint8_t   	TransL1_RecvFF_Pop			(STransL1 *pTransL1);
-void 		TransL1_RecvFF_Reset		(STransL1 *pTransL1);
-
-void		TransL1_RegisterClbEvent		(STransL1 *pTransL1, EL1Event event, FClbL1Event pFunction, void *pParam);
-
-BOOL		TransL1_IsReceiving			(STransL1 *pTransL1);
-void		TransL1_ClearNewByteFlag	(STransL1 *pTransL1);
-
-void 		TransL1_TX_Interrupt_Handle	(void* pParam);
-void 		TransL1_RX_Interrupt_Handle	(void* pParam);
-
-#ifdef DEBUG_TRANSL1
-void 	TransL1_PrintLog			(STransL1 *pTransL1);
-void 	TransL1_PrintRecvBuffer			(STransL1 *pTransL1);
-#endif
+int  		Modbus_Send				(SModbus *pModbus, uint8_t* pData, uint16_t nSize);
+int  		Modbus_Recv				(SModbus *pModbus, uint8_t* pData, uint16_t nSize);
+int	 		Modbus_GetRecvCount		(SModbus *pModbus);
+void 		Modbus_RecvFF_EnProtect	(SModbus *pModbus, BOOL bEn);
+uint8_t   	Modbus_RecvFF_Pop		(SModbus *pModbus);
+void 		Modbus_RecvFF_Reset		(SModbus *pModbus);
+void		Modbus_SetSending		(SModbus *pModbus, BOOL send);
+uint8_t		Modbus_SendAndRecv		(SModbus *pModbus, uint8_t *psData,
+									 uint16_t sSize, uint8_t *prData,
+									 uint16_t *rSize, uint16_t timeout);
 
 /************************** Variable Definitions *****************************/
 
@@ -190,4 +124,4 @@ void 	TransL1_PrintRecvBuffer			(STransL1 *pTransL1);
 
 /*****************************************************************************/
 
-#endif /* TRANSL1_H_ */
+#endif /* MODBUS_LAYER1_H_ */

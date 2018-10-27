@@ -343,6 +343,12 @@ void configure_uart_pins(uint32_t instance)
       /* Affects PORTC_PCR4 register */
       PORT_HAL_SetMuxMode(PORTC,4u,kPortMuxAlt3);
       break;
+    case UART2_IDX:                      /* UART5 */
+	  /* Affects PORTD_PCR2 register */
+	  PORT_HAL_SetMuxMode(PORTD,2u,kPortMuxAlt3);
+	  /* Affects PORTD_PCR3 register */
+	  PORT_HAL_SetMuxMode(PORTD,3u,kPortMuxAlt3);
+	  break;
     case UART5_IDX:                      /* UART5 */
       /* Affects PORTE_PCR9 register */
       PORT_HAL_SetMuxMode(PORTE,9u,kPortMuxAlt3);

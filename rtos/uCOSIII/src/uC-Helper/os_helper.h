@@ -59,9 +59,9 @@
 
 /************************** Function Prototypes ******************************/
 // malloc, free helper
-void*  	OSA_MemFixedMalloc(uint32_t uiSize);
-void   	OSA_MemFixedFree(uint8_t* pucAllocMem);
-uint8_t OSA_MemFixedInit(void);
+void*  	OSA_FixedMemMalloc(uint32_t uiSize);
+void   	OSA_FixedMemFree(uint8_t* pucAllocMem);
+uint8_t OSA_FixedMemInit(void);
 
 /************************** Variable Definitions *****************************/
 
