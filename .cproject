@@ -82,12 +82,12 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.8290070658" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../"/>
 									<listOptionValue builtIn="false" value="../bsp"/>
-									<listOptionValue builtIn="false" value="../shell"/>
 									<listOptionValue builtIn="false" value="../library"/>
-									<listOptionValue builtIn="false" value="../modbus"/>
-									<listOptionValue builtIn="false" value="../filesystem"/>
+									<listOptionValue builtIn="false" value="../library/shell"/>
 									<listOptionValue builtIn="false" value="../application"/>
-									<listOptionValue builtIn="false" value="../serialcomm"/>
+									<listOptionValue builtIn="false" value="../application/modbus"/>
+									<listOptionValue builtIn="false" value="../application/filesystem"/>
+									<listOptionValue builtIn="false" value="../application/serialcomm"/>
 									<listOptionValue builtIn="false" value="../platform/osa/inc"/>
 									<listOptionValue builtIn="false" value="../platform/utilities/inc"/>
 									<listOptionValue builtIn="false" value="../platform/CMSIS/Include"/>

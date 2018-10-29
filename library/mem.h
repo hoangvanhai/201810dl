@@ -12,15 +12,17 @@
 
 typedef struct _SMem
 {
-    /** Pointer to the buffer body */
-    uint8_t *u8Body;
-    /** Pointer to next free buffer */
-    struct _SMem *pNext;
+	/** Pointer to next free buffer */
+	struct _SMem *pNext;
+	/** Pointer to the buffer body */
+	uint8_t *u8Body;
+
 } SMem;
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
 #define MEM_BODY(buf) ((buf)->u8Body)
+//#define MEM_BODY(buf) ((uint8_t*)(buf) + sizeof(SMem*))
 
 /************************** Function Prototypes ******************************/
 

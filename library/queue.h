@@ -1,9 +1,8 @@
-#ifndef QUEUE_H_
-#define QUEUE_H_
+#ifndef LIBRARY_QUEUE_H_
+#define LIBRARY_QUEUE_H_
 
 /***************************** Include Files *********************************/
 #include "mem.h"
-#include "TransDef.h"
 #include "fsl_os_abstraction.h"
 /************************** Constant Definitions *****************************/
 
@@ -37,12 +36,9 @@ typedef struct _SQueue
 } SQueue;
 /***************** Macros (Inline Functions) Definitions *********************/
 #define Search_SetParam(sSearch, fCriteria, pHandle) (sSearch.fCriteria = fCriteria; sSearch.pHandle = pHandle;)
-
 #define Queue_GetSize(q) ((q)->u8Size)
-
 #define Queue_Pop(q)    Queue_Remove(q,NULL)
 #define Queue_Peek(q)   Queue_Read(q,NULL)
-
 #define Queue_Push(q,b) Queue_Append(q,b)
 /************************** Function Prototypes ******************************/
 

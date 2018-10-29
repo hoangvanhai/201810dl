@@ -80,7 +80,7 @@ void task_modbus(task_param_t param)
 
 	Modbus_Init(&sModbus, BOARD_MODBUS_UART_INSTANCE, BOARD_MODBUS_UART_BAUD, 0, 0);
 
-	uint8_t rx_buf[100];
+	uint8_t rx_buf[264];
 	uint16_t rx_length;
 
 	while (1)
@@ -91,9 +91,9 @@ void task_modbus(task_param_t param)
 
 			LREP("modbus get msg size = %d ts = %d\r\n", msg_size, ts);
 
-			retVal = Modbus_SendAndRecv(&sModbus, (uint8_t*)p_msg, 100, rx_buf, &rx_length, 100);
+			retVal = Modbus_SendAndRecv(&sModbus, (uint8_t*)p_msg, 264, rx_buf, &rx_length, 100);
 
-			if(retVal != SUCCESS) {
+			if(retVal != TRANS_SUCCESS) {
 				LREP("Modbus send err: %d\r\n", retVal);
 			}
 

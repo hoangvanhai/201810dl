@@ -145,7 +145,7 @@ uint8_t  Modbus_Init(SModbus *pModbus, uint32_t uartInstance,
 	pModbus->uFlag.all = 0;
 	pModbus->uFlag.Bits.bStarted = true;
 
-	return SUCCESS;
+	return MB_SUCCESS;
 }
 
 uint8_t		Modbus_SendAndRecv		(SModbus *pModbus, uint8_t *psData,
@@ -154,16 +154,16 @@ uint8_t		Modbus_SendAndRecv		(SModbus *pModbus, uint8_t *psData,
 	Modbus_RecvFF_Reset(pModbus);
 	uint8_t retVal;
 	retVal = Modbus_Send(pModbus, psData, sSize);
-	if(retVal == SUCCESS) {
+	if(retVal == MB_SUCCESS) {
 		OSA_SleepMs(timeout);
 		uint32_t recvCount = Modbus_GetRecvCount(pModbus);
 		if(recvCount > 0) {
 			*rSize = Modbus_Recv(pModbus, prData, recvCount);
 			if(*rSize <= 0) {
-				retVal = TRANS_ERR_FIFO;
+				retVal = MB_ERR_FIFO;
 			}
 		} else {
-			retVal = TRANS_ERR_TIMEOUT;
+			retVal = MB_ERR_TIMEOUT;
 		}
 	}
 	return retVal;
@@ -179,9 +179,9 @@ uint8_t		Modbus_SendAndRecv		(SModbus *pModbus, uint8_t *psData,
 int Modbus_Send(SModbus *pModbus, uint8_t* pData, uint16_t u16Size) 
 {
 
-	ASSERT_NONVOID(pModbus != 0, TRANS_ERR_INVALID_PTR);
-	ASSERT_NONVOID(u16Size <= SIZE_FIFO_SEND, TRANS_ERR_INVALID_DATA);
-	ASSERT_NONVOID(Modbus_IsSendReady(pModbus), TRANS_ERR_BUSY);
+	ASSERT_NONVOID(pModbus != 0, MB_ERR_INVALID_PTR);
+	ASSERT_NONVOID(u16Size <= SIZE_FIFO_SEND, MB_ERR_INVALID_DATA);
+	ASSERT_NONVOID(Modbus_IsSendReady(pModbus), MB_ERR_BUSY);
 
 	int i = 0;
 	for(; i < u16Size; i++) {
@@ -196,10 +196,10 @@ int Modbus_Send(SModbus *pModbus, uint8_t* pData, uint16_t u16Size)
 	if(UART_DRV_SendData(pModbus->uartInstance,
 						 pModbus->pSendBuff,
 						 pModbus->u16SendSize) == kStatus_UART_Success) {
-		return SUCCESS;
+		return MB_SUCCESS;
 	}
 
-	return FAILURE;
+	return MB_FAILURE;
 }
 /*****************************************************************************/
 /** @brief Modbus_Send

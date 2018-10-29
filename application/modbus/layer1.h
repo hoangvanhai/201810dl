@@ -23,42 +23,24 @@ extern "C" {
 
 /**************************** Type Definitions *******************************/
 
-
-typedef struct _SRS485Drive
-{
-	uint16_t	u16Port;
-	uint16_t	u16Pin;
-	
-}SRS485DE;
-
-typedef enum E_TRANSL1_EVENT_
-{
-	TRANSL1_EVT_NONE 		= 0,
-	TRANSL1_EVT_SEND_DONE 	= 1,	//L1 Send done
-	TRANSL1_EVT_RECV_BYTE 	= 2,	//L1 receive a byte
-	TRANSL1_EVT_ERROR		= 3
-
-}EL1Event;
-
-
 typedef enum
 {
     /*General return values*/
-    SUCCESS 				= 	0,
-    FAILURE					=	1,
+    MB_SUCCESS 				= 	0,
+	MB_FAILURE					=	1,
 
-    TRANS_ERR_MEM			=  	2,
+	MB_ERR_MEM			=  	2,
 
     /*return value and error code for Modbus & TransL2*/
-    TRANS_ERR_BUSY			=	10,
-    TRANS_ERR_NOT_STARTED 	= 	11,
-    TRANS_ERR_TIMEOUT		=	12,
-    TRANS_ERR_INVALID_PTR	=	14,
-    TRANS_ERR_INVALID_DATA 	= 	15,
-	TRANS_ERR_FIFO			=   16,
-    TRANS_ERR_CRCD			=	17,
+	MB_ERR_BUSY			=	10,
+	MB_ERR_NOT_STARTED 	= 	11,
+    MB_ERR_TIMEOUT		=	12,
+	MB_ERR_INVALID_PTR	=	14,
+	MB_ERR_INVALID_DATA = 	15,
+	MB_ERR_FIFO			=   16,
+	MB_ERR_CRCD			=	17,
 
-}ETransReturn, ETransErrorCode, ETransStatus;
+}EMbReturn, EMbErrorCode, EMbStatus;
 
 
 typedef union UMbFlag_ {

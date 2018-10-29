@@ -15,37 +15,37 @@
 
 /* Other definitions	*/
 #ifndef BYTE
-#define BYTE		uint8_t
-#define BYTE_MAX (	255)
+#define BYTE			uint8_t
+#define BYTE_MAX 		(255)
 #endif
 
 #ifndef WORD
-#define WORD		uint16_t
-#define WORD_MAX 	(65535U)
+#define WORD			uint16_t
+#define WORD_MAX 		(65535U)
 #endif
 
 #ifndef DWORD
-#define DWORD		uint32_t
-#define DWORD_MAX 	(4294967295UL)
+#define DWORD			uint32_t
+#define DWORD_MAX 		(4294967295UL)
 #endif
 
 #ifndef LPVOID	
-#define LPVOID	void*
+#define LPVOID			void*
 #endif
 
 #ifndef LPBYTE
-#define LPBYTE  BYTE*
+#define LPBYTE  		BYTE*
 #endif
 
 #ifndef LPWORD
-#define LPWORD  WORD*
+#define LPWORD  		WORD*
 #endif
 
 #ifndef LPDWORD
-#define LPDWORD  DWORD*
+#define LPDWORD  		DWORD*
 #endif
 
-typedef uint8_t BOOL;
+typedef uint8_t 		BOOL;
 
 
 /*Two types compatible with Texas Instrument's DSP*/

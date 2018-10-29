@@ -10,7 +10,7 @@
 
 
 /************************** Constant Definitions *****************************/
-#define TRANS_UPDATE_TIMER_RATE_MS   (20)    //10ms
+#define TRANS_UPDATE_TIMER_RATE_MS   (1)    //10ms
 
 #define TRANS_TIMEOUT_TICK           (50L)	//in mili-ten second
 #define TRANS_MAX_NUM_SEND           (3)
@@ -20,7 +20,7 @@
 
 
 /**************************** Type Definitions *******************************/
-typedef struct _S_Trans_FLAG
+typedef union _S_Trans_FLAG
 {
     uint8_t	u8All;
     struct
@@ -57,10 +57,9 @@ typedef struct _STrans
     /*Hanlde of StransL2*/
     STransL2S           sTransL2;
     /*Handle of semaphore */
-    uint8_t             hSem;
+    void*             	hSem;
     /*Timer handle*/
     OS_TMR              hUpdateTimer;
-    void*               hSendCtrlTimer;
     FClbUIEvent        	fClbRecv;
     FClbUIEvent        	fClbSendDone;
     FClbUIEvent        	fClbError;
@@ -74,12 +73,11 @@ typedef struct _STrans
 #define  TransIBC_Task(pTransIBC)		Trans_Task(pTransIBC)
 
 #define  TransIBCSend(pData, len, ctrl)                   Trans_Send(&sApp.sTrans,len, pData, ctrl)
-
 /************************** Function Prototypes ******************************/
 
-void Trans_Init				(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, uint8_t *pSemaphore);
+void Trans_Init				(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, void *pSemaphore);
 
-void Trans_Task				(void *arg);
+void Trans_Task				(STrans *pTrans);
 
 BOOL Trans_Send               (STrans *pTrans, 
                                  uint16_t u16Dlen, 

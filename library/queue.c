@@ -7,7 +7,6 @@
 #include "app_cfg.h"
 #include <fsl_debug_console.h>
 
-#if (TOTAL_NUMBER_OF_MEMS > 0)
 
 /************************** Constant Definitions *****************************/
 
@@ -42,19 +41,6 @@ static SMem *Queue_Read_Or_Remove(SQueue *q, SMode mode, SSearch *search);
 
 /************************** Variable Definitions *****************************/
 
-/*
- * Queue of free large buffers
- */
-#if (TOTAL_NUMBER_OF_LARGE_MEMS > 0)
-extern SQueue qFreeLargeQueue;
-#endif
-
-/*
- * Queue of free small buffers
- */
-#if (TOTAL_NUMBER_OF_SMALL_MEMS > 0)
-extern SQueue qFreeSmallQueue;
-#endif
 /*****************************************************************************/
 /**
  * @brief Initializes the queue.
@@ -183,9 +169,7 @@ static SMem *Queue_Read_Or_Remove(SQueue *q, SMode mode, SSearch *search)
             {
                 /* Nothing needs done*/
             }
-        }
-
-        else{
+        } else{
         	ASSERT(FALSE);
         }
     } /* q->u8Size != 0 */
@@ -258,77 +242,5 @@ void Queue_Flush(SQueue *q)
 }
 
 /*****************************************************************************/
-
-/**
- * @brief 
- *
- * @param 
- * @return Void.
- * @note
- */
-uint8_t Queue_GetFreeQueueSize(uint16_t u16Size)
-{
-    uint8_t u8Size = 0;
-
-    #if (TOTAL_NUMBER_OF_SMALL_MEMS > 0)
-
-    if (u16Size <= LARGE_MEM_SIZE)
-    {
-        if ((u16Size <= SMALL_MEM_SIZE))
-        {
-            ENTER_CRITICAL();
-            u8Size = qFreeSmallQueue.u8Size;
-            EXIT_CRITICAL();
-        }
-
-        //if(u8Size == NULL)
-        else
-        {
-            ENTER_CRITICAL();
-            u8Size = qFreeLargeQueue.u8Size;
-            EXIT_CRITICAL();
-        }
-    }
-
-    #else
-
-    ENTER_CRITICAL();
-    u8Size = qFreeLargeQueue.u8Size;
-    EXIT_CRITICAL();
-
-    #endif
-
-    return u8Size;
-}	
-#if (TOTAL_NUMBER_OF_SMALL_MEMS > 0)
-uint8_t Queue_GetFreeSmallQueueSize(void)
-{
-    uint8_t u8Size = 0;
-
-    #if (TOTAL_NUMBER_OF_SMALL_MEMS > 0)
-
-    ENTER_CRITICAL();
-    u8Size = qFreeSmallQueue.u8Size;
-    EXIT_CRITICAL();
-
-    #endif
-
-    return u8Size;
-}
-#endif
-
-uint8_t Queue_GetFreeLargeQueueSize()
-{
-    uint8_t u8Size;
-
-    ENTER_CRITICAL();
-    u8Size = qFreeLargeQueue.u8Size;
-    EXIT_CRITICAL();
-
-    return u8Size;
-}	
-
-/*****************************************************************************/
-#endif //TOTAL_NUMBER_OF_MEMS
 
 

@@ -22,10 +22,10 @@ static EL2RecvAction    OnRecvFrame	(STransL2S *pTransL2);
 static void  			RunSendFrame	(STransL2S *pTransL2);
 static void  			L2FireEvent		(STransL2S *pTransL2, EL2Event eEventCode);
 
-static inline void 		InitL1TimeOutTimer	(STransL2S *pTransL2);
-static inline void 		StartL1TimeOutTimer	(STransL2S *pTransL2, uint32_t u32TimeOut);
-static inline void 		StopL1TimeOutTimer	(STransL2S *pTransL2);
-//static void			Clb_L1TimeOutTimer	(uint32_t u32CurrSysTick, void *pClbParam);
+static void 			InitL1TimeOutTimer	(STransL2S *pTransL2);
+static void 			StartL1TimeOutTimer	(STransL2S *pTransL2, uint32_t u32TimeOut);
+static void 			StopL1TimeOutTimer	(STransL2S *pTransL2);
+static void				Clb_L1TimeOutTimer	(void *timer, void *pClbParam);
 
 /************************** Variable Definitions *****************************/
 
@@ -42,7 +42,7 @@ static BOOL TransL2S_MemAlloc(STransL2S* pTransL2)
 {
     //LREP("\r\nL2 Malloc, Mem_Size %d",(uint32_t)Mem_GetAvailableLargeSpace());
     SFrameInfo *pFrameInfo;
-    pTransL2->sMemRecv 	= Mem_Alloc(LARGE_MEM_SIZE);
+    pTransL2->sMemRecv 	= (SMem *)Mem_Alloc(LARGE_MEM_SIZE);
 
     ASSERT(pTransL2->sMemRecv != NULL);
 
@@ -55,13 +55,11 @@ static BOOL TransL2S_MemAlloc(STransL2S* pTransL2)
 
         return FALSE;
     }
-    pFrameInfo			= (SFrameInfo *)MEM_BODY(pTransL2->sMemRecv);
-    pTransL2->frmRecv		= (uint8_t*)pFrameInfo + sizeof(SFrameInfo);
 
-    //pFrameInfo->eMsgType	= MSG_TransL2S_IND;
+    pFrameInfo				= (SFrameInfo *)MEM_BODY(pTransL2->sMemRecv);
+    pTransL2->frmRecv		= (uint8_t*)pFrameInfo + sizeof(SFrameInfo);
     pFrameInfo->pFrame		= pTransL2->frmRecv;
     pFrameInfo->pu8Data		= &pTransL2->frmRecv[IDX_SFRM_DATA0];
-
     return TRUE;
 }	
 /*****************************************************************************/
@@ -75,6 +73,7 @@ static BOOL TransL2S_MemAlloc(STransL2S* pTransL2)
 
 static void Clb_L1SendDone(LPVOID pParam) 
 {
+	OS_ERR err;
     STransL2S *pTransL2 = (STransL2S *)pParam;
 //    STransL1 *pTransL1 = &pTransL2->sTransL1;
 
@@ -88,7 +87,7 @@ static void Clb_L1SendDone(LPVOID pParam)
     StopL1TimeOutTimer(pTransL2);
 
     /*Signal to run Trans thread*/
-    (*pTransL2->hSem) += 1;
+    OSTaskSemPost((OS_TCB*)pTransL2->hSem, OS_OPT_NONE, &err);
 
 }
 
@@ -102,6 +101,7 @@ static void Clb_L1SendDone(LPVOID pParam)
  */
 static void Clb_L1RecvData(LPVOID pParam) 
 {
+	OS_ERR err;
     STransL2S *pTransL2 = (STransL2S *)pParam;
 
     ASSERT_VOID(pParam);
@@ -109,7 +109,7 @@ static void Clb_L1RecvData(LPVOID pParam)
     L2DBG_INC(nL1RecvData);
        
     /*Signal to run Trans thread*/
-    (*pTransL2->hSem) += 1;
+    OSTaskSemPost((OS_TCB*)pTransL2->hSem, OS_OPT_NONE, &err);
 }
 	
 /*****************************************************************************/
@@ -120,7 +120,7 @@ static void Clb_L1RecvData(LPVOID pParam)
  *  @return Void.
  *  @note
  */
-inline void Clb_L1SendTimeOut(void *timer, void *pParam)
+static void Clb_L1TimeOutTimer(void *timer, void *pParam)
 {
     STransL2S *pTransL2 = (STransL2S *)pParam;
     uint8_t*   pSendFrm  = pTransL2->frmSend;
@@ -176,7 +176,7 @@ inline void InitL1TimeOutTimer(STransL2S *pTransL2)
 				(OS_TICK)0,
 				(OS_TICK)100,
 				(OS_OPT)OS_OPT_TMR_PERIODIC,
-				(OS_TMR_CALLBACK_PTR) Clb_L1SendTimeOut,
+				(OS_TMR_CALLBACK_PTR) Clb_L1TimeOutTimer,
 				(void*)pTransL2,
 				(OS_ERR*)&err);
 
@@ -192,7 +192,8 @@ inline void InitL1TimeOutTimer(STransL2S *pTransL2)
 inline void StartL1TimeOutTimer(STransL2S *pTransL2, uint32_t u32TimeOut)
 {
     //Timer_SetRate(pTransL2->hL1TimeOutTimer,(uint32_t)u32TimeOut * SYSTICK_PER_SECOND/1000);
-//    Timer_StartAt(pTransL2->hL1TimeOutTimer,(uint32_t)u32TimeOut * TICKS_PER_SECOND/1000);
+	OS_ERR err;
+	OSTmrStart(&pTransL2->hL1TimeOutTimer, &err);
 }	
 /*****************************************************************************/
 /** @brief
@@ -202,7 +203,7 @@ inline void StartL1TimeOutTimer(STransL2S *pTransL2, uint32_t u32TimeOut)
  *  @return Void.
  *  @note
  */
-inline void StopL1TimeOutTimer(STransL2S *pTransL2)
+void StopL1TimeOutTimer(STransL2S *pTransL2)
 {
 	OS_ERR err;
     OSTmrStop(&pTransL2->hL1TimeOutTimer, OS_OPT_NONE, (void*)NULL, &err);
@@ -237,7 +238,7 @@ void TransL2S_SetL1Para(STransL2S *pTransL2, uint32_t u32UartPort, uint32_t u32B
  *  @note
  */
 #if (TRANSL1_VER == TRANSL1_V1)
-ETransErrorCode TransL2S_Init(STransL2S *pTransL2, uint8_t u8NodeID, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio, uint8_t* hSem)
+ETransErrorCode TransL2S_Init(STransL2S *pTransL2, uint8_t u8NodeID, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio, void* hSem)
 #elif (TRANSL1_VER == TRANSL1_V2)
 ETransErrorCode TransL2S_Init(STransL2S *pTransL2, uint8_t u8NodeID, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio, void* hSem, uint16_t u16TxDMABase)
 #endif
@@ -254,7 +255,7 @@ ETransErrorCode TransL2S_Init(STransL2S *pTransL2, uint8_t u8NodeID, uint8_t u8T
     pTransL2->u16RecvCount	= 0;
     pTransL2->u8SeqRemote	= 0xFF;
     pTransL2->u8SeqLocal	= 0x00;
-    pTransL2->u8ErrorCode	= SUCCESS;
+    pTransL2->u8ErrorCode	= TRANS_SUCCESS;
     pTransL2->sFlag.u8All   = 0;
     pTransL2->sFlag.Bits.bCheckSeqNum	= TRUE;
 
@@ -262,7 +263,7 @@ ETransErrorCode TransL2S_Init(STransL2S *pTransL2, uint8_t u8NodeID, uint8_t u8T
     pTransL2->fClbL2RecvData= NULL;
     pTransL2->fClbL2Error	= NULL;
 
-    pTransL2->hSem    = hSem;
+    pTransL2->hSem    		= hSem;
 
     /*allocate a buffer for receiving a frame*/
     TransL2S_MemAlloc(pTransL2);
@@ -277,10 +278,10 @@ ETransErrorCode TransL2S_Init(STransL2S *pTransL2, uint8_t u8NodeID, uint8_t u8T
     eErrorCode = TransL1_Init(pTransL1, pTransL1->u32UartPort, pTransL1->u32BaudRate, u8TxIntPrio, u8RxIntPrio, u16TxDMABase);
     #endif
 
-    if(eErrorCode != SUCCESS)
+    if(eErrorCode != TRANS_SUCCESS)
     {
-            pTransL2->u8ErrorCode = eErrorCode;
-            return FAILURE;
+		pTransL2->u8ErrorCode = eErrorCode;
+		return TRANS_FAILURE;
     }
 
     TransL1_RegisterClbEvent(pTransL1, TRANSL1_EVT_SEND_DONE, Clb_L1SendDone, pTransL2);
@@ -309,8 +310,7 @@ BOOL TransL2S_Stop(STransL2S *pTransL2)
 {
     ASSERT_NONVOID(pTransL2, FALSE);
 
-    if(pTransL2->sFlag.Bits.bStarted != TRUE)
-    {
+    if(pTransL2->sFlag.Bits.bStarted != TRUE) {
         pTransL2->u8ErrorCode = TRANS_ERR_NOT_STARTED;
         return FALSE;
     }
@@ -344,9 +344,7 @@ ETransErrorCode TransL2S_GetLastError(STransL2S *pTransL2)
  */
 BOOL TransL2S_IsSendReady(STransL2S *pTransL2)
 {
-	
     ASSERT_NONVOID(pTransL2, FALSE);
-
     return ( pTransL2->sFlag.Bits.bStarted == TRUE  &&
              pTransL2->sFlag.Bits.bSending == FALSE);
 }
@@ -362,7 +360,6 @@ BOOL TransL2S_IsSendReady(STransL2S *pTransL2)
 void TransL2S_SetCheckSeqNum(STransL2S *pTransL2, BOOL bSet)
 {
     ASSERT_VOID(pTransL2);
-
     pTransL2->sFlag.Bits.bCheckSeqNum = bSet;
 }
 
@@ -377,7 +374,6 @@ void TransL2S_SetCheckSeqNum(STransL2S *pTransL2, BOOL bSet)
 uint8_t* TransL2S_GetSendData(STransL2S *pTransL2)
 {
     ASSERT_NONVOID(pTransL2, NULL);
-
     return &pTransL2->frmSend[IDX_SFRM_DATA0];
 }
 
@@ -414,7 +410,6 @@ void TransL2S_SendTask(STransL2S *pTransL2)
 {
     if(TransL2S_IsSending(pTransL2))
     {
-        
         RunSendFrame(pTransL2);
         L2DBG_INC(nRunSendFrame);
     }
@@ -433,7 +428,6 @@ EL2RecvAction TransL2S_RecvTask(STransL2S *pTransL2)
     
     if(ProcessRecvData(pTransL2))
     {
-        
         eRecvAction = OnRecvFrame(pTransL2);
         L2DBG_INC(nL2ProcRecvData);
     }
@@ -464,14 +458,14 @@ EL2RecvAction TransL2S_Task(STransL2S *pTransL2)
 
 ETransErrorCode TransL2S_Send(STransL2S *pTransL2, uint8_t u8DstAdr, SMem *pMem)
 {
-    SFrameInfo 	*pFrameInfo;
+//    SFrameInfo 	*pFrameInfo;
     uint8_t 	*pSendFrm;
     uint8_t 	*pData;
     uint16_t       u16DLen;
 
+    LREP("transl2 send \r\n");
     /*-------------------------*/
     ASSERT_NONVOID(pTransL2, FALSE);
-
     ASSERT_NONVOID(pMem != NULL, FALSE);
 
     /*-------------------------*/
@@ -494,7 +488,11 @@ ETransErrorCode TransL2S_Send(STransL2S *pTransL2, uint8_t u8DstAdr, SMem *pMem)
     }
 	
     /*-------------------------*/
-    pFrameInfo = (SFrameInfo *)MEM_BODY(pMem);
+//    LREP("pMem at: 0x%x\r\n", pMem);
+//    pFrameInfo = (SFrameInfo *)MEM_BODY(pMem);
+//
+    SFrameInfo *pFrameInfo = (SFrameInfo *)MEM_BODY(pMem);
+    LREP("Header: 0x%x Location: 0x%x\r\n", pMem, pFrameInfo);
 
     pFrameInfo->u8NumSend--;
 
@@ -502,7 +500,10 @@ ETransErrorCode TransL2S_Send(STransL2S *pTransL2, uint8_t u8DstAdr, SMem *pMem)
 
     pTransL2->frmSend 		= (uint8_t*)pFrameInfo + sizeof(SFrameInfo);
     pSendFrm          		= pTransL2->frmSend;
-    pData         		= &pTransL2->frmSend[IDX_SFRM_DATA0];
+    pData         			= &pTransL2->frmSend[IDX_SFRM_DATA0];
+
+
+    LREP("ctrl: 0x%x - len = 0x%x\r\n", pFrameInfo->u8Ctrl, pFrameInfo->u16DLen);
 
     /*---------------------------*/
     // Building the sending frame
@@ -548,7 +549,7 @@ ETransErrorCode TransL2S_Send(STransL2S *pTransL2, uint8_t u8DstAdr, SMem *pMem)
     pTransL2->sFlag.Bits.bWaitingL1Send 	= FALSE;
     pTransL2->sFlag.Bits.bL1Sending 		= FALSE;
 
-    pTransL2->u8ErrorCode 			= SUCCESS;
+    pTransL2->u8ErrorCode 			= TRANS_SUCCESS;
     
     return pTransL2->u8ErrorCode;
 }
@@ -603,7 +604,7 @@ static void RunSendFrame(STransL2S *pTransL2)
 
         eErrorCode = TransL1_Send(&pTransL2->sTransL1, pSendFrm, u16SendSize);
 
-        if(eErrorCode == SUCCESS)
+        if(eErrorCode == TRANS_SUCCESS)
         {
             
             pTransL2->u8ErrorCode = eErrorCode;
@@ -784,7 +785,7 @@ static EL2RecvAction OnRecvFrame(STransL2S *pTransL2)
     BOOL            bRecvFrame = FALSE;
     uint16_t          u16DLen;
     EL2RecvAction   eRecvAction = TRANSL2_ACT_NO;
-    ETransErrorCode eErrorCode = SUCCESS;
+    ETransErrorCode eErrorCode = TRANS_SUCCESS;
 
     ASSERT_NONVOID(pTransL2, eErrorCode);
 
@@ -956,7 +957,7 @@ static void L2FireEvent(STransL2S *pTransL2, EL2Event event)
                 SFrameInfo *pFrameInfo 	= (SFrameInfo *)MEM_BODY(pTransL2->sMemRecv);
                 pFrameInfo->u16DLen	= SFRAME_GET_DLEN(pFrameInfo->pFrame);
                 pFrameInfo->u8Ctrl	= pFrameInfo->pFrame[IDX_SFRM_CTRL];
-                pTransL2->u8ErrorCode	= SUCCESS;
+                pTransL2->u8ErrorCode	= TRANS_SUCCESS;
 
                 pTransL2->fClbL2RecvData(TRANSL2_EVT_RECV_DATA,pTransL2->u8ErrorCode,pTransL2->sMemRecv, pTransL2->pClbRecvDataParam);
 
@@ -968,7 +969,7 @@ static void L2FireEvent(STransL2S *pTransL2, EL2Event event)
             ASSERT(pTransL2->fClbL2SendDone != NULL);
             if(pTransL2->fClbL2SendDone)
             {
-                pTransL2->u8ErrorCode	= SUCCESS;
+                pTransL2->u8ErrorCode	= TRANS_SUCCESS;
                 pTransL2->fClbL2SendDone(TRANSL2_EVT_SEND_DONE,pTransL2->u8ErrorCode,pTransL2->sMemSend, pTransL2->pClbSendDoneParam);
             }
             break;

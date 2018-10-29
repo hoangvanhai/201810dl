@@ -27,12 +27,14 @@
 /***************************** Include Files *********************************/
 #include <includes.h>
 #include <gpio_pins.h>
+#include <Transceiver.h>
 /************************** Constant Definitions *****************************/
 
 
 /**************************** Type Definitions *******************************/
 typedef struct SApp_ {
 
+	STrans	sTransPc;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
@@ -41,11 +43,15 @@ typedef struct SApp_ {
 extern void 	task_shell(task_param_t );
 extern void 	task_filesystem(task_param_t );
 extern void 	task_modbus(task_param_t );
+extern void 	task_serialcomm(task_param_t);
 /************************** Variable Definitions *****************************/
 extern OS_TCB 	TCB_task_shell;
 extern OS_TCB 	TCB_task_filesystem;
 extern OS_TCB 	TCB_task_modbus;
+extern OS_TCB	TCB_task_serialcomm;
 extern bool 	sdCardDetect;
+
+extern SApp		sApp;
 /*****************************************************************************/
 
 

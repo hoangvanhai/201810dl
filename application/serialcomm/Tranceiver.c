@@ -41,11 +41,12 @@ static void  Trans_CheckTimeOutOfSendedFrame(STrans *pTrans);
  *  @return Void.
  *  @note
  */
-void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, uint8_t *pSemaphore)
+void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, void *pSemaphore)
 {
-    pTrans->sFlag.u8All = 0;
-    //pTrans->hSem = pSemaphore;
-    pTrans->hSem = 0;
+	OS_ERR err;
+
+	pTrans->sFlag.u8All = 0;
+    pTrans->hSem = pSemaphore;
 
     Queue_Init(&pTrans->qSendingData);
     Queue_Init(&pTrans->qSendingCMD);
@@ -72,10 +73,9 @@ void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, uin
     /*register callback functions for TransL2*/
     TransL2S_RegisterClbEvent(&pTrans->sTransL2, TRANSL2_EVT_RECV_DATA, Clb_L2RecvData, pTrans);
     TransL2S_RegisterClbEvent(&pTrans->sTransL2, TRANSL2_EVT_SEND_DONE, Clb_L2SendDone, pTrans);
-    TransL2S_RegisterClbEvent(&pTrans->sTransL2, TRANSL2_EVT_ERROR,    Clb_L2Error,    pTrans);
+    TransL2S_RegisterClbEvent(&pTrans->sTransL2, TRANSL2_EVT_ERROR,     Clb_L2Error,    pTrans);
 
     /*------------------------------------------------------------------------*/
-	OS_ERR err;
 	OSTmrCreate(&pTrans->hUpdateTimer,
 				(CPU_CHAR *)"timer",
 				(OS_TICK)0,
@@ -206,22 +206,18 @@ void Trans_SendTask(STrans *pTrans)
         else if (Queue_GetSize(&pTrans->qSendingData) > 0)
         {
             pMem = Queue_Remove(&pTrans->qSendingData, NULL);
+            LREP("get mem at: 0x%x - 0x%x\r\n", pMem, MEM_BODY(pMem));
         }
-        if(pMem != NULL)
-        {
-            
-            if(TransL2S_Send(pTransL2, RRC_UI_UI_DEST_ID, pMem) != SUCCESS)
-            {
+
+        if(pMem != NULL) {
+            if(TransL2S_Send(pTransL2, RRC_UI_UI_DEST_ID, pMem) != TRANS_SUCCESS) {
                 ASSERT(FALSE);
-            }
-            else
-            {
-                
+            } else {
+
             }
         }
     }
 
-   
     /*-----------------------------------------------------------------------
      * Run TransL2 to send frame
      *-----------------------------------------------------------------------*/
@@ -235,13 +231,10 @@ void Trans_SendTask(STrans *pTrans)
  *  @return Void.
  *  @note
  */
-void Trans_Task(void *arg)
+void Trans_Task(STrans *pTrans)
 {
-	STrans *pTrans = (STrans*)arg;
 	Trans_RecvTask(pTrans);
 	Trans_SendTask(pTrans);
-	pTrans->sFlag.Bits.bUpdateWaitingACKFrameState = TRUE;
-
 }
 /*****************************************************************************/
 /** @brief
@@ -255,30 +248,25 @@ static BOOL Trans_send(STrans *pTrans, uint8_t* pu8Data,
                             uint16_t u16Dlen, uint8_t u8Ctrl, EPackageType bFrmType)
 {
     uint16_t u16Idx = 0;
-
-    
     SMem        *pMem;
-    
-    // LREP("\r\n-> %d", (uint32_t)u16Dlen);
     
     pMem =  Mem_Alloc(CALCULATE_MEM_SIZE(u16Dlen + SFRM_HDR_SIZE));
 
-    if(pMem == NULL)
-    {
+    if(pMem == NULL) {
         ASSERT("No memory available" == 0);
         return FALSE;
     }
     
     SFrameInfo *pFrameInfo = (SFrameInfo *)MEM_BODY(pMem);
 
-    //LREP("\r\nHeader: 0x%x Location: 0x%x", (uint32_t)pMem, (uint32_t)pFrameInfo);
-   
-    
     pFrameInfo->u8Ctrl   = (uint8_t)u8Ctrl;
     pFrameInfo->u16DLen  = (uint16_t)u16Dlen;
-    pFrameInfo->pFrame   = (uint8_t*)((uint8_t*)pFrameInfo + sizeof(SFrameInfo));
-    
+    pFrameInfo->pFrame   = ((uint8_t*)pFrameInfo + sizeof(SFrameInfo));
     pFrameInfo->pu8Data	 = &pFrameInfo->pFrame[IDX_SFRM_DATA0];
+
+
+    LREP("ctrl: 0x%x - len = 0x%x\r\n", pFrameInfo->u8Ctrl, pFrameInfo->u16DLen);
+    LREP("Header: 0x%x Location: 0x%x\r\n", pMem, pFrameInfo);
 
     //SEQ
     if(bFrmType == E_CMD_FRM)
@@ -314,8 +302,10 @@ static BOOL Trans_send(STrans *pTrans, uint8_t* pu8Data,
     }
 
     //Signal to run Trans task
-    pTrans->hSem += 1;
     
+    OS_ERR err;
+    OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_NONE, &err);
+
     return TRUE;
 }
 /*****************************************************************************/
@@ -340,8 +330,8 @@ BOOL Trans_Send(STrans *pTrans, uint16_t u16Dlen, uint8_t* pu8Data,  uint8_t u8C
  */
 BOOL Trans_IsSendReady(STrans *pTrans, uint16_t u16DLen)
 {
-    uint16_t u16Size = CALCULATE_MEM_SIZE(u16DLen + SFRM_HDR_SIZE);
-    return (BOOL)Mem_IsAvailableSpace(u16Size);
+//    uint16_t u16Size = CALCULATE_MEM_SIZE(u16DLen + SFRM_HDR_SIZE);
+    return TRUE;
 }
 /*****************************************************************************/
 /** @brief
@@ -545,12 +535,10 @@ void Clb_L2Error (EL2Event evt, ETransStatus eStatus, SMem *pSendMem, void *pClb
  */
 static void Clb_UpdateTimer(void *timer, void *pClbParam)
 {
+	OS_ERR err;
     STrans *pTrans = (STrans *)pClbParam;
-
-    //out_char('#');
     pTrans->sFlag.Bits.bUpdateWaitingACKFrameState = TRUE;
-    //LREP("\r\nTimer TransL3 Update @ %d", (uint32_t)SysTick_GetTick());   
-    pTrans->hSem += 1;
+    OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_POST_NONE, &err);
 }
 
 

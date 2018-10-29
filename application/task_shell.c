@@ -36,7 +36,7 @@
 #include <includes.h>
 #include "shell.h"
 #include <app.h>
-
+#include <Transceiver.h>
 
 void clear_screen(int32_t argc, char**argv);
 void send_queue(int32_t argc, char**argv);
@@ -79,14 +79,14 @@ void send_queue(int32_t argc, char**argv) {
 	if (argc == 2)
 	{
 		if(strcmp(argv[1], "modbus") == 0) {
-			int i = 0;
+			//int i = 0;
 			//for(; i < 100; i++) {
 			LREP("send data to modbus task\r\n");
-			uint8_t *p_msg = OSA_FixedMemMalloc(100);
+			uint8_t *p_msg = OSA_FixedMemMalloc(264);
 			if(p_msg != NULL) {
-				memset(p_msg, 0xFF, 100);
+				memset(p_msg, 0xFF, 264);
 				OS_ERR err;
-				OSTaskQPost(&TCB_task_modbus, p_msg, 100, OS_OPT_POST_FIFO, &err);
+				OSTaskQPost(&TCB_task_modbus, p_msg, 264, OS_OPT_POST_FIFO, &err);
 				if(err != OS_ERR_NONE) {
 					LREP("task queue post failed \r\n");
 				} else {
@@ -115,7 +115,12 @@ void send_queue(int32_t argc, char**argv) {
 			}
 			OSA_SleepMs(100);
 			}
+		} else if(strcmp(argv[1], "trans") == 0) {
+			uint8_t data[100];
+			Trans_Send(&sApp.sTransPc, 100, data, FRM_DATA);
+			LREP("control passed\r\n");
 		} else {
+
 			LREP("argument not supported\r\n\n");
 		}
 	}

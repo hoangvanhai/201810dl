@@ -27,7 +27,10 @@ extern "C" {
 
 /**************************** Type Definitions *******************************/
 
-//#define DEBUG_TRANSL2
+
+
+typedef void (*FClbL2Event)(EL2Event eEventCode, ETransStatus eStatus, SMem *pMem, void *pClbParam);
+
 
 #ifdef DEBUG_TRANSL2
     #define L2DBG_INC(n)	pTransL2->sDbg.n++
@@ -90,14 +93,10 @@ typedef struct _STransL2S
 
     /*Semaphore to signal Trans Task*/
 
-    uint8_t*			hSem;			//use to signal Trans thread
+    void*				hSem;			//use to signal Trans thread
 
     /*TimeOut Timer for L1*/
     OS_TMR				hL1TimeOutTimer;
-
-    #ifdef DEBUG_TRANSL2
-    STransL2SDbg	 sDbg;
-    #endif
 	
 } STransL2S;
 
@@ -116,7 +115,7 @@ typedef struct _STransL2S
 /************************** Function Prototypes ******************************/
 
 #if (TRANSL1_VER == TRANSL1_V1)
-ETransErrorCode 	TransL2S_Init		(STransL2S *pTransL2, uint8_t u8NodeID, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio, uint8_t* pSemaphore);
+ETransErrorCode 	TransL2S_Init		(STransL2S *pTransL2, uint8_t u8NodeID, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio, void* pSemaphore);
 #elif (TRANSL1_VER == TRANSL1_V2)
 ETransErrorCode 	TransL2S_Init		(STransL2S *pTransL2, uint8_t u8NodeID, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio, void* pSemaphore, uint16_t u16TxDMABase);
 #endif
@@ -128,7 +127,7 @@ EL2RecvAction 		TransL2S_RecvTask	(STransL2S *pTransL2);
 void 				TransL2S_SendTask	(STransL2S *pTransL2);
 BOOL				TransL2S_IsSendReady	(STransL2S *pTransL2);
 void 				TransL2S_SetCheckSeqNum	(STransL2S *pTransL2, BOOL bSet);
-uint8_t*				TransL2S_GetSendData	(STransL2S *pTransL2);
+uint8_t*			TransL2S_GetSendData	(STransL2S *pTransL2);
 ETransErrorCode		TransL2S_Send           (STransL2S *pTransL2, uint8_t u8DstAdr, SMem *pMem);
 BOOL				TransL2S_GetRecvFrame	(STransL2S *pTransL2, uint8_t *pu8From, uint8_t **ppData, uint16_t *pu16Size);
 ETransErrorCode 	TransL2S_GetLastError	(STransL2S *pTransL2);

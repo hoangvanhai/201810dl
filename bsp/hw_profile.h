@@ -59,9 +59,11 @@
 #define BOARD_DEBUG_UART_INSTANCE   	1
 #define BOARD_DEBUG_UART_BAUD       	115200
 
-#define BOARD_MODBUS_UART_INSTANCE   	2
+#define BOARD_MODBUS_UART_INSTANCE   	3
 #define BOARD_MODBUS_UART_BAUD       	115200
 
+#define BOARD_TRANSPC_UART_INSTANCE   	2
+#define BOARD_TRANSPC_UART_BAUD       	115200
 
 
 /* Define feature for the low_power_demo */
@@ -129,55 +131,6 @@
 /* The FlexBus instance used for board.*/
 #define BOARD_FLEXBUS_INSTANCE          0
 
-/* board led color mapping */
-#define BOARD_GPIO_LED_RED              kGpioLED3
-#define BOARD_GPIO_LED_GREEN            kGpioLED1
-#define BOARD_GPIO_LED_BLUE             kGpioLED4
-#define BOARD_GPIO_LED_YELLOW           kGpioLED2
-
-#define TX_DEBUG_CONSOLE_DIS PORT_HAL_SetMuxMode(PORTC, 4, kPortMuxAsGpio)
-#define RX_DEBUG_CONSOLE_DIS PORT_HAL_SetMuxMode(PORTC, 3, kPortMuxAsGpio)
-
-#define SW_INT_DIS PORT_HAL_SetPinIntMode(PORTA, 4, kPortIntDisabled)
-#define SW_DIS PORT_HAL_SetMuxMode(PORTA, 4, kPortPinDisabled)
-#define SW_EN PORT_HAL_SetMuxMode(PORTA, 4, kPortMuxAsGpio)
-
-#define LED1_EN  (GPIO_DRV_OutputPinInit(&ledPins[0]))  /*!< Enable target LED1 */
-#define LED2_EN  (GPIO_DRV_OutputPinInit(&ledPins[1]))  /*!< Enable target LED2 */
-#define LED3_EN  (GPIO_DRV_OutputPinInit(&ledPins[2]))  /*!< Enable target LED3 */
-#define LED4_EN  (GPIO_DRV_OutputPinInit(&ledPins[3]))  /*!< Enable target LED4 */
-
-#define LED1_DIS (PORT_HAL_SetMuxMode(PORTE, 6, kPortPinDisabled))   /*!< Disable target LED1 */
-#define LED2_DIS (PORT_HAL_SetMuxMode(PORTE, 7, kPortPinDisabled))   /*!< Disable target LED2 */
-#define LED3_DIS (PORT_HAL_SetMuxMode(PORTE, 8, kPortPinDisabled))   /*!< Disable target LED3 */
-#define LED4_DIS (PORT_HAL_SetMuxMode(PORTE, 9, kPortPinDisabled))   /*!< Disable target LED4 */
-
-#define LED1_OFF (GPIO_DRV_WritePinOutput(ledPins[0].pinName, 1))         /*!< Turn off target LED1 */
-#define LED2_OFF (GPIO_DRV_WritePinOutput(ledPins[1].pinName, 1))         /*!< Turn off target LED2 */
-#define LED3_OFF (GPIO_DRV_WritePinOutput(ledPins[2].pinName, 1))         /*!< Turn off target LED3 */
-#define LED4_OFF (GPIO_DRV_WritePinOutput(ledPins[3].pinName, 1))         /*!< Turn off target LED4 */
-
-#define LED1_ON (GPIO_DRV_WritePinOutput(ledPins[0].pinName, 0))          /*!< Turn on target LED1 */
-#define LED2_ON (GPIO_DRV_WritePinOutput(ledPins[1].pinName, 0))          /*!< Turn on target LED2 */
-#define LED3_ON (GPIO_DRV_WritePinOutput(ledPins[2].pinName, 0))          /*!< Turn on target LED3 */
-#define LED4_ON (GPIO_DRV_WritePinOutput(ledPins[3].pinName, 0))          /*!< Turn on target LED4 */
-
-#define LED1_TOGGLE (GPIO_DRV_TogglePinOutput(ledPins[0].pinName))        /*!< Toggle on target LED1 */
-#define LED2_TOGGLE (GPIO_DRV_TogglePinOutput(ledPins[1].pinName))        /*!< Toggle on target LED2 */
-#define LED3_TOGGLE (GPIO_DRV_TogglePinOutput(ledPins[2].pinName))        /*!< Toggle on target LED3 */
-#define LED4_TOGGLE (GPIO_DRV_TogglePinOutput(ledPins[3].pinName))        /*!< Toggle on target LED4 */
-
-#define LED_RTOS_EN        LED1_EN
-#define LED_RTOS_TOGGLE    LED1_TOGGLE
-#define LED_CLOCK_EN       LED2_EN
-#define LED_CLOCK_TOGGLE   LED2_TOGGLE
-
-#define OFF_ALL_LEDS  \
-                           LED1_OFF;\
-                           LED2_OFF;\
-                           LED3_OFF;\
-                           LED4_OFF;
-
 /* The SDHC instance/channel used for board */
 #define BOARD_SDHC_INSTANCE                   0
 #define BOARD_SDHC_CD_GPIO_IRQ_HANDLER        PORTE_IRQHandler
@@ -196,12 +149,12 @@
 #define BOARD_RTC_FUNC_INSTANCE         0
 
 /* If connected the TWR_MEM, this is spi sd card */
-#define SDCARD_CARD_DETECTION_GPIO_PORT         PORTD_IDX
-#define SDCARD_CARD_DETECTION_GPIO_PIN          15
-#define SDCARD_CARD_WRITE_PROTECTION_GPIO_PORT  PORTC_IDX
-#define SDCARD_CARD_WRITE_PROTECTION_GPIO_PIN   13
-#define SDCARD_SPI_HW_INSTANCE                  1
-#define SDCARD_CARD_INSERTED                    0
+//#define SDCARD_CARD_DETECTION_GPIO_PORT         PORTD_IDX
+//#define SDCARD_CARD_DETECTION_GPIO_PIN          15
+//#define SDCARD_CARD_WRITE_PROTECTION_GPIO_PORT  PORTC_IDX
+//#define SDCARD_CARD_WRITE_PROTECTION_GPIO_PIN   13
+//#define SDCARD_SPI_HW_INSTANCE                  1
+//#define SDCARD_CARD_INSERTED                    0
 
 
 #endif /* APPLICATION_HW_PROFILE_H_ */

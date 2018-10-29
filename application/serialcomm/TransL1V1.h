@@ -10,7 +10,7 @@ extern "C" {
 #include "typedefs.h"
 #include "FiFo.h"
 #include "app_cfg.h"
-#include "TransDef.h"
+#include "TransDefS.h"
 
 
 #if (TRANSL1_VER == TRANSL1_V1)
@@ -64,7 +64,7 @@ typedef enum E_TRANSL1_EVENT_
 
 }EL1Event;
 
-typedef struct _S_L1_FLAG
+typedef union _S_L1_FLAG
 {
 	uint8_t u8All;
     struct
@@ -138,8 +138,8 @@ void		TransL1_RegisterClbEvent		(STransL1 *pTransL1, EL1Event event, FClbL1Event
 BOOL		TransL1_IsReceiving			(STransL1 *pTransL1);
 void		TransL1_ClearNewByteFlag	(STransL1 *pTransL1);
 
-void 		TransL1_TX_Interrupt_Handle	(void* pParam);
-void 		TransL1_RX_Interrupt_Handle	(void* pParam);
+void 		TransL1_TX_Interrupt_Handle	(uint32_t, void*);
+void 		TransL1_RX_Interrupt_Handle	(uint32_t, void*);
 
 #ifdef DEBUG_TRANSL1
 void 	TransL1_PrintLog			(STransL1 *pTransL1);

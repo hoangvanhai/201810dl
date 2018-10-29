@@ -337,6 +337,12 @@ void configure_sdcard_spi_pins(uint32_t instance)
 void configure_uart_pins(uint32_t instance)
 {
   switch(instance) {
+  case UART0_IDX:                      /* UART5 */
+	  /* Affects PORTD_PCR2 register */
+//	  PORT_HAL_SetMuxMode(PORTD,2u,kPortMuxAlt3);
+	  /* Affects PORTD_PCR3 register */
+//	  PORT_HAL_SetMuxMode(PORTD,3u,kPortMuxAlt3);
+	  break;
     case UART1_IDX:                      /* UART1 */
       /* Affects PORTC_PCR3 register */
       PORT_HAL_SetMuxMode(PORTC,3u,kPortMuxAlt3);
@@ -348,6 +354,18 @@ void configure_uart_pins(uint32_t instance)
 	  PORT_HAL_SetMuxMode(PORTD,2u,kPortMuxAlt3);
 	  /* Affects PORTD_PCR3 register */
 	  PORT_HAL_SetMuxMode(PORTD,3u,kPortMuxAlt3);
+	  break;
+    case UART3_IDX:                      /* UART5 */
+	  /* Affects PORTB_PCR10 register */
+	  PORT_HAL_SetMuxMode(PORTB,10u,kPortMuxAlt3);
+	  /* Affects PORTB_PCR11 register */
+	  PORT_HAL_SetMuxMode(PORTB,11u,kPortMuxAlt3);
+	  break;
+    case UART4_IDX:                      /* UART5 */
+	  /* Affects PORTE_PCR24 register */
+	  PORT_HAL_SetMuxMode(PORTE,24u,kPortMuxAlt3);
+	  /* Affects PORTE_PCR25 register */
+	  PORT_HAL_SetMuxMode(PORTE,25u,kPortMuxAlt3);
 	  break;
     case UART5_IDX:                      /* UART5 */
       /* Affects PORTE_PCR9 register */

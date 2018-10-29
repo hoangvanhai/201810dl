@@ -54,8 +54,7 @@ const char *logo_msg = { "\r\n\n"
 OSA_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
 OSA_TASK_DEFINE(task_filesystem, 	TASK_FILESYSTEM_STACK_SIZE);
 OSA_TASK_DEFINE(task_modbus, 		TASK_MODBUS_STACK_SIZE);
-
-//OS_TMR	hTimer;
+OSA_TASK_DEFINE(task_serialcomm,	TASK_SERIAL_COMM_STACK_SIZE);
 
 uint32_t gSlaveId;
 
@@ -70,7 +69,6 @@ uint32_t gSlaveId;
 #if 1
 int main(void)
 {
-	uint32_t i;
     osa_status_t result;
 
     result = kStatus_OSA_Error;
@@ -116,10 +114,24 @@ int main(void)
                     &task_filesystem_task_handler);
     if (result != kStatus_OSA_Success)
     {
-        LREP("Failed to create sample task\r\n\r\n");
+        LREP("Failed to create filesystem task\r\n\r\n");
         return -1;
     }
 
+
+    result = OSA_TaskCreate(task_serialcomm,
+                    (uint8_t *)"serialcomm",
+                    TASK_SERIAL_COMM_STACK_SIZE,
+                    task_serialcomm_stack,
+                    TASK_SERIALCOMM_PRIO,
+                    (task_param_t)&sApp.sTransPc,
+                    false,
+                    &task_serialcomm_task_handler);
+    if (result != kStatus_OSA_Success)
+    {
+        LREP("Failed to create serialcomm task\r\n\r\n");
+        return -1;
+    }
 
     // create app tasks
     result = OSA_TaskCreate(task_shell,
@@ -143,20 +155,6 @@ int main(void)
     for(;;) {}                    // Should not achieve here
 }
 
-
-
-
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-//void Clb_TimerControl(void *p_tmr, void *p_arg) {
-//	LREP("timer clb\r\n");
-//}
 #endif
 
 

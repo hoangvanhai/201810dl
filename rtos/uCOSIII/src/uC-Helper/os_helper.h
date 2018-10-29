@@ -42,7 +42,7 @@
 #define	OS_MEM_PARTITION_32                             32      // Used
 #define	OS_MEM_PARTITION_64                             64      // Used
 #define	OS_MEM_PARTITION_128                            128		// Not Used
-#define	OS_MEM_PARTITION_250                            250		// Not Used
+#define	OS_MEM_PARTITION_264                            264		// Not Used
 
 
 #define OS_MEM_PARTITION_8_TOTAL_NUM_BLOCK				20
@@ -50,7 +50,7 @@
 #define OS_MEM_PARTITION_32_TOTAL_NUM_BLOCK				10
 #define OS_MEM_PARTITION_64_TOTAL_NUM_BLOCK				8
 #define OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK			4
-#define OS_MEM_PARTITION_250_TOTAL_NUM_BLOCK			0
+#define OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK			8
 
 
 /**************************** Type Definitions *******************************/
@@ -59,9 +59,9 @@
 
 /************************** Function Prototypes ******************************/
 // malloc, free helper
-void*  	OSA_FixedMemMalloc(uint32_t uiSize);
-void   	OSA_FixedMemFree(uint8_t* pucAllocMem);
-uint8_t OSA_FixedMemInit(void);
+uint8_t*  	OSA_FixedMemMalloc(uint32_t uiSize);
+void   		OSA_FixedMemFree(uint8_t* pucAllocMem);
+uint8_t 	OSA_FixedMemInit(void);
 
 /************************** Variable Definitions *****************************/
 

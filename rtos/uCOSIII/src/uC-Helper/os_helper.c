@@ -59,19 +59,19 @@ OS_MEM		g_hMemPartition64;
 #if OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK > 0
 OS_MEM		g_hMemPartition128;
 #endif
-#if OS_MEM_PARTITION_250_TOTAL_NUM_BLOCK > 0
-OS_MEM		g_hMemPartition250;
+#if OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK > 0
+OS_MEM		g_hMemPartition264;
 #endif
 
 
-    /*
-    For each memory block we need to reserve two first bytes for storing partition ID.
-    We also MUST carefully remember that the return pointer of allocated memory to the user
-    must be even address, unless we will get some troubles when allocating memory for structure
-    that has some big data elements(int, long, ...).This problem is introduced by the Stack Pointer
-    MUST point to even address, not odd address. The two last bytes save the partition ID two additional
-    bytes (unused by the user)
-    */
+/*
+For each memory block we need to reserve two first bytes for storing partition ID.
+We also MUST carefully remember that the return pointer of allocated memory to the user
+must be even address, unless we will get some troubles when allocating memory for structure
+that has some big data elements(int, long, ...).This problem is introduced by the Stack Pointer
+MUST point to even address, not odd address. The two last bytes save the partition ID two additional
+bytes (unused by the user)
+*/
 
 #if OS_MEM_PARTITION_8_TOTAL_NUM_BLOCK > 0
 uint8_t		*g_ucMemStorage8[OS_MEM_PARTITION_8_TOTAL_NUM_BLOCK][10];
@@ -88,8 +88,8 @@ uint8_t		*g_ucMemStorage64[OS_MEM_PARTITION_64_TOTAL_NUM_BLOCK][66];
 #if OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK > 0
 uint8_t		*g_ucMemStorage128[OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK][130];
 #endif
-#if OS_MEM_PARTITION_250_TOTAL_NUM_BLOCK > 0
-uint8_t		*g_ucMemStorage250[OS_MEM_PARTITION_250_TOTAL_NUM_BLOCK][252];
+#if OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK > 0
+uint8_t		*g_ucMemStorage264[OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK][266];
 #endif
 
 // ---------------------------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ uint8_t		*g_ucMemStorage250[OS_MEM_PARTITION_250_TOTAL_NUM_BLOCK][252];
 //				data structure that has some big data elements(int, long, ...). This problem is
 //				introduced by the Stack Pointer MUST point to even address, not odd address.
 // ---------------------------------------------------------------------------------------------------
-void* OSA_FixedMemMalloc(uint32_t uiSize)
+uint8_t* OSA_FixedMemMalloc(uint32_t uiSize)
 {
 	uint8_t* 	pucAllocMem = NULL;
 	OS_ERR		ucError		= OS_ERR_NONE;
@@ -170,15 +170,14 @@ void* OSA_FixedMemMalloc(uint32_t uiSize)
 		}
 	}
 #endif
-#if OS_MEM_PARTITION_250_TOTAL_NUM_BLOCK > 0
-	else if ((uiSize > OS_MEM_PARTITION_128) && (uiSize <= OS_MEM_PARTITION_250))
+#if OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK > 0
+	else if ((uiSize > OS_MEM_PARTITION_128) && (uiSize <= OS_MEM_PARTITION_264))
 	{
-		if (g_hMemPartition250 != NULL)
 		{
 			// Get memory from partition
-			pucAllocMem = OSMemGet(g_hMemPartition250, &ucError);
+			pucAllocMem = OSMemGet(&g_hMemPartition264, &ucError);
 			// Save the ID of partition as the actual allocated memory
-			uiSize = OS_MEM_PARTITION_250;
+			uiSize = OS_MEM_PARTITION_264;
 		}
 	}
 #endif
@@ -193,13 +192,14 @@ void* OSA_FixedMemMalloc(uint32_t uiSize)
 
 
 	if (pucAllocMem != NULL) {
-		uint16_t*	puiPartitionID = (uint16_t*)pucAllocMem;
+		//LREP("req malloc size = %d loc = 0x%x\r\n ", uiSize, pucAllocMem);
 		// Save the ID of partition at the first & second bytes - two additional bytes (unused by the user)
-		*puiPartitionID	= uiSize;
+		pucAllocMem[0]	= (uiSize >> 8) & 0xFF;
+		pucAllocMem[1]	= (uiSize) & 0xFF;
 		g_uiMallocCount++; // Count up the number of allocated memory
 		LREP("MALLOC -> TOTAL = %d\r\n", g_uiMallocCount);
-		//LREP("\r\nMalloc ADDR 0x%x", (&pucAllocMem[2]));
-		return ((void*)&pucAllocMem[2]);
+		LREP("Malloc ADDR 0x%x\r\n", (&pucAllocMem[2]));
+		return ((uint8_t*)&pucAllocMem[2]);
 	} else  {
 		return NULL;
 	}
@@ -219,10 +219,12 @@ void OSA_FixedMemFree(uint8_t* pucAllocMem)
 	// The real allocated memory start at two locations before the first element of pucAllocMem
 	uint8_t*	pucCompleteAllocMem = pucAllocMem - 2;
 	// Get the partition ID which stored at the two first bytes
-	uint16_t*	puiPartitionID		= (uint16_t*)pucCompleteAllocMem;
+	uint16_t	puiPartitionID		= 	((pucCompleteAllocMem[0] << 8) & 0xFF00) |
+										pucCompleteAllocMem[1];
 
+	//LREP("free id = %d loc of complete = 0x%x\r\n", puiPartitionID, pucCompleteAllocMem);
 	// Check the partition ID of the freed required memory to free it up to the original partition
-	switch((uint16_t)*puiPartitionID)
+	switch(puiPartitionID)
 	{
 #if OS_MEM_PARTITION_8_TOTAL_NUM_BLOCK > 0
 		case OS_MEM_PARTITION_8:
@@ -256,13 +258,14 @@ void OSA_FixedMemFree(uint8_t* pucAllocMem)
 			HELPER_TRACE_FREE_STATUS();
 			break;
 #endif
-#if OS_MEM_PARTITION_250_TOTAL_NUM_BLOCK > 0
-		case OS_MEM_PARTITION_250:
-			OSMemPut(g_hMemPartition250, (void*) pucCompleteAllocMem, &ucError);
+#if OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK > 0
+		case OS_MEM_PARTITION_264:
+			OSMemPut(&g_hMemPartition264, (void*) pucCompleteAllocMem, &ucError);
 			HELPER_TRACE_FREE_STATUS();
+			break;
 #endif
 		default:
-			LREP("\r\npPartitionID: %d PartitionID = 0x%x Wrong Param", (uint16_t)(*puiPartitionID), puiPartitionID);
+			LREP("Wrong Param partitionID: %d location = 0x%x \r\n", (puiPartitionID), pucCompleteAllocMem);
 			break;
 	}
 }
@@ -343,6 +346,19 @@ uint8_t OSA_FixedMemInit(void)
     if(ucError != OS_ERR_NONE)
     {
         LREP("\r\nCan not Create Partition 128 bytes");
+    }
+#endif
+#if OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK > 0
+    OSMemCreate(&g_hMemPartition264,
+       			(CPU_CHAR*)"mem264",
+   				&g_ucMemStorage264[0][0],
+				OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK,
+				266,
+   				&ucError);
+
+    if(ucError != OS_ERR_NONE)
+    {
+        LREP("\r\nCan not Create Partition 266 bytes");
     }
 #endif
     //LREP("\r\nMemory is initialized!");

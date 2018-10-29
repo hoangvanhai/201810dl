@@ -4,7 +4,6 @@
 #include "queue.h"
 #include "typedefs.h"
 #include "app_cfg.h"
-#include <TransDef.h>
 #include <fsl_debug_console.h>
 /************************** Constant Definitions *****************************/
 
@@ -28,6 +27,11 @@ SMem *Mem_Alloc(uint16_t u16Size)
 {
     SMem *pMem = NULL;
     pMem = (SMem*)OSA_FixedMemMalloc(u16Size);
+    if(pMem != NULL) {
+    	//pMem->u8Body = (uint8_t*)pMem;
+    	pMem->pNext = (SMem*)pMem;
+        pMem->u8Body = (uint8_t*)pMem + sizeof(SMem*);
+    }
     return pMem;
 }
 
@@ -40,12 +44,9 @@ SMem *Mem_Alloc(uint16_t u16Size)
  */
 void Mem_Free(SMem *pMem)
 {
-    if (NULL == pMem)
-    {	    
-	    ASSERT(FALSE);
-        return;
-    }
+    ASSERT_VOID(NULL != pMem);
     OSA_FixedMemFree((uint8_t*)pMem);
+    pMem = NULL;
 }
 /*****************************************************************************/
 
