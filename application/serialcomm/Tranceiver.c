@@ -265,8 +265,8 @@ static BOOL Trans_send(STrans *pTrans, uint8_t* pu8Data,
     pFrameInfo->pu8Data	 = &pFrameInfo->pFrame[IDX_SFRM_DATA0];
 
 
-    LREP("ctrl: 0x%x - len = 0x%x\r\n", pFrameInfo->u8Ctrl, pFrameInfo->u16DLen);
-    LREP("Header: 0x%x Location: 0x%x\r\n", pMem, pFrameInfo);
+//    LREP("ctrl: 0x%x - len = 0x%x\r\n", pFrameInfo->u8Ctrl, pFrameInfo->u16DLen);
+//    LREP("Header: 0x%x Location: 0x%x\r\n", pMem, pFrameInfo);
 
     //SEQ
     if(bFrmType == E_CMD_FRM)

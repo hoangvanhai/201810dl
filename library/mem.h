@@ -22,7 +22,6 @@ typedef struct _SMem
 /***************** Macros (Inline Functions) Definitions *********************/
 
 #define MEM_BODY(buf) ((buf)->u8Body)
-//#define MEM_BODY(buf) ((uint8_t*)(buf) + sizeof(SMem*))
 
 /************************** Function Prototypes ******************************/
 

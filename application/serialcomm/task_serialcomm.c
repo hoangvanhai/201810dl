@@ -13,11 +13,12 @@
 
 
 void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
-	LREP("Recv frm event\r\n");
+	static uint32_t count = 0;
+	LREP("Recv frm event: %d - ctrl = 0x%x\r\n", count++, u8Type);
 }
 
 void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type) {
-	LREP("Sent done event\r\n");
+	LREP("Sent done event 0x%x\r\n", u8Type);
 }
 
 void task_serialcomm(task_param_t param) {

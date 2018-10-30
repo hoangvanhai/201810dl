@@ -29,7 +29,9 @@
 /**************************** Type Definitions *******************************/
 
 /***************** Macros (Inline Functions) Definitions *********************/
+//#define LOG_MEM
 
+#ifdef LOG_MEM
 #define HELPER_TRACE_FREE_STATUS()		{ \
 			if (ucError == OS_ERR_NONE)	{ \
 				if(g_uiMallocCount) { \
@@ -38,6 +40,15 @@
 			} else { \
 				LREP(ERROR_DISPLAY, (long)ucError); } \
 			}
+#define HELPER_TRACE_MALLOC_STATUS() { \
+			g_uiMallocCount++; \
+			LREP("MALLOC -> TOTAL = %d\r\n", g_uiMallocCount); \
+			LREP("Malloc ADDR 0x%x\r\n", (&pucAllocMem[2]));}
+#else
+#define HELPER_TRACE_FREE_STATUS() 		{--g_uiMallocCount;}
+#define HELPER_TRACE_MALLOC_STATUS() 	{ ++g_uiMallocCount;}
+
+#endif
 
 /************************** Function Prototypes ******************************/
 
@@ -59,8 +70,8 @@ OS_MEM		g_hMemPartition64;
 #if OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK > 0
 OS_MEM		g_hMemPartition128;
 #endif
-#if OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK > 0
-OS_MEM		g_hMemPartition264;
+#if OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK > 0
+OS_MEM		g_hMemPartition272;
 #endif
 
 
@@ -88,8 +99,8 @@ uint8_t		*g_ucMemStorage64[OS_MEM_PARTITION_64_TOTAL_NUM_BLOCK][66];
 #if OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK > 0
 uint8_t		*g_ucMemStorage128[OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK][130];
 #endif
-#if OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK > 0
-uint8_t		*g_ucMemStorage264[OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK][266];
+#if OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK > 0
+uint8_t		*g_ucMemStorage272[OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK][274];
 #endif
 
 // ---------------------------------------------------------------------------------------------------
@@ -124,36 +135,33 @@ uint8_t* OSA_FixedMemMalloc(uint32_t uiSize)
 	else if ((uiSize > OS_MEM_PARTITION_8) && (uiSize <= OS_MEM_PARTITION_16))
 	{
 
-	{
+
 		// Get memory from partition
 		pucAllocMem = OSMemGet(&g_hMemPartition16, &ucError);
 		// Save the ID of partition as the actual allocated memory
 		uiSize = OS_MEM_PARTITION_16;
-	}
+
 	}
 #endif
 #if OS_MEM_PARTITION_32_TOTAL_NUM_BLOCK > 0
 	else if ((uiSize > OS_MEM_PARTITION_16) && (uiSize <= OS_MEM_PARTITION_32))
 	{
 
-		{
-			// Get memory from partition
-			pucAllocMem = OSMemGet(&g_hMemPartition32, &ucError);
-			// Save the ID of partition as the actual allocated memory
-			uiSize = OS_MEM_PARTITION_32;
-		}
+		// Get memory from partition
+		pucAllocMem = OSMemGet(&g_hMemPartition32, &ucError);
+		// Save the ID of partition as the actual allocated memory
+		uiSize = OS_MEM_PARTITION_32;
+
 	}
 #endif
 #if OS_MEM_PARTITION_64_TOTAL_NUM_BLOCK > 0
 	else if ((uiSize > OS_MEM_PARTITION_32) && (uiSize <= OS_MEM_PARTITION_64))
 	{
 
-		{
-			// Get memory from partition
-			pucAllocMem = OSMemGet(&g_hMemPartition64, &ucError);
-			// Save the ID of partition as the actual allocated memory
-			uiSize = OS_MEM_PARTITION_64;
-		}
+		// Get memory from partition
+		pucAllocMem = OSMemGet(&g_hMemPartition64, &ucError);
+		// Save the ID of partition as the actual allocated memory
+		uiSize = OS_MEM_PARTITION_64;
 	}
 #endif
 #if OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK > 0
@@ -161,24 +169,24 @@ uint8_t* OSA_FixedMemMalloc(uint32_t uiSize)
 	else if ((uiSize > OS_MEM_PARTITION_64) && (uiSize <= OS_MEM_PARTITION_128))
 	{
 
-		{
-			// Get memory from partition
-			pucAllocMem = OSMemGet(&g_hMemPartition128, &ucError);
-			// Save the ID of partition as the actual allocated memory
-			uiSize = OS_MEM_PARTITION_128;
 
-		}
+		// Get memory from partition
+		pucAllocMem = OSMemGet(&g_hMemPartition128, &ucError);
+		// Save the ID of partition as the actual allocated memory
+		uiSize = OS_MEM_PARTITION_128;
+
+
 	}
 #endif
-#if OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK > 0
-	else if ((uiSize > OS_MEM_PARTITION_128) && (uiSize <= OS_MEM_PARTITION_264))
+#if OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK > 0
+	else if ((uiSize > OS_MEM_PARTITION_128) && (uiSize <= OS_MEM_PARTITION_272))
 	{
-		{
-			// Get memory from partition
-			pucAllocMem = OSMemGet(&g_hMemPartition264, &ucError);
-			// Save the ID of partition as the actual allocated memory
-			uiSize = OS_MEM_PARTITION_264;
-		}
+
+		// Get memory from partition
+		pucAllocMem = OSMemGet(&g_hMemPartition272, &ucError);
+		// Save the ID of partition as the actual allocated memory
+		uiSize = OS_MEM_PARTITION_272;
+
 	}
 #endif
 
@@ -192,13 +200,10 @@ uint8_t* OSA_FixedMemMalloc(uint32_t uiSize)
 
 
 	if (pucAllocMem != NULL) {
-		//LREP("req malloc size = %d loc = 0x%x\r\n ", uiSize, pucAllocMem);
+		HELPER_TRACE_MALLOC_STATUS();
 		// Save the ID of partition at the first & second bytes - two additional bytes (unused by the user)
 		pucAllocMem[0]	= (uiSize >> 8) & 0xFF;
 		pucAllocMem[1]	= (uiSize) & 0xFF;
-		g_uiMallocCount++; // Count up the number of allocated memory
-		LREP("MALLOC -> TOTAL = %d\r\n", g_uiMallocCount);
-		LREP("Malloc ADDR 0x%x\r\n", (&pucAllocMem[2]));
 		return ((uint8_t*)&pucAllocMem[2]);
 	} else  {
 		return NULL;
@@ -258,9 +263,9 @@ void OSA_FixedMemFree(uint8_t* pucAllocMem)
 			HELPER_TRACE_FREE_STATUS();
 			break;
 #endif
-#if OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK > 0
-		case OS_MEM_PARTITION_264:
-			OSMemPut(&g_hMemPartition264, (void*) pucCompleteAllocMem, &ucError);
+#if OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK > 0
+		case OS_MEM_PARTITION_272:
+			OSMemPut(&g_hMemPartition272, (void*) pucCompleteAllocMem, &ucError);
 			HELPER_TRACE_FREE_STATUS();
 			break;
 #endif
@@ -348,12 +353,12 @@ uint8_t OSA_FixedMemInit(void)
         LREP("\r\nCan not Create Partition 128 bytes");
     }
 #endif
-#if OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK > 0
-    OSMemCreate(&g_hMemPartition264,
+#if OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK > 0
+    OSMemCreate(&g_hMemPartition272,
        			(CPU_CHAR*)"mem264",
-   				&g_ucMemStorage264[0][0],
-				OS_MEM_PARTITION_264_TOTAL_NUM_BLOCK,
-				266,
+   				&g_ucMemStorage272[0][0],
+				OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK,
+				274,
    				&ucError);
 
     if(ucError != OS_ERR_NONE)

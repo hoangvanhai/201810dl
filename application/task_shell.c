@@ -115,8 +115,10 @@ void send_queue(int32_t argc, char**argv) {
 			}
 			OSA_SleepMs(100);
 			}
-		} else if(strcmp(argv[1], "trans") == 0) {
+		} else if(strcmp(argv[1], "t") == 0) {
 			uint8_t data[100];
+			for(int i = 0; i < 100; i++)
+				data[i] = i;
 			Trans_Send(&sApp.sTransPc, 100, data, FRM_DATA);
 			LREP("control passed\r\n");
 		} else {

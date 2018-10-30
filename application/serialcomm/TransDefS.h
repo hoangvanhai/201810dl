@@ -109,8 +109,8 @@ extern "C" {
 #define RRC_UI_UI_DEST_ID         		0x01
 
 #define LARGE_FRAME_SIZE				(SFRM_MAX_SIZE)
-#define LARGE_MEM_SIZE					((sizeof(SFrameInfo)) + LARGE_FRAME_SIZE)
-#define CALCULATE_MEM_SIZE(DataSize)	((sizeof(SFrameInfo)) + (DataSize))
+#define LARGE_MEM_SIZE					((sizeof(SMem)) + (sizeof(SFrameInfo)) + LARGE_FRAME_SIZE)
+#define CALCULATE_MEM_SIZE(DataSize)	((sizeof(SMem)) + (sizeof(SFrameInfo)) + (DataSize))
 
 /**************************** Type Definitions *******************************/
 

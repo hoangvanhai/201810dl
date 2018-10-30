@@ -287,9 +287,9 @@ int TransL1_Send(STransL1 *pTransL1, uint8_t* pData, uint16_t u16Size)
 
 	pTransL1->sFlag.Bits.bSending = TRUE;
 	
-	for(int i = 0; i < u16Size; i++) {
-		LREP("%02x ", pData[i]);
-	}
+//	for(int i = 0; i < u16Size; i++) {
+//		LREP("%02x ", pData[i]);
+//	}
 
 	if(UART_DRV_SendData(pTransL1->u32UartPort,
 			pTransL1->pSendBuff,
@@ -427,8 +427,8 @@ inline void TransL1_RX_Interrupt_Handle(uint32_t instance, void* uartState)
 	}
 
 	/* Callback function, signal to run the trans thread*/
-	if(pThisTransL1->fClbL1RecvData && pThisTransL1->pClbRecvByteParam)
-	{
+	if(pThisTransL1->fClbL1RecvData && pThisTransL1->pClbRecvByteParam) {
+		//LREP("%x ", state->rxBuff[0]);
 		pThisTransL1->fClbL1RecvData(pThisTransL1->pClbRecvByteParam);
 	}
 }

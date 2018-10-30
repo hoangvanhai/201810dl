@@ -462,8 +462,6 @@ ETransErrorCode TransL2S_Send(STransL2S *pTransL2, uint8_t u8DstAdr, SMem *pMem)
     uint8_t 	*pSendFrm;
     uint8_t 	*pData;
     uint16_t       u16DLen;
-
-    LREP("transl2 send \r\n");
     /*-------------------------*/
     ASSERT_NONVOID(pTransL2, FALSE);
     ASSERT_NONVOID(pMem != NULL, FALSE);
@@ -492,7 +490,7 @@ ETransErrorCode TransL2S_Send(STransL2S *pTransL2, uint8_t u8DstAdr, SMem *pMem)
 //    pFrameInfo = (SFrameInfo *)MEM_BODY(pMem);
 //
     SFrameInfo *pFrameInfo = (SFrameInfo *)MEM_BODY(pMem);
-    LREP("Header: 0x%x Location: 0x%x\r\n", pMem, pFrameInfo);
+    //LREP("Header: 0x%x Location: 0x%x\r\n", pMem, pFrameInfo);
 
     pFrameInfo->u8NumSend--;
 
@@ -503,7 +501,7 @@ ETransErrorCode TransL2S_Send(STransL2S *pTransL2, uint8_t u8DstAdr, SMem *pMem)
     pData         			= &pTransL2->frmSend[IDX_SFRM_DATA0];
 
 
-    LREP("ctrl: 0x%x - len = 0x%x\r\n", pFrameInfo->u8Ctrl, pFrameInfo->u16DLen);
+    //LREP("ctrl: 0x%x - len = 0x%x\r\n", pFrameInfo->u8Ctrl, pFrameInfo->u16DLen);
 
     /*---------------------------*/
     // Building the sending frame
@@ -653,7 +651,6 @@ static BOOL ProcessRecvData(STransL2S *pTransL2)
 
     if(pTransL2->frmRecv == NULL)
     {
-        //////ASSERT(pTransL2->frmRecv);
         
         if(TransL2S_MemAlloc(pTransL2) == FALSE)
         {
@@ -708,6 +705,7 @@ static BOOL ProcessRecvData(STransL2S *pTransL2)
                 TransL1_RecvFF_RewindHead(pTransL1);
                 TransL1_RecvFF_EnProtect(pTransL1, FALSE);
                 L2DBG_INC(nRecvErrCRCH);
+                ASSERT(FALSE);
                 continue;
             }
 

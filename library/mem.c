@@ -28,9 +28,9 @@ SMem *Mem_Alloc(uint16_t u16Size)
     SMem *pMem = NULL;
     pMem = (SMem*)OSA_FixedMemMalloc(u16Size);
     if(pMem != NULL) {
-    	//pMem->u8Body = (uint8_t*)pMem;
-    	pMem->pNext = (SMem*)pMem;
-        pMem->u8Body = (uint8_t*)pMem + sizeof(SMem*);
+    	pMem->u8Body = (uint8_t*)pMem + sizeof(SMem);
+//    	pMem->pNext = (SMem*)pMem;
+//        pMem->u8Body = (uint8_t*)pMem + sizeof(SMem*);
     }
     return pMem;
 }
