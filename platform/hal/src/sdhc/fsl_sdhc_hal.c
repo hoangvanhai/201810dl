@@ -29,6 +29,8 @@
  */
 #include "fsl_sdhc_hal.h"
 #include <string.h>
+#include <fsl_debug_console.h>
+
 #if FSL_FEATURE_SOC_SDHC_COUNT
 
 /*FUNCTION****************************************************************
@@ -385,13 +387,16 @@ bool SDHC_HAL_GetCurState(SDHC_Type * base, sdhc_hal_curstat_type_t stateType)
     case kSdhcHalGetDataLine6Level:
     case kSdhcHalGetDataLine7Level:
       {
+    	  LREP("sub = %d\r\n", stateType - kSdhcHalGetDataLine0Level);
           dateLineLevel = SDHC_BRD_PRSSTAT_DLSL(base);
           if((dateLineLevel)&(1U<<(stateType-kSdhcHalGetDataLine0Level)))
           {
+        	  LREP("ret true\r\n");
               status = true;
           }
           else
           {
+        	  LREP("ret false\r\n");
               status = false;
           }
           break;

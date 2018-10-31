@@ -1,7 +1,4 @@
-#ifndef APPLICATION_APP_H_
-#define APPLICATION_APP_H_
-
-/** @FILE NAME:    template.h
+/** @FILE NAME:    template.c
  *  @DESCRIPTION:  This file for ...
  *
  *  Copyright (c) 2018 EES Ltd.
@@ -22,48 +19,54 @@
  *
  *
  *</pre>
- ******************************************************************************/
+******************************************************************************/
 
 /***************************** Include Files *********************************/
-#include <includes.h>
-#include <gpio_pins.h>
-#include <Transceiver.h>
+#include <freq_meas.h>
+#include <fsl_interrupt_manager.h>
 /************************** Constant Definitions *****************************/
 
-
 /**************************** Type Definitions *******************************/
-typedef struct SApp_ {
-
-	STrans	sTransPc;
-}SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
+
 /************************** Function Prototypes ******************************/
-extern void 	task_shell(task_param_t );
-extern void 	task_filesystem(task_param_t );
-extern void 	task_modbus(task_param_t );
-extern void 	task_serialcomm(task_param_t);
-
-void 			App_Init(SApp *pApp);
-
 
 /************************** Variable Definitions *****************************/
-extern OS_TCB 	TCB_task_shell;
-extern OS_TCB 	TCB_task_filesystem;
-extern OS_TCB 	TCB_task_modbus;
-extern OS_TCB	TCB_task_serialcomm;
-extern bool 	sdCardDetect;
 
-extern SApp		sApp;
 /*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+void FM_Init(uint32_t ftmInstance) {
+	ftm_user_config_t ftm_user_cfg = {
+			.tofFrequency = 10,
+			.syncMethod = FTM_SYNC_SWSYNC_MASK,
+			.isWriteProtection = false,
+			.BDMMode = kFtmBdmMode_11
+	};
+
+	ftm_dual_edge_capture_param_t capture_param_status = {
+			.mode = kFtmContinuous,
+			.currChanEdgeMode = kFtmRisingEdge,
+			.nextChanEdgeMode = kFtmRisingEdge
+	};
+
+	FTM_DRV_Init(ftmInstance, &ftm_user_cfg);
+
+	FTM_DRV_SetupChnDualEdgeCapture (ftmInstance, &capture_param_status, CHAN2_IDX,0);
+
+	FTM_HAL_EnableChnInt(g_ftmBase[ftmInstance], CHAN2_IDX); //enable odd channel interrupt
+
+	FTM_DRV_SetClock(ftmInstance,kClock_source_FTM_SystemClk, kFtmDividedBy1);
+
+	FTM_HAL_SetDualEdgeCaptureCmd(g_ftmBase[ftmInstance], CHAN2_IDX, true); //set the  DECAPx in FTM_COMBINE
+}
 
 
-
-
-
-
-
-
-
-#endif /* APPLICATION_APP_H_ */

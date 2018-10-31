@@ -955,6 +955,7 @@ static void SDHC_DRV_DataIrq(uint32_t instance, uint32_t irq)
     if (irq & (SDHC_HAL_DATA_ERR_INT | SDHC_HAL_DMA_ERR_INT))
     {
         SDHC_DRV_SetRequestError(req, irq);
+        LREP("post data err \r\n");
         OSA_SemaPost(req->complete);
         return;
     }
@@ -969,6 +970,7 @@ static void SDHC_DRV_DataIrq(uint32_t instance, uint32_t irq)
     }
     else if (irq & SDHC_HAL_DATA_COMPLETE_INT)
     {
+    	LREP("post data \r\n");
         OSA_SemaPost(req->complete);
     }
     else if (irq & SDHC_HAL_DMA_INT)
@@ -993,8 +995,10 @@ static void SDHC_DRV_CmdIrq(uint32_t instance, uint32_t irq)
     assert(instance < SDHC_INSTANCE_COUNT);
     assert(irq & SDHC_HAL_CMD_ALL_INT);
     req = g_hosts[instance]->currentReq;
+    LREP("irq = 0x%x\r\n", irq);
     if (irq & SDHC_HAL_CMD_ERR_INT)
     {
+    	LREP("SDHC_DRV_CmdIrq\r\n");
         SDHC_DRV_SetRequestError(req, irq);
     }
     else if (irq & SDHC_HAL_CMD_COMPLETE_INT)
@@ -1030,6 +1034,7 @@ static void SDHC_DRV_CmdIrq(uint32_t instance, uint32_t irq)
     }
     if ((!req->data) || (req->cardErrStatus))
     {
+    	LREP("post command \r\n");
         OSA_SemaPost(req->complete);
     }
 }
@@ -1457,7 +1462,6 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
     /* Wait until last time sdhc send operation complete */
     while(!SDHC_HAL_GetCurState(g_sdhcBase[instance], kSdhcHalGetDataLine0Level)){}
     
-    LREP("passed blocking check !\r\n");
     host = g_hosts[instance];
     ret = kStatus_SDHC_NoError;
     req->error = 0;
@@ -1519,6 +1523,7 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
     {
         host->currentReq = 0;
         SDHC_DRV_SetClock(instance, false);
+        LREP("set err send cmd \r\n");
         req->error |= FSL_SDHC_REQ_ERR_SEND_CMD;
 #if defined BSP_FSL_SDHC_USING_IRQ
         OSA_SemaDestroy(req->complete);
@@ -1537,15 +1542,18 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
         if (!timeoutInMs)
         {
             status = OSA_SemaWait(req->complete, OSA_WAIT_FOREVER);
+            LREP("wait forever status = %d\r\n", status);
         }
         else
         {
             status = OSA_SemaWait(req->complete, timeoutInMs);
+            LREP("wait timeout status = %d\r\n", status);
         }
     } while (status == kStatus_OSA_Idle);
 
     if (status != kStatus_OSA_Success)
     {
+    	LREP("________________set err timeout _________________\r\n");
         req->error |= FSL_SDHC_REQ_ERR_TIMEOUT;
     }
 
@@ -1618,13 +1626,14 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
 
     if (req->error)
     {
+    	LREP("error = %x\r\n", req->error);
         ret = kStatus_SDHC_RequestFailed;
     }
 
     host->currentReq = 0;
     SDHC_DRV_SetClock(instance, false);
 
-    LREP("return %d\r\n", ret);
+    LREP("SDHC_DRV_IssueRequestBlocking return %d\r\n", ret);
     return ret;
 }
 #endif

@@ -75,11 +75,15 @@ int main(void)
     hardware_init();
     GPIO_DRV_Init(NULL, ledPins);
 
+    GPIO_DRV_Init(sdhcCdPin, NULL);
+
     LREP(logo_msg);
     LREP("Application started built time: " __TIME__ " " __DATE__ "\r\n");
 
     // Configure the power mode protection
     SMC_HAL_SetProtection(SMC_BASE_PTR, kAllowPowerModeVlp);
+
+    CLOCK_SYS_EnableSdhcClock(0);
 
     // get cpu uid low value for slave
     gSlaveId = SIM_UIDL_UID(SIM_BASE_PTR);

@@ -68,22 +68,33 @@ void task_filesystem(task_param_t param)
 	void 	*p_msg;
 	OS_MSG_SIZE msg_size;
 	CPU_TS	ts;
+
+	BOOL run = FALSE;
+
+	//demo_card_data_access();
+
     while (1)
     {
+
+    	OSA_SleepMs(1000);
+    	if(run == FALSE) {
+    		run = TRUE;
+    		demo_card_data_access();
+    	}
 		//OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, 0, &err);
-
-    	p_msg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
-		if(err == OS_ERR_NONE) {
-
-			LREP("filesystem get msg size = %d ts = %d\r\n", msg_size, ts);
-
-			OSA_FixedMemFree((uint8_t*)p_msg);
-
-//			LREP("sd card detect: %d\r\n", cardInserted);
-//			if(cardInserted == true) {
-//				demo_card_data_access();
-//			}
-		}
+//
+//    	p_msg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
+//		if(err == OS_ERR_NONE) {
+//
+//			LREP("filesystem get msg size = %d ts = %d\r\n", msg_size, ts);
+//
+//			OSA_FixedMemFree((uint8_t*)p_msg);
+//
+////			LREP("sd card detect: %d\r\n", cardInserted);
+////			if(cardInserted == true) {
+////				demo_card_data_access();
+////			}
+//		}
     }
 }
 

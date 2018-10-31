@@ -42,7 +42,7 @@
 #define swap_be32(x) (__REV(x))
 #endif
 
-#define FSL_SDCARD_REQUEST_TIMEOUT 1000
+#define FSL_SDCARD_REQUEST_TIMEOUT 2000	//1000
 
 /*FUNCTION****************************************************************
  *
@@ -966,11 +966,9 @@ static sdhc_status_t SDCARD_DRV_GoIdle(sdhc_card_t *card)
     }
 #endif
     req->cmdIndex = kGoIdleState;
-    LREP("__________ISSUE REQ BLOCKING START ...\r\n");
     err = SDHC_DRV_IssueRequestBlocking(card->hostInstance,
                                         req,
                                         FSL_SDCARD_REQUEST_TIMEOUT);
-    LREP("___________ RET: %d\r\n", err);
 #if defined BSP_FSL_SDHC_USING_DYNALLOC
     OSA_MemFree(req);
 #endif
@@ -1391,9 +1389,9 @@ sdhc_status_t SDCARD_DRV_Init(sdhc_host_t *host, sdhc_card_t *card)
         return kStatus_SDHC_SetClockFailed;
     }
 
-    LREP("config clock done !\r\n");
+    LREP("SDHC config clock done !\r\n");
     err = SDCARD_DRV_GoIdle(card);
-    LREP("go idle done err = %d\r\n", err);
+    LREP("SDHC go idle done err = %d\r\n", err);
     if (err)
     {
         return kStatus_SDHC_SetCardToIdle;
@@ -1402,7 +1400,7 @@ sdhc_status_t SDCARD_DRV_Init(sdhc_host_t *host, sdhc_card_t *card)
 
 
     err = SDCARD_DRV_SendIfCond(card);
-    LREP("config send if cond done err = %d\r\n", err);
+    LREP("SDHC config send if cond done err = %d\r\n", err);
     if (err == kStatus_SDHC_NoError)
     {
         /* SDHC or SDXC card */

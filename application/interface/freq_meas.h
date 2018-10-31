@@ -1,7 +1,7 @@
-#ifndef APPLICATION_APP_H_
-#define APPLICATION_APP_H_
+#ifndef APPLICATION_INTERFACE_FREQ_MEAS_H_
+#define APPLICATION_INTERFACE_FREQ_MEAS_H_
 
-/** @FILE NAME:    template.h
+/** @FILE NAME:    freq_meas.h
  *  @DESCRIPTION:  This file for ...
  *
  *  Copyright (c) 2018 EES Ltd.
@@ -25,45 +25,20 @@
  ******************************************************************************/
 
 /***************************** Include Files *********************************/
-#include <includes.h>
-#include <gpio_pins.h>
-#include <Transceiver.h>
+#include <fsl_ftm_driver.h>
+#include <fsl_os_abstraction.h>
+#include <fsl_debug_console.h>
 /************************** Constant Definitions *****************************/
 
-
 /**************************** Type Definitions *******************************/
-typedef struct SApp_ {
-
-	STrans	sTransPc;
-}SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
 /************************** Function Prototypes ******************************/
-extern void 	task_shell(task_param_t );
-extern void 	task_filesystem(task_param_t );
-extern void 	task_modbus(task_param_t );
-extern void 	task_serialcomm(task_param_t);
-
-void 			App_Init(SApp *pApp);
-
-
+void FM_Init(uint32_t ftmInstance);
 /************************** Variable Definitions *****************************/
-extern OS_TCB 	TCB_task_shell;
-extern OS_TCB 	TCB_task_filesystem;
-extern OS_TCB 	TCB_task_modbus;
-extern OS_TCB	TCB_task_serialcomm;
-extern bool 	sdCardDetect;
 
-extern SApp		sApp;
 /*****************************************************************************/
 
 
-
-
-
-
-
-
-
-#endif /* APPLICATION_APP_H_ */
+#endif /* APPLICATION_INTERFACE_FREQ_MEAS_H_ */

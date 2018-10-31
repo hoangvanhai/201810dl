@@ -86,6 +86,7 @@
 									<listOptionValue builtIn="false" value="../library/shell"/>
 									<listOptionValue builtIn="false" value="../application"/>
 									<listOptionValue builtIn="false" value="../application/modbus"/>
+									<listOptionValue builtIn="false" value="../application/interface"/>
 									<listOptionValue builtIn="false" value="../application/filesystem"/>
 									<listOptionValue builtIn="false" value="../application/serialcomm"/>
 									<listOptionValue builtIn="false" value="../platform/osa/inc"/>
