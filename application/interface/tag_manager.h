@@ -1,4 +1,7 @@
-/** @FILE NAME:    template.c
+#ifndef APPLICATION_INTERFACE_TAG_MANAGER_H_
+#define APPLICATION_INTERFACE_TAG_MANAGER_H_
+
+/** @FILE NAME:    template.h
  *  @DESCRIPTION:  This file for ...
  *
  *  Copyright (c) 2018 EES Ltd.
@@ -19,57 +22,31 @@
  *
  *
  *</pre>
-******************************************************************************/
+ ******************************************************************************/
 
 /***************************** Include Files *********************************/
-#include <master.h>
+#include <includes.h>
 /************************** Constant Definitions *****************************/
 
 /**************************** Type Definitions *******************************/
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
-
 /************************** Function Prototypes ******************************/
-
+void Tag_Modbus_ReadAll();
+void Tag_AiDi_ReadAll();
 /************************** Variable Definitions *****************************/
 
 /*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-uint16_t MBMaster_Read(uint8_t id, uint8_t fc, uint16_t addr,
-						uint8_t num_reg, uint8_t *data, uint16_t *len) {
-
-	return 0;
-}
-
-
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-uint16_t MBMaster_Write(uint8_t id, uint8_t fc, uint16_t addr,
-						uint8_t num_reg, uint8_t *data, uint16_t len) {
-
-	return 0;
-}
 
 
 
 
+#define TAG_MAX_CHANNEL		12
+#define TAG_MAX_DI_NUM		8
+#define TAG_MAX_DO_NUM		4
 
 
+extern STag g_tagArray[TAG_MAX_CHANNEL];
 
-
-
-
-
+#endif /* APPLICATION_INTERFACE_TAG_MANAGER_H_ */

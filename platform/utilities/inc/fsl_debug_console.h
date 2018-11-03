@@ -34,7 +34,6 @@
 #include <stdint.h>
 #include "fsl_os_abstraction.h"
 #include "fsl_misc_utilities.h"
-
 /*
  * @addtogroup debug_console
  * @{

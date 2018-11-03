@@ -44,8 +44,8 @@ void hardware_init(void) {
 
 //  CLOCK_SYS_EnableSdhcClock(0);
 
-//  configure_sdhc_pins(0);
-
+  configure_sdhc_pins(0);
+  configure_i2c_pins(1);
   /* Init board clock */
   BOARD_ClockInit();
   dbg_uart_init();

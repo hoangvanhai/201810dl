@@ -50,5 +50,5 @@
 
 // application
 #include <app_cfg.h>
-
+#include <definition.h>
 #endif /* APPLICATION_INCLUDES_H_ */

@@ -40,10 +40,16 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+#include <fsl_debug_console.h>
+
 /* Definitions of physical drive number for each media */
 #define USB                                             0
 #define SD                                              1
-
+#define SD_DISK_ENABLE									1
+#define CD_USING_GPIO
+//#define CD_USING_DAT3
+//#define CD_USING_POLL_DAT3
 
 #define _USE_WRITE	1	/* 1: Enable disk_write function */
 #define _USE_IOCTL	1	/* 1: Enable disk_ioctl function */

@@ -272,11 +272,18 @@ typedef union _UINT32 {
 #define UPPER_MSB(a)    ((a).u8Bytes[3])
 
 /*----------------------------------------------------------------------*/
-typedef enum {
-	  FALSE = 0,
-	  TRUE
-}BOOLEAN;
+//typedef enum {
+//	  FALSE = 0,
+//	  TRUE
+//}BOOLEAN;
 
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#ifndef TRUE
+#define TRUE 1
+#endif
 
 #ifndef bool
 typedef enum _bool {

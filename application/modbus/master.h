@@ -26,7 +26,8 @@
  ******************************************************************************/
 
 /***************************** Include Files *********************************/
-
+#include <stdint.h>
+#include <layer1.h>
 /************************** Constant Definitions *****************************/
 
 
@@ -48,7 +49,8 @@
 /***************** Macros (Inline Functions) Definitions *********************/
 
 /************************** Function Prototypes ******************************/
-
+uint16_t MBMaster_Read(uint8_t id, uint8_t fc, uint16_t addr, uint8_t num_reg, uint8_t *data, uint16_t *len);
+uint16_t MBMaster_Write(uint8_t id, uint8_t fc, uint16_t addr, uint8_t num_reg, uint8_t *data, uint16_t len);
 /************************** Variable Definitions *****************************/
 
 /*****************************************************************************/

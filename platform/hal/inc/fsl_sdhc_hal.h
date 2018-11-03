@@ -96,6 +96,7 @@
                                         SDHC_HAL_CMD_CRC_ERR_INT | \
                                         SDHC_HAL_CMD_END_BIT_ERR_INT | \
                                         SDHC_HAL_CMD_INDEX_ERR_INT))
+
 #define SDHC_HAL_DATA_ERR_INT           ((uint32_t)(SDHC_HAL_DATA_TIMEOUT_ERR_INT | \
                                         SDHC_HAL_DATA_CRC_ERR_INT | \
                                         SDHC_HAL_DATA_END_BIT_ERR_INT))

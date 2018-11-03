@@ -387,16 +387,16 @@ bool SDHC_HAL_GetCurState(SDHC_Type * base, sdhc_hal_curstat_type_t stateType)
     case kSdhcHalGetDataLine6Level:
     case kSdhcHalGetDataLine7Level:
       {
-    	  LREP("sub = %d\r\n", stateType - kSdhcHalGetDataLine0Level);
+    	  //LREP("sub = %d\r\n", stateType - kSdhcHalGetDataLine0Level);
           dateLineLevel = SDHC_BRD_PRSSTAT_DLSL(base);
           if((dateLineLevel)&(1U<<(stateType-kSdhcHalGetDataLine0Level)))
           {
-        	  LREP("ret true\r\n");
+        	  //LREP("ret true\r\n");
               status = true;
           }
           else
           {
-        	  LREP("ret false\r\n");
+        	  //LREP("ret false\r\n");
               status = false;
           }
           break;
@@ -637,6 +637,12 @@ void SDHC_HAL_SendCmd(SDHC_Type * base, const sdhc_hal_cmd_req_t* cmdReq)
                 | SDHC_XFERTYP_CMDTYP_MASK | SDHC_XFERTYP_BCEN_MASK | SDHC_XFERTYP_CICEN_MASK
                 | SDHC_XFERTYP_CCCEN_MASK | SDHC_XFERTYP_RSPTYP_MASK | SDHC_XFERTYP_DTDSEL_MASK
                 | SDHC_XFERTYP_AC12EN_MASK)));
+	LREP("dataBlkSize: %d - dataBlkCount: %d arg: %x index: %d flag: 0x%x\r\n",
+			cmdReq->dataBlkSize,
+			cmdReq->dataBlkCount,
+			cmdReq->arg,
+			cmdReq->index,
+			cmdReq->flags);
 }
 
 /*FUNCTION****************************************************************

@@ -23,6 +23,7 @@
 
 /***************************** Include Files *********************************/
 #include <app.h>
+#include <rtc_comm.h>
 /************************** Constant Definitions *****************************/
 
 /**************************** Type Definitions *******************************/
@@ -55,7 +56,18 @@ void 			App_Init(SApp *pApp) {
  *  @note
  */
 
+void 			task_periodic(void *parg) {
 
+	RTC_InitI2C(0);
+	OSA_SleepMs(100);
+	RTC_SetTimeDate(NULL);
+
+	while(1) {
+		OSA_SleepMs(1000);
+		LREP("Start get data\r\n");
+		RTC_GetTimeDate(NULL);
+	}
+}
 /*****************************************************************************/
 /** @brief
  *

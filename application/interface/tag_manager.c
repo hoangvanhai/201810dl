@@ -22,6 +22,7 @@
 ******************************************************************************/
 
 /***************************** Include Files *********************************/
+#include <tag_manager.h>
 #include <master.h>
 /************************** Constant Definitions *****************************/
 
@@ -33,7 +34,8 @@
 /************************** Function Prototypes ******************************/
 
 /************************** Variable Definitions *****************************/
-
+//STag g_tagArray[TAG_MAX_CHANNEL];
+bool g_DigitalInput[TAG_MAX_DI_NUM];
 /*****************************************************************************/
 /** @brief
  *
@@ -42,33 +44,29 @@
  *  @return Void.
  *  @note
  */
-uint16_t MBMaster_Read(uint8_t id, uint8_t fc, uint16_t addr,
-						uint8_t num_reg, uint8_t *data, uint16_t *len) {
 
-	return 0;
-}
-
-
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-uint16_t MBMaster_Write(uint8_t id, uint8_t fc, uint16_t addr,
-						uint8_t num_reg, uint8_t *data, uint16_t len) {
-
-	return 0;
+void Tag_Modbus_ReadAll() {
+//	int retVal;
+//	for(int i = 0; i < TAG_MAX_CHANNEL; i++) {
+//		if(g_tagArray[i].input_type == TIT_MB) {
+//			uint8_t data[4];
+//			uint16_t rlen;
+//			retVal = MBMaster_Read(g_tagArray[i].id, g_tagArray[i].slave_reg_addr, 0x03, 1, data, &rlen);
+//			if(retVal != MB_SUCCESS) {
+//				g_tagArray[i].status = TAG_STT_MB_FAILED;
+//			} else {
+//				g_tagArray[i].status = TAG_STT_OK;
+//			}
+//		}
+//	}
 }
 
 
 
 
+void Tag_AiDi_ReadAll() {
 
-
-
+}
 
 
 

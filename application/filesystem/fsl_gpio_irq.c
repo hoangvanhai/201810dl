@@ -49,7 +49,7 @@ void PORTE_IRQHandler(void)
     uint32_t pin = GPIO_EXTRACT_PIN(kGpioSdhc0Cd);
 
     if(PORT_HAL_GetPortIntFlag(gpioBase) == (1 << pin)) {
-        sdhc_card_detection();
+        //sdhc_card_detection();
     }
     /* Clear interrupt flag.*/
     PORT_HAL_ClearPortIntFlag(gpioBase);

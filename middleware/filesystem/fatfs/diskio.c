@@ -31,13 +31,14 @@
 /**************************************************************************
    Micro variables
 **************************************************************************/
+#include "diskio.h"        /* FatFs lower layer API */
 #if USB_DISK_ENABLE
 #include "msd_diskio.h"
 #endif
 #if SD_DISK_ENABLE
 #include "fsl_sd_disk.h"
 #endif
-#include "diskio.h"        /* FatFs lower layer API */
+
 
 
 /*FUNCTION*----------------------------------------------------------------
@@ -64,8 +65,8 @@ DSTATUS disk_initialize (
     case SD:
         return sdcard_disk_initialize(pdrv);
 #endif
-//    default:
-//        return STA_NOINIT;
+    default:
+        return STA_NOINIT;
     }
     return stat;
 }

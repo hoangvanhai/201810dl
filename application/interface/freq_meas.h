@@ -41,4 +41,6 @@ void FM_Init(uint32_t ftmInstance);
 /*****************************************************************************/
 
 
+
+
 #endif /* APPLICATION_INTERFACE_FREQ_MEAS_H_ */

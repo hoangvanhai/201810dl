@@ -50,7 +50,7 @@
 #define OS_MEM_PARTITION_32_TOTAL_NUM_BLOCK				10
 #define OS_MEM_PARTITION_64_TOTAL_NUM_BLOCK				8
 #define OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK			4
-#define OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK			8
+#define OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK			20
 
 
 /**************************** Type Definitions *******************************/
