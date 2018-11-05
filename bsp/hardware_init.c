@@ -46,6 +46,7 @@ void hardware_init(void) {
 
   configure_sdhc_pins(0);
   configure_i2c_pins(1);
+  configure_ftm_pins(FTM0_IDX);
   /* Init board clock */
   BOARD_ClockInit();
   dbg_uart_init();

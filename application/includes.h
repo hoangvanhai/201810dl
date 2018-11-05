@@ -52,4 +52,5 @@
 // application
 #include <app_cfg.h>
 #include <definition.h>
+#include <typedefs.h>
 #endif /* APPLICATION_INCLUDES_H_ */

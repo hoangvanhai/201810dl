@@ -70,12 +70,20 @@ void 			task_periodic(void *parg) {
 		ASSERT(FALSE);
 	}
 
+
+
+	FM_Init(0);
+
+
+
 	while(1) {
 		OSA_SleepMs(1000);
 		if(RTC_GetTimeDate(&g_DateTime) == 0) {
+			/*
 			LREP("sec %d min %d hour %d day: %d date: %d month: %d year: %d\r\n",
 					g_DateTime.tm_sec, g_DateTime.tm_min, g_DateTime.tm_hour, g_DateTime.tm_wday,
 					g_DateTime.tm_mday, g_DateTime.tm_mon, g_DateTime.tm_year);
+					*/
 		} else {
 			ASSERT(FALSE);
 		}

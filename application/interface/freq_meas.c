@@ -34,7 +34,7 @@
 /************************** Function Prototypes ******************************/
 
 /************************** Variable Definitions *****************************/
-
+uint64_t totalCounter;
 /*****************************************************************************/
 /** @brief
  *
@@ -44,29 +44,97 @@
  *  @note
  */
 
-void FM_Init(uint32_t ftmInstance) {
+void FM_Init(uint32_t instance) {
+
 	ftm_user_config_t ftm_user_cfg = {
-			.tofFrequency = 10,
-			.syncMethod = FTM_SYNC_SWSYNC_MASK,
-			.isWriteProtection = false,
-			.BDMMode = kFtmBdmMode_11
+		.tofFrequency = 1,
+		.syncMethod = FTM_SYNC_TRIG0_MASK,
+		.isWriteProtection = false,
+		.BDMMode = kFtmBdmMode_01
 	};
 
-	ftm_dual_edge_capture_param_t capture_param_status = {
-			.mode = kFtmContinuous,
-			.currChanEdgeMode = kFtmRisingEdge,
-			.nextChanEdgeMode = kFtmRisingEdge
-	};
-
-	FTM_DRV_Init(ftmInstance, &ftm_user_cfg);
-
-	FTM_DRV_SetupChnDualEdgeCapture (ftmInstance, &capture_param_status, CHAN2_IDX,0);
-
-	FTM_HAL_EnableChnInt(g_ftmBase[ftmInstance], CHAN2_IDX); //enable odd channel interrupt
-
-	FTM_DRV_SetClock(ftmInstance,kClock_source_FTM_SystemClk, kFtmDividedBy1);
-
-	FTM_HAL_SetDualEdgeCaptureCmd(g_ftmBase[ftmInstance], CHAN2_IDX, true); //set the  DECAPx in FTM_COMBINE
+	FTM_DRV_Init(FTM_PERIOD_MEASUARE_INSTANCE, &ftm_user_cfg);
+	FTM_DRV_SetClock(FTM_PERIOD_MEASUARE_INSTANCE,kClock_source_FTM_SystemClk, kFtmDividedBy1);
+	FTM_DRV_SetupChnInputCapture(FTM_PERIOD_MEASUARE_INSTANCE, kFtmRisingAndFalling, CHAN0_IDX, 0);
+	FTM_HAL_EnableChnInt(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
+	LREP("init ftm capture module done !\r\n");
 }
+
+
+
+/*******************************************************************************
+ * Code
+ ******************************************************************************/
+
+#if (FTM_INSTANCE_COUNT > 0)
+/*!
+ * @brief Implementation of FTM0 handler named in startup code.
+ *
+ *  Passes instance to generic FTM IRQ handler.
+ */
+void FTM0_IRQHandler(void)
+{
+	//debug_putchar('0');
+
+	if(FTM_HAL_HasTimerOverflowed(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE])) {
+		//LREP(" [O] ");
+		FTM_HAL_ClearTimerOverflow(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE]);
+		totalCounter += 0xFFFF;
+	}
+
+	if (FTM_HAL_HasChnEventOccurred(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX))
+	{
+		FTM_HAL_ClearChnEventStatus(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
+		totalCounter += FTM_HAL_GetChnCountVal(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
+		LREP("%ld ", totalCounter);
+		totalCounter = 0;
+		FTM_HAL_SetCounter(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], 0);
+	}
+
+	//CaptureTime_ms = (CaptureCounts * 100) / FTM_DRV_GetClock(VALVE_FTM_UNIT);
+
+    FTM_DRV_IRQHandler(0U);
+}
+#endif
+
+#if (FTM_INSTANCE_COUNT > 1)
+/*!
+ * @brief Implementation of FTM1 handler named in startup code.
+ *
+ * Passes instance to generic FTM IRQ handler.
+ */
+void FTM1_IRQHandler(void)
+{
+	debug_putchar('1');
+    FTM_DRV_IRQHandler(1U);
+}
+#endif
+
+#if (FTM_INSTANCE_COUNT > 2)
+/*!
+ * @brief Implementation of FTM2 handler named in startup code.
+ *
+ * Passes instance to generic FTM IRQ handler.
+ */
+void FTM2_IRQHandler(void)
+{
+	debug_putchar('2');
+    FTM_DRV_IRQHandler(2U);
+}
+#endif
+
+#if (FTM_INSTANCE_COUNT > 3)
+/*!
+ * @brief Implementation of FTM3 handler named in startup code.
+ *
+ * Passes instance to generic FTM IRQ handler.
+ */
+void FTM3_IRQHandler(void)
+{
+	debug_putchar('3');
+    FTM_DRV_IRQHandler(3U);
+}
+#endif
+
 
 

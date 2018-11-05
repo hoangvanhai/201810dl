@@ -53,10 +53,13 @@ extern const IRQn_Type g_ftmIrqId[FTM_INSTANCE_COUNT];
 /*! @brief Configuration structure that the user needs to set
  */
 typedef struct FtmUserConfig {
-    uint8_t tofFrequency; /*!< Select ratio between number of overflows to times TOF is set @internal gui name="Overflow frequency" id="OvFrequency" */
+    uint8_t tofFrequency; /*!< Select ratio between number of overflows to times TOF is set
+    						@internal gui name="Overflow frequency" id="OvFrequency" */
     ftm_bdm_mode_t BDMMode; /*!< Select FTM behavior in BDM mode @internal gui name="BDM mode" id="BdmMode" */
-    bool isWriteProtection; /*!< true: enable write protection, false: write protection is disabled @internal gui name="Write protection" id="WriteProtection" */
-    uint32_t syncMethod; /*!< Register synch options available in the ftm_sync_method_t enumeration @internal gui name="Triggers" id="Triggers" */
+    bool isWriteProtection; /*!< true: enable write protection, false: write protection is disabled
+    						@internal gui name="Write protection" id="WriteProtection" */
+    uint32_t syncMethod; /*!< Register synch options available in the ftm_sync_method_t enumeration
+    						@internal gui name="Triggers" id="Triggers" */
 } ftm_user_config_t;
 
 /*******************************************************************************

@@ -44,6 +44,7 @@ void send_queue(int32_t argc, char**argv);
 void help_cmd(int32_t argc, char **argv);
 void setdate(int32_t argc, char **argv);
 void settime(int32_t argc, char **argv);
+void status(int32_t argc, char **argv);
 void restart(int32_t argc, char**argv);
 void my_shell_init(void);
 
@@ -54,8 +55,9 @@ const shell_command_t cmd_table[] =
 	{"clear", 	0u, 0u, clear_screen, 	"clear screen", ""},
 	{"send", 	1u, 1u, send_queue, 	"send queue message", "<tcb>"},
 	{"reset", 	0u, 0u, restart, 		"reset system", ""},
-	{"settime", 2u, 2u, settime, 		"set curr time", "<min> <hour>"},
-	{"setdate", 3u, 3u, setdate, 		"reset system", "<date> <month> <year>"},
+	{"settime", 2u, 2u, settime, 		"set time", "<min> <hour>"},
+	{"setdate", 3u, 3u, setdate, 		"set date", "<date> <month> <year>"},
+	{"status", 	0u, 0u, status, 		"show system status", ""},
 	{0, 0u, 0u, 0, 0, 0}
 };
 
@@ -227,6 +229,21 @@ void settime(int32_t argc, char **argv)
 	}
 
 }
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void status(int32_t argc, char **argv) {
+	LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n\r\n",
+			g_DateTime.tm_mday, g_DateTime.tm_mon, g_DateTime.tm_year,
+			g_DateTime.tm_hour, g_DateTime.tm_min, g_DateTime.tm_sec);
+}
+
 
 void task_shell(task_param_t param)
 {

@@ -160,13 +160,23 @@ typedef enum _ftm_sync_method_t
 typedef enum _ftm_bdm_mode_t
 {
     kFtmBdmMode_00 = 0,
-    /*!< FTM counter stopped, CH(n)F bit can be set, FTM channels in functional mode, writes to MOD,CNTIN and C(n)V registers bypass the register buffers. @internal gui name="Mode 0" */
+		/*!< FTM counter stopped, CH(n)F bit can be set,
+		 * FTM channels in functional mode, writes to MOD,
+		 * CNTIN and C(n)V registers bypass the register buffers.
+		 * @internal gui name="Mode 0" */
     kFtmBdmMode_01,
-    /*!< FTM counter stopped, CH(n)F bit is not set, FTM channels outputs are forced to their safe value , writes to MOD,CNTIN and C(n)V registers bypass the register buffers. @internal gui name="Mode 1" */
+    	/*!< FTM counter stopped, CH(n)F bit is not set,
+    	 * FTM channels outputs are forced to their safe value ,
+    	 * writes to MOD, CNTIN and C(n)V registers bypass the register buffers.
+    	 * @internal gui name="Mode 1" */
     kFtmBdmMode_10,
-    /*!< FTM counter stopped, CH(n)F bit is not set, FTM channels outputs are frozen when chip enters in BDM mode, writes to MOD,CNTIN and C(n)V registers bypass the register buffers. @internal gui name="Mode 2" */
+		/*!< FTM counter stopped, CH(n)F bit is not set,
+		 * FTM channels outputs are frozen when chip enters in BDM mode,  writes to MOD,CNTIN and C(n)V registers bypass the register buffers.
+		 * @internal gui name="Mode 2" */
     kFtmBdmMode_11
-    /*!< FTM counter in functional mode, CH(n)F bit can be set, FTM channels in functional mode, writes to MOD,CNTIN and C(n)V registers is in fully functional mode. @internal gui name="Mode 3" */
+    	/*!< FTM counter in functional mode, CH(n)F bit can be set,
+    	 * FTM channels in functional mode, writes to MOD,CNTIN and C(n)V registers is in fully functional mode.
+    	 * @internal gui name="Mode 3" */
 }ftm_bdm_mode_t;
 
 /*! @brief FTM status */
@@ -215,9 +225,12 @@ typedef struct FtmDualEdgeCaptureParam
  */
 typedef struct FtmPhaseParam
 {
-    bool kFtmPhaseInputFilter;      /*!< false: disable phase filter, true: enable phase filter  @internal gui name="Phase input filter" id="QuadPhaseFilter" */
-    uint32_t kFtmPhaseFilterVal;    /*!< Filter value, used only if phase input filter is enabled  @internal gui name="Phase filter value" id="QuadPhaseValue" */
-    ftm_quad_phase_polarity_t kFtmPhasePolarity; /*!< kFtmQuadPhaseNormal or kFtmQuadPhaseInvert  @internal gui name="Phase polarity" id="QuadPhasePol" */
+    bool kFtmPhaseInputFilter;      /*!< false: disable phase filter, true: enable phase filter
+    								@internal gui name="Phase input filter" id="QuadPhaseFilter" */
+    uint32_t kFtmPhaseFilterVal;    /*!< Filter value, used only if phase input filter is enabled
+    								@internal gui name="Phase filter value" id="QuadPhaseValue" */
+    ftm_quad_phase_polarity_t kFtmPhasePolarity; /*!< kFtmQuadPhaseNormal or kFtmQuadPhaseInvert
+    								@internal gui name="Phase polarity" id="QuadPhasePol" */
 }ftm_phase_params_t;
 
 /*******************************************************************************

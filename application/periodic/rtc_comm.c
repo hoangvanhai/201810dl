@@ -20,7 +20,14 @@ static i2c_device_t slave =
     .baudRate_kbps = 100
 };
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int RTC_InitI2C(uint32_t baudrate) {
 	I2C_DRV_MasterInit(I2C_RTOS_MASTER_INSTANCE, &master);
 	g_DateTime.tm_min = 0;
@@ -32,13 +39,27 @@ int RTC_InitI2C(uint32_t baudrate) {
 	return 0;
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int RTC_InitRTCIC(uint32_t address) {
 
 	return 0;
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int RTC_GetTimeDate(SDateTime *time) {
 	if(time) {
 		uint8_t recvData[7];
@@ -65,7 +86,14 @@ int RTC_GetTimeDate(SDateTime *time) {
 	return -1;
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int RTC_SetTimeDate(SDateTime *time) {
 
 	uint8_t DateTime[7];
@@ -91,12 +119,19 @@ int RTC_SetTimeDate(SDateTime *time) {
 	i2c_ret = I2C_DRV_MasterSendDataBlocking(I2C_RTOS_MASTER_INSTANCE, &slave, cmd, 1, DateTime, 7, 20);
 
 	if(i2c_ret != kStatus_I2C_Success) {
-		LREP("I2C write return error: %d\r\n", i2c_ret);
+		ASSERT(FALSE);
 	}
 	return i2c_ret;
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int  RTC_SetDateTime(uint8_t min, uint8_t hour, uint8_t date,
 						uint8_t month, uint32_t year) {
 
@@ -112,7 +147,14 @@ int  RTC_SetDateTime(uint8_t min, uint8_t hour, uint8_t date,
 	return retVal;
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 static int cmd_read_date_time(uint8_t *recvData)
 {
     i2c_status_t i2c_ret;
@@ -122,7 +164,7 @@ static int cmd_read_date_time(uint8_t *recvData)
     i2c_ret = I2C_DRV_MasterReceiveDataBlocking(I2C_RTOS_MASTER_INSTANCE,
                                       &slave, cmd, 1, recvData, 7, 20);
     if(i2c_ret != kStatus_I2C_Success) {
-    	LREP("I2C return error: %d\r\n", i2c_ret);
+    	ASSERT(FALSE);
     }
 
     return i2c_ret;

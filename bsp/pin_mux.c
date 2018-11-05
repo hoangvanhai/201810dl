@@ -123,12 +123,19 @@ void configure_enet_pins(uint32_t instance)
 void configure_ftm_pins(uint32_t instance)
 {
   switch(instance) {
+	case FTM0_IDX:                       /* FTM3 */
+		/* Affects PORTD_PCR1 register */
+		PORT_HAL_SetDriveStrengthMode(PORTC,1u,kPortLowDriveStrength);
+		PORT_HAL_SetMuxMode(PORTC,1u,kPortMuxAlt4);
+		PORT_HAL_SetSlewRateMode(PORTC,1u,kPortSlowSlewRate);
+		break;
     case FTM3_IDX:                       /* FTM3 */
-      /* Affects PORTE_PCR6 register */
-      PORT_HAL_SetDriveStrengthMode(PORTE,6u,kPortLowDriveStrength);
-      PORT_HAL_SetMuxMode(PORTE,6u,kPortMuxAlt6);
-      PORT_HAL_SetSlewRateMode(PORTE,6u,kPortSlowSlewRate);
-      break;
+		/* Affects PORTD_PCR1 register */
+		PORT_HAL_SetDriveStrengthMode(PORTD,1u,kPortLowDriveStrength);
+		PORT_HAL_SetMuxMode(PORTD,1u,kPortMuxAlt6);
+		PORT_HAL_SetSlewRateMode(PORTD,1u,kPortSlowSlewRate);
+		break;
+
     default:
       break;
   }
@@ -442,6 +449,8 @@ void configure_flexbus_pins(uint32_t instance)
       break;
   }
 }
+
+
 
 /* END pin_mux. */
 /*!

@@ -10,9 +10,10 @@
 
 #include <time.h>
 #include <includes.h>
+#include <fsl_debug_console.h>
 
 
-#define I2C_RTOS_SLAVE_ADDRESS    	(0x68)	//(0xD0)
+#define I2C_RTOS_SLAVE_ADDRESS    	(0x68)
 #define I2C_RTOS_MASTER_INSTANCE	1
 #define RTC_START_REG				0
 #define RTC_NUM_REG					7
@@ -25,10 +26,11 @@ int RTC_InitRTCIC(uint32_t address);
 int RTC_GetTimeDate(SDateTime *time);
 
 int RTC_SetTimeDate(SDateTime *time);
-int RTC_SetDateTime(uint8_t min, uint8_t hour, uint8_t date, uint8_t month, uint32_t year);
 
+int RTC_SetDateTime(uint8_t min, uint8_t hour,
+					uint8_t date, uint8_t month,
+					uint32_t year);
 
 extern SDateTime g_DateTime;
-
 
 #endif /* APPLICATION_PERIODIC_RTC_COMM_H_ */

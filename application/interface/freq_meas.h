@@ -29,7 +29,7 @@
 #include <fsl_os_abstraction.h>
 #include <fsl_debug_console.h>
 /************************** Constant Definitions *****************************/
-
+#define FTM_PERIOD_MEASUARE_INSTANCE			FTM0_IDX
 /**************************** Type Definitions *******************************/
 
 /***************** Macros (Inline Functions) Definitions *********************/

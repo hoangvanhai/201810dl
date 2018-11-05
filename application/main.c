@@ -113,19 +113,19 @@ int main(void)
         return -1;
     }
 
-    result = OSA_TaskCreate(task_filesystem,
-                    (uint8_t *)"filesystem",
-                    TASK_FILESYSTEM_STACK_SIZE,
-                    task_filesystem_stack,
-                    TASK_FILESYSTEM_PRIO,
-                    (task_param_t)0,
-                    false,
-                    &task_filesystem_task_handler);
-    if (result != kStatus_OSA_Success)
-    {
-        LREP("Failed to create filesystem task\r\n\r\n");
-        return -1;
-    }
+//    result = OSA_TaskCreate(task_filesystem,
+//                    (uint8_t *)"filesystem",
+//                    TASK_FILESYSTEM_STACK_SIZE,
+//                    task_filesystem_stack,
+//                    TASK_FILESYSTEM_PRIO,
+//                    (task_param_t)0,
+//                    false,
+//                    &task_filesystem_task_handler);
+//    if (result != kStatus_OSA_Success)
+//    {
+//        LREP("Failed to create filesystem task\r\n\r\n");
+//        return -1;
+//    }
 
 
     result = OSA_TaskCreate(task_serialcomm,
