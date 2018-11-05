@@ -60,12 +60,25 @@ void 			task_periodic(void *parg) {
 
 	RTC_InitI2C(0);
 	OSA_SleepMs(100);
-	RTC_SetTimeDate(NULL);
+
+	if(RTC_GetTimeDate(&g_DateTime) == 0) {
+		if(g_DateTime.tm_year == 1990) {
+			RTC_SetDateTime(0, 0, 1, 1, 2018);
+		}
+
+	} else {
+		ASSERT(FALSE);
+	}
 
 	while(1) {
 		OSA_SleepMs(1000);
-		LREP("Start get data\r\n");
-		RTC_GetTimeDate(NULL);
+		if(RTC_GetTimeDate(&g_DateTime) == 0) {
+			LREP("sec %d min %d hour %d day: %d date: %d month: %d year: %d\r\n",
+					g_DateTime.tm_sec, g_DateTime.tm_min, g_DateTime.tm_hour, g_DateTime.tm_wday,
+					g_DateTime.tm_mday, g_DateTime.tm_mon, g_DateTime.tm_year);
+		} else {
+			ASSERT(FALSE);
+		}
 	}
 }
 /*****************************************************************************/

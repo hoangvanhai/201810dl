@@ -189,7 +189,7 @@ void shell_help(void)
 
   while (cur_command->name)
   {
-    LREP(">%7s %-14s- %s\r\n", cur_command->name,
+    LREP(">%10s %-24s- %s\r\n", cur_command->name,
                                       cur_command->syntax,
                                       cur_command->description);
     cur_command++;

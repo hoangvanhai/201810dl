@@ -57,7 +57,7 @@
 /** Macro to convert a number to a string.	 */
 #define TOSTRING(x) _TOSTRING(x)
 
-
+#define DEC_TO_HEX_1BYTE(dec)  		(((dec / 10) << 4) & 0xF0) | (dec % 10)
 
 #ifdef DEBUG
 	#define ASSERT_NONVOID(con,ret)	{if(!(con))	{LREP("\r\nASSERT in file " __FILE__ " at line "  TOSTRING(__LINE__) "\r\n"); return ret;}	}

@@ -12,7 +12,7 @@
 #include <includes.h>
 
 
-#define I2C_RTOS_SLAVE_ADDRESS    	(0xD0)
+#define I2C_RTOS_SLAVE_ADDRESS    	(0x68)	//(0xD0)
 #define I2C_RTOS_MASTER_INSTANCE	1
 #define RTC_START_REG				0
 #define RTC_NUM_REG					7
@@ -20,11 +20,12 @@
 
 typedef struct	tm		SDateTime;
 
-uint32_t RTC_InitI2C(uint32_t baudrate);
-uint32_t RTC_InitRTCIC(uint32_t address);
-uint32_t RTC_GetTimeDate(SDateTime *time);
-uint32_t RTC_SetTimeDate(SDateTime *time);
+int RTC_InitI2C(uint32_t baudrate);
+int RTC_InitRTCIC(uint32_t address);
+int RTC_GetTimeDate(SDateTime *time);
 
+int RTC_SetTimeDate(SDateTime *time);
+int RTC_SetDateTime(uint8_t min, uint8_t hour, uint8_t date, uint8_t month, uint32_t year);
 
 
 extern SDateTime g_DateTime;

@@ -34,6 +34,7 @@
 #include "fsl_i2c_shared_function.h"
 #include "fsl_clock_manager.h"
 #include "fsl_interrupt_manager.h"
+//#include <fsl_debug_console.h>
 
 #if FSL_FEATURE_SOC_I2C_COUNT
 
@@ -563,6 +564,8 @@ static i2c_status_t I2C_DRV_SendAddress(uint32_t instance,
 
     /* Put slave address byte 1 into address buffer. */
     addrBuff[addrSize++] = addrByte1;
+
+    //LREP("address = 0x%x \r\n", addrByte1);
 
     if (is10bitAddr)
     {

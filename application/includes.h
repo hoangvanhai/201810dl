@@ -46,6 +46,7 @@
 #include "fsl_uart_edma_driver.h"
 #include "fsl_vref_driver.h"
 #include "fsl_wdog_driver.h"
+#include "fsl_misc_utilities.h"
 
 
 // application
