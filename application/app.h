@@ -39,24 +39,28 @@
     task_stack_t task##_stack[(stackSize)/sizeof(task_stack_t)];  \
     task_handler_t task##_task_handler;
 
-/**************************** Type Definitions *******************************/
+#define APP_TASK_INIT_HANDLER(p, task) 		(p)->task##_task_handler = &((p)->TCB_##task)
 
+#define App_SetSysStatus(pApp, state)    	(pApp)->eStatus |= (state)
+#define App_ClearSysStatus(pApp, state)  	(pApp)->eStatus &= ~(state)
+
+/**************************** Type Definitions *******************************/
 typedef struct SApp_ {
+	ESysStatus			eStatus;
 	STrans				sTransPc;
 	STrans				sTransUi;
 	SModbus				sModbus;
 	SDateTime			sDateTime;
-
-	/* NET */
 	SDigitalInput		sDI;
 	SDigitalOutput		sDO;
 	SAnalogInput		sAI;
-
 	APP_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
 	APP_TASK_DEFINE(task_filesystem, 	TASK_FILESYSTEM_STACK_SIZE);
 	APP_TASK_DEFINE(task_modbus, 		TASK_MODBUS_STACK_SIZE);
 	APP_TASK_DEFINE(task_serialcomm,	TASK_SERIAL_COMM_STACK_SIZE);
 	APP_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
+
+	OS_TMR 				hTimer;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
@@ -65,7 +69,7 @@ typedef struct SApp_ {
 /* Application interface */
 void 			App_Init(SApp *pApp);
 void			App_InitTaskHandle(SApp *pApp);
-void			App_CreateAppTask(SApp *pApp);
+int				App_CreateAppTask(SApp *pApp);
 void 			App_TaskShell(task_param_t );
 void 			App_TaskFilesystem(task_param_t );
 void 			App_TaskModbus(task_param_t );
@@ -101,7 +105,7 @@ int				App_InitAI(SApp *pApp);
 /************************** Variable Definitions *****************************/
 
 extern SApp		sApp;
-SApp 			*pAppObj;
+extern SApp 	*pAppObj;
 /*****************************************************************************/
 
 

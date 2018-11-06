@@ -11,7 +11,7 @@
 
 static int cmd_read_date_time(uint8_t *recvData);
 
-SDateTime g_DateTime;
+SDateTime *pDateTime;
 static i2c_master_state_t master;
 // i2c slave info
 static i2c_device_t slave =
@@ -20,24 +20,7 @@ static i2c_device_t slave =
     .baudRate_kbps = 100
 };
 
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-int RTC_InitI2C(uint32_t baudrate) {
-	I2C_DRV_MasterInit(I2C_RTOS_MASTER_INSTANCE, &master);
-	g_DateTime.tm_min = 0;
-	g_DateTime.tm_hour = 0;
-	g_DateTime.tm_wday = 1;
-	g_DateTime.tm_mday = 1;
-	g_DateTime.tm_mon = 1;
-	g_DateTime.tm_year = 10;
-	return 0;
-}
+
 
 /*****************************************************************************/
 /** @brief
@@ -47,9 +30,26 @@ int RTC_InitI2C(uint32_t baudrate) {
  *  @return Void.
  *  @note
  */
-int RTC_InitRTCIC(uint32_t address) {
+int RTC_InitDateTime(SDateTime *time) {
 
-	return 0;
+	i2c_status_t retVal =  I2C_DRV_MasterInit(I2C_RTOS_MASTER_INSTANCE, &master);
+	if(retVal != kStatus_I2C_Success)
+		return retVal;
+
+	if(time != NULL) {
+		pDateTime = time;
+		pDateTime->tm_min = 0;
+		pDateTime->tm_hour = 0;
+		pDateTime->tm_wday = 1;
+		pDateTime->tm_mday = 1;
+		pDateTime->tm_mon = 1;
+		pDateTime->tm_year = 2018;
+	} else {
+		ASSERT(FALSE);
+		return -1;
+	}
+
+	return retVal;
 }
 
 /*****************************************************************************/
@@ -135,14 +135,14 @@ int RTC_SetTimeDate(SDateTime *time) {
 int  RTC_SetDateTime(uint8_t min, uint8_t hour, uint8_t date,
 						uint8_t month, uint32_t year) {
 
-	int retVal = RTC_GetTimeDate(&g_DateTime);
+	int retVal = RTC_GetTimeDate(pDateTime);
 	if(retVal == kStatus_I2C_Success) {
-		g_DateTime.tm_min = min;
-		g_DateTime.tm_hour = hour;
-		g_DateTime.tm_mday = date;
-		g_DateTime.tm_mon = month;
-		g_DateTime.tm_year = year - 1990;
-		return RTC_SetTimeDate(&g_DateTime);
+		pDateTime->tm_min = min;
+		pDateTime->tm_hour = hour;
+		pDateTime->tm_mday = date;
+		pDateTime->tm_mon = month;
+		pDateTime->tm_year = year - 1990;
+		return RTC_SetTimeDate(pDateTime);
 	}
 	return retVal;
 }

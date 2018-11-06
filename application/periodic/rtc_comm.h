@@ -21,16 +21,11 @@
 
 typedef struct	tm		SDateTime;
 
-int RTC_InitI2C(uint32_t baudrate);
-int RTC_InitRTCIC(uint32_t address);
+int RTC_InitDateTime(SDateTime *time);
 int RTC_GetTimeDate(SDateTime *time);
-
 int RTC_SetTimeDate(SDateTime *time);
-
 int RTC_SetDateTime(uint8_t min, uint8_t hour,
 					uint8_t date, uint8_t month,
 					uint32_t year);
-
-extern SDateTime g_DateTime;
 
 #endif /* APPLICATION_PERIODIC_RTC_COMM_H_ */

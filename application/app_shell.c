@@ -200,7 +200,7 @@ void setdate(int32_t argc, char **argv)
 		day = atoi(argv[1]);
 		month = atoi(argv[2]);
 		year = atoi(argv[3]);
-		if(RTC_SetDateTime(g_DateTime.tm_min, g_DateTime.tm_hour, day, month, year) == kStatus_I2C_Success) {
+		if(RTC_SetDateTime(pAppObj->sDateTime.tm_min, pAppObj->sDateTime.tm_hour, day, month, year) == kStatus_I2C_Success) {
 			LREP("set date successful year = %d\r\n", year);
 		}
 	} else {
@@ -223,7 +223,7 @@ void settime(int32_t argc, char **argv)
 		int min, hour;
 		min = atoi(argv[1]);
 		hour = atoi(argv[2]);
-		RTC_SetDateTime(min, hour, g_DateTime.tm_mday, g_DateTime.tm_mon, g_DateTime.tm_year);
+		RTC_SetDateTime(min, hour, pAppObj->sDateTime.tm_mday, pAppObj->sDateTime.tm_mon, pAppObj->sDateTime.tm_year);
 	} else {
 		LREP("argument not supported\r\n\n");
 	}
@@ -240,8 +240,8 @@ void settime(int32_t argc, char **argv)
  */
 void status(int32_t argc, char **argv) {
 	LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n\r\n",
-			g_DateTime.tm_mday, g_DateTime.tm_mon, g_DateTime.tm_year,
-			g_DateTime.tm_hour, g_DateTime.tm_min, g_DateTime.tm_sec);
+			pAppObj->sDateTime.tm_mday, pAppObj->sDateTime.tm_mon, pAppObj->sDateTime.tm_year,
+			pAppObj->sDateTime.tm_hour, pAppObj->sDateTime.tm_min, pAppObj->sDateTime.tm_sec);
 }
 
 

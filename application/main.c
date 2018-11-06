@@ -80,8 +80,6 @@ int main(void)
     // Configure the power mode protection
     SMC_HAL_SetProtection(SMC_BASE_PTR, kAllowPowerModeVlp);
 
-    CLOCK_SYS_EnableSdhcClock(0);
-
     // get cpu uid low value for slave
     gSlaveId = SIM_UIDL_UID(SIM_BASE_PTR);
 
@@ -95,6 +93,9 @@ int main(void)
 
     OSA_FixedMemInit();
 
+    App_Init(&sApp);
+
+    App_CreateAppTask(&sApp);
 
     OSA_Start();
 
@@ -102,16 +103,16 @@ int main(void)
 }
 
 
-void App_CreateAppTask(SApp *pApp) {
+int App_CreateAppTask(SApp *pApp) {
 
 	osa_status_t result;
-
+	LREP("start create app task \r\n");
     result = OSA_TaskCreate(App_TaskModbus,
                     (uint8_t *)"modbus",
                     TASK_MODBUS_STACK_SIZE,
 					pApp->task_modbus_stack,
                     TASK_MODBUS_PRIO,
-                    (task_param_t)0,
+                    (task_param_t)pApp,
                     false,
                     &pApp->task_modbus_task_handler);
     if(result != kStatus_OSA_Success)
@@ -140,7 +141,7 @@ void App_CreateAppTask(SApp *pApp) {
                     TASK_SERIAL_COMM_STACK_SIZE,
 					pApp->task_serialcomm_stack,
                     TASK_SERIALCOMM_PRIO,
-                    (task_param_t)&sApp.sTransPc,
+                    (task_param_t)pApp,
                     false,
                     &pApp->task_serialcomm_task_handler);
     if (result != kStatus_OSA_Success)
@@ -149,13 +150,29 @@ void App_CreateAppTask(SApp *pApp) {
         return -1;
     }
 
+    //  create app tasks
+	result = OSA_TaskCreate(App_TaskPeriodic,
+					(uint8_t *)"periodic",
+					TASK_PERIODIC_STACK_SIZE,
+					pApp->task_periodic_stack,
+					TASK_PERIODIC_PRIO,
+					(task_param_t)pApp,
+					false,
+					&pApp->task_periodic_task_handler);
+	if (result != kStatus_OSA_Success)
+	{
+		LREP("Failed to create periodic task\r\n\r\n");
+		return -1;
+	}
+
+
     // create app tasks
     result = OSA_TaskCreate(App_TaskShell,
                     (uint8_t *)"shell",
                     TASK_SHELL_STACK_SIZE,
                     pApp->task_shell_stack,
                     TASK_SHELL_PRIO,
-                    (task_param_t)0,
+                    (task_param_t)pApp,
                     false,
                     &pApp->task_shell_task_handler);
     if (result != kStatus_OSA_Success)
@@ -165,21 +182,8 @@ void App_CreateAppTask(SApp *pApp) {
     }
 
 
-    // create app tasks
-        result = OSA_TaskCreate(App_TaskPeriodic,
-                        (uint8_t *)"periodic",
-                        TASK_PERIODIC_STACK_SIZE,
-                        pApp->task_periodic_stack,
-                        TASK_PERIODIC_PRIO,
-                        (task_param_t)0,
-                        false,
-                        &pApp->task_periodic_task_handler);
-        if (result != kStatus_OSA_Success)
-        {
-            LREP("Failed to create periodic task\r\n\r\n");
-            return -1;
-        }
 
+	return result;
 }
 
 #endif

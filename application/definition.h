@@ -12,6 +12,21 @@
 #include <stdbool.h>
 #include <app_cfg.h>
 
+typedef enum ESysStatus_ {
+	SYS_ERR_NONE		= 1 < 0,
+	SYS_ERR_RTC			= 1 < 1,
+	SYS_ERR_SDCARD_1	= 1 < 2,
+	SYS_ERR_SDCARD_2	= 1 < 3,
+	SYS_ERR_MODBUS		= 1 < 10,
+	SYS_ERR_SPC			= 1 < 11,
+	SYS_ERR_NET_PC		= 1 < 11,
+	SYS_ERR_NET_FTP 	= 1 < 12,
+	SYS_ERR_ETHER_CONN 	= 1 < 13,
+	SYS_ERR_3G_CONN 	= 1 < 14,
+	SYS_ERR_SUI			= 1 < 15,
+}ESysStatus;
+
+
 typedef struct SMsg_ {
 	uint16_t	id;
 	uint8_t		*pData;
