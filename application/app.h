@@ -29,34 +29,79 @@
 #include <gpio_pins.h>
 #include <Transceiver.h>
 #include <definition.h>
-/************************** Constant Definitions *****************************/
+#include <master.h>
+#include <rtc_comm.h>
+#include <hw_profile.h>
 
+/************************** Constant Definitions *****************************/
+#define APP_TASK_DEFINE(task, stackSize)                          \
+    OS_TCB TCB_##task;                                            \
+    task_stack_t task##_stack[(stackSize)/sizeof(task_stack_t)];  \
+    task_handler_t task##_task_handler;
 
 /**************************** Type Definitions *******************************/
 
 typedef struct SApp_ {
+	STrans				sTransPc;
+	STrans				sTransUi;
+	SModbus				sModbus;
+	SDateTime			sDateTime;
 
-	STrans	sTransPc;
+	/* NET */
+	SDigitalInput		sDI;
+	SDigitalOutput		sDO;
+	SAnalogInput		sAI;
+
+	APP_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
+	APP_TASK_DEFINE(task_filesystem, 	TASK_FILESYSTEM_STACK_SIZE);
+	APP_TASK_DEFINE(task_modbus, 		TASK_MODBUS_STACK_SIZE);
+	APP_TASK_DEFINE(task_serialcomm,	TASK_SERIAL_COMM_STACK_SIZE);
+	APP_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
 /************************** Function Prototypes ******************************/
-extern void 	task_shell(task_param_t );
-extern void 	task_filesystem(task_param_t );
-extern void 	task_modbus(task_param_t );
-extern void 	task_serialcomm(task_param_t);
+/* Application interface */
 void 			App_Init(SApp *pApp);
-void 			task_periodic(void *parg);
+void			App_InitTaskHandle(SApp *pApp);
+void			App_CreateAppTask(SApp *pApp);
+void 			App_TaskShell(task_param_t );
+void 			App_TaskFilesystem(task_param_t );
+void 			App_TaskModbus(task_param_t );
+void 			App_TaskSerialcomm(task_param_t);
+void 			App_TaskPeriodic(task_param_t);
+
+// Date time
+int				App_InitDateTime(SApp *pApp);
+SDateTime		App_GetDateTime(SApp *pApp);
+int 			App_SetDateTime(SApp *pApp, SDateTime time);
+
+// Communication
+int				App_InitTransUI(SApp *pApp);
+int				App_InitTransPC(SApp *pApp);
+int 			App_SendUI(SApp *pApp, uint8_t *data, uint8_t len, bool ack);
+int				App_SendPC(SApp *pApp, uint8_t *data, uint8_t len, bool ack);
+void			App_SetTransUICallback(SApp *pApp, EL3Event evt, FClbL3Event func);
+void			App_SetTransPCCallback(SApp *pApp, EL3Event evt, FClbL3Event func);
+void			App_SetNetPCCallback(SApp *pApp);
+void 			App_SetFTPCallback(SApp *pApp);
+
+// Modbus
+int				App_InitModbus(SApp *pApp);
+int				App_DeinitModbus(SApp *pApp);
+int				App_ModbusDoRead(SApp *pApp);
+
+// DI
+int				App_InitDI(SApp *pApp);
+int 			App_InitDO(SApp *pApp);
+int				App_InitAI(SApp *pApp);
+
 
 /************************** Variable Definitions *****************************/
-extern OS_TCB 	TCB_task_shell;
-extern OS_TCB 	TCB_task_filesystem;
-extern OS_TCB 	TCB_task_modbus;
-extern OS_TCB	TCB_task_serialcomm;
-extern bool 	sdCardDetect;
 
 extern SApp		sApp;
+SApp 			*pAppObj;
 /*****************************************************************************/
 
 

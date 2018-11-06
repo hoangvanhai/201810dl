@@ -34,7 +34,7 @@
 /************************** Function Prototypes ******************************/
 
 /************************** Variable Definitions *****************************/
-uint64_t totalCounter;
+uint32_t totalCounter;
 /*****************************************************************************/
 /** @brief
  *
@@ -48,16 +48,18 @@ void FM_Init(uint32_t instance) {
 
 	ftm_user_config_t ftm_user_cfg = {
 		.tofFrequency = 1,
-		.syncMethod = FTM_SYNC_TRIG0_MASK,
+		.syncMethod = kFtmUseHardwareTrig0,
 		.isWriteProtection = false,
-		.BDMMode = kFtmBdmMode_01
+		.BDMMode = kFtmBdmMode_11
 	};
 
 	FTM_DRV_Init(FTM_PERIOD_MEASUARE_INSTANCE, &ftm_user_cfg);
 	FTM_DRV_SetClock(FTM_PERIOD_MEASUARE_INSTANCE,kClock_source_FTM_SystemClk, kFtmDividedBy1);
 	FTM_DRV_SetupChnInputCapture(FTM_PERIOD_MEASUARE_INSTANCE, kFtmRisingAndFalling, CHAN0_IDX, 0);
+	FTM_DRV_SetTimeOverflowIntCmd(FTM_PERIOD_MEASUARE_INSTANCE, true);
 	FTM_HAL_EnableChnInt(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
 	LREP("init ftm capture module done !\r\n");
+
 }
 
 
@@ -72,28 +74,56 @@ void FM_Init(uint32_t instance) {
  *
  *  Passes instance to generic FTM IRQ handler.
  */
+float max  = -32767.0, min = 32767.0;
+float max_latch, min_latch;
+uint32_t tmp = 0;
+float duration =  0;
+
 void FTM0_IRQHandler(void)
 {
-	//debug_putchar('0');
-
+	OSIntEnter();
 	if(FTM_HAL_HasTimerOverflowed(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE])) {
-		//LREP(" [O] ");
-		FTM_HAL_ClearTimerOverflow(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE]);
+		//FTM_HAL_ClearTimerOverflow(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE]);
+		FTM_BWR_SC_TOF(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], 0);
+		//totalCounter += FTM_HAL_GetMod(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE]);
 		totalCounter += 0xFFFF;
 	}
 
 	if (FTM_HAL_HasChnEventOccurred(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX))
 	{
-		FTM_HAL_ClearChnEventStatus(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
-		totalCounter += FTM_HAL_GetChnCountVal(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
-		LREP("%ld ", totalCounter);
+		//totalCounter += FTM_HAL_GetChnCountVal(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
+		totalCounter += FTM_RD_CnV_VAL(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
+		//FTM_HAL_SetCounter(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], 0);
+		FTM_WR_CNT_COUNT(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], 0);
+		duration = ((float)(totalCounter) / (float)FTM_DRV_GetClock(FTM_PERIOD_MEASUARE_INSTANCE)) * 1000 * 2; //???
+		//duration = (float)(totalCounter) / (float)30000;
 		totalCounter = 0;
-		FTM_HAL_SetCounter(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], 0);
+#if 1
+		if(max <  duration)
+		{
+			max = duration;
+		}
+		else if( min > duration)
+		{
+			min = duration;
+		}
+		tmp++;
+		if (tmp >= 100)
+		{
+			//LREP("[Max %.3f - Min %.3f curr %.3f]\r\n", max, min, duration);
+			max_latch = max;
+			min_latch = min;
+			tmp = 0;
+			max = -32767;
+			min = 32767;
+		}
+#endif
+
+		//FTM_HAL_ClearChnEventStatus(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
+		FTM_CLR_STATUS(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], 1U << CHAN0_IDX);
 	}
-
-	//CaptureTime_ms = (CaptureCounts * 100) / FTM_DRV_GetClock(VALVE_FTM_UNIT);
-
-    FTM_DRV_IRQHandler(0U);
+	OSIntExit();
+    //FTM_DRV_IRQHandler(0U);
 }
 #endif
 

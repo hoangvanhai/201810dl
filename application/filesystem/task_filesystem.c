@@ -43,51 +43,6 @@ int init_filesystem();
 FATFS SDCARDFS;
 /*****************************************************************************/
 
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-
-void task_filesystem(task_param_t param)
-{
-//	OS_ERR err;
-//	void 	*p_msg;
-//	OS_MSG_SIZE msg_size;
-//	CPU_TS	ts;
-
-	BOOL run = FALSE;
-
-
-
-    while (1)
-    {
-
-    	OSA_SleepMs(1000);
-    	if(run == FALSE) {
-    		run = TRUE;
-    		if(init_filesystem() != FR_OK) {
-				LREP("Init FAT FS failed \r\n");
-			} else {
-				LREP("Init FAT FS successful \r\n");
-			}
-    	}
-
-    	/*
-		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, 0, &err);
-
-    	p_msg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
-		if(err == OS_ERR_NONE) {
-
-			LREP("filesystem get msg size = %d ts = %d\r\n", msg_size, ts);
-
-			OSA_FixedMemFree((uint8_t*)p_msg);
-		}*/
-    }
-}
 
 /*****************************************************************************/
 /** @brief

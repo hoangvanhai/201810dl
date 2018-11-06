@@ -148,7 +148,7 @@ void debug_rx_handle(uint32_t instance, void * uartState) {
 	//debug_putchar(state->rxBuff[0]);
 	if(shell_push_command(state->rxBuff[0]) == true) {
 		OS_ERR err;
-		OSTaskSemPost(&TCB_task_shell, OS_OPT_POST_NONE, &err);
+		OSTaskSemPost(&pAppObj->TCB_task_shell, OS_OPT_POST_NONE, &err);
 		if(err != OS_ERR_NONE) {
 			LREP("sem post failed\r\n");
 		}

@@ -44,9 +44,9 @@ typedef enum E_Trans_EVENT_
     TRANS_EVT_SENT_DATA      = 2,	//Data confirm
     TRANS_EVT_ERROR          = 3
 
-}ETransEvent;
+}EL3Event;
 
-typedef void (*FClbUIEvent)(void *pData, uint8_t u8Type);
+typedef void (*FClbL3Event)(void *pData, uint8_t u8Type);
 
 typedef struct _STrans
 {
@@ -60,9 +60,9 @@ typedef struct _STrans
     void*             	hSem;
     /*Timer handle*/
     OS_TMR              hUpdateTimer;
-    FClbUIEvent        	fClbRecv;
-    FClbUIEvent        	fClbSendDone;
-    FClbUIEvent        	fClbError;
+    FClbL3Event        	fClbRecv;
+    FClbL3Event        	fClbSendDone;
+    FClbL3Event        	fClbError;
 
 
 }STrans;
@@ -87,7 +87,7 @@ BOOL Trans_Send               (STrans *pTrans,
 
 BOOL Trans_IsSendReady        (STrans *pTrans, uint16_t u16DLen);
 
-void Trans_RegisterClbEvent   (STrans *pTrans, ETransEvent evt, FClbUIEvent pFunction);
+void Trans_RegisterClbEvent   (STrans *pTrans, EL3Event evt, FClbL3Event pFunction);
 
 
 

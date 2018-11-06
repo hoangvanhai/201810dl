@@ -51,11 +51,7 @@ const char *logo_msg = { "\r\n\n"
 		"**     *  **     * *     *      \r\n"
 		"*******  ********   ****        \r\n" };
 
-OSA_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
-OSA_TASK_DEFINE(task_filesystem, 	TASK_FILESYSTEM_STACK_SIZE);
-OSA_TASK_DEFINE(task_modbus, 		TASK_MODBUS_STACK_SIZE);
-OSA_TASK_DEFINE(task_serialcomm,	TASK_SERIAL_COMM_STACK_SIZE);
-OSA_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
+
 
 uint32_t gSlaveId;
 
@@ -99,14 +95,25 @@ int main(void)
 
     OSA_FixedMemInit();
 
-    result = OSA_TaskCreate(task_modbus,
+
+    OSA_Start();
+
+    for(;;) {}                    // Should not achieve here
+}
+
+
+void App_CreateAppTask(SApp *pApp) {
+
+	osa_status_t result;
+
+    result = OSA_TaskCreate(App_TaskModbus,
                     (uint8_t *)"modbus",
                     TASK_MODBUS_STACK_SIZE,
-                    task_modbus_stack,
+					pApp->task_modbus_stack,
                     TASK_MODBUS_PRIO,
                     (task_param_t)0,
                     false,
-                    &task_modbus_task_handler);
+                    &pApp->task_modbus_task_handler);
     if(result != kStatus_OSA_Success)
     {
         LREP("Failed to create slave task\r\n\r\n");
@@ -120,7 +127,7 @@ int main(void)
 //                    TASK_FILESYSTEM_PRIO,
 //                    (task_param_t)0,
 //                    false,
-//                    &task_filesystem_task_handler);
+//                    &pApp->task_filesystem_task_handler);
 //    if (result != kStatus_OSA_Success)
 //    {
 //        LREP("Failed to create filesystem task\r\n\r\n");
@@ -128,14 +135,14 @@ int main(void)
 //    }
 
 
-    result = OSA_TaskCreate(task_serialcomm,
+    result = OSA_TaskCreate(App_TaskSerialcomm,
                     (uint8_t *)"serialcomm",
                     TASK_SERIAL_COMM_STACK_SIZE,
-                    task_serialcomm_stack,
+					pApp->task_serialcomm_stack,
                     TASK_SERIALCOMM_PRIO,
                     (task_param_t)&sApp.sTransPc,
                     false,
-                    &task_serialcomm_task_handler);
+                    &pApp->task_serialcomm_task_handler);
     if (result != kStatus_OSA_Success)
     {
         LREP("Failed to create serialcomm task\r\n\r\n");
@@ -143,14 +150,14 @@ int main(void)
     }
 
     // create app tasks
-    result = OSA_TaskCreate(task_shell,
+    result = OSA_TaskCreate(App_TaskShell,
                     (uint8_t *)"shell",
                     TASK_SHELL_STACK_SIZE,
-                    task_shell_stack,
+                    pApp->task_shell_stack,
                     TASK_SHELL_PRIO,
                     (task_param_t)0,
                     false,
-                    &task_shell_task_handler);
+                    &pApp->task_shell_task_handler);
     if (result != kStatus_OSA_Success)
     {
         LREP("Failed to create master task\r\n\r\n");
@@ -159,24 +166,20 @@ int main(void)
 
 
     // create app tasks
-        result = OSA_TaskCreate(task_periodic,
+        result = OSA_TaskCreate(App_TaskPeriodic,
                         (uint8_t *)"periodic",
                         TASK_PERIODIC_STACK_SIZE,
-                        task_periodic_stack,
+                        pApp->task_periodic_stack,
                         TASK_PERIODIC_PRIO,
                         (task_param_t)0,
                         false,
-                        &task_periodic_task_handler);
+                        &pApp->task_periodic_task_handler);
         if (result != kStatus_OSA_Success)
         {
             LREP("Failed to create periodic task\r\n\r\n");
             return -1;
         }
 
-
-    OSA_Start();
-
-    for(;;) {}                    // Should not achieve here
 }
 
 #endif

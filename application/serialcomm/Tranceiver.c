@@ -419,7 +419,7 @@ static void Trans_CheckTimeOutOfSendedFrame(STrans *pTrans)
  *  @note
  */
 
-void Trans_RegisterClbEvent(STrans *pTrans, ETransEvent evt, FClbUIEvent pFunction)
+void Trans_RegisterClbEvent(STrans *pTrans, EL3Event evt, FClbL3Event pFunction)
 {
     switch(evt)
     {

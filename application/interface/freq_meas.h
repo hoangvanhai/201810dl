@@ -28,6 +28,7 @@
 #include <fsl_ftm_driver.h>
 #include <fsl_os_abstraction.h>
 #include <fsl_debug_console.h>
+#include <stdint.h>
 /************************** Constant Definitions *****************************/
 #define FTM_PERIOD_MEASUARE_INSTANCE			FTM0_IDX
 /**************************** Type Definitions *******************************/

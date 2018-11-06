@@ -93,7 +93,7 @@ void send_queue(int32_t argc, char**argv) {
 			if(p_msg != NULL) {
 				memset(p_msg, 0xFF, 264);
 				OS_ERR err;
-				OSTaskQPost(&TCB_task_modbus, p_msg, 264, OS_OPT_POST_FIFO, &err);
+				OSTaskQPost(&pAppObj->TCB_task_modbus, p_msg, 264, OS_OPT_POST_FIFO, &err);
 				if(err != OS_ERR_NONE) {
 					LREP("task queue post failed \r\n");
 				} else {
@@ -111,7 +111,7 @@ void send_queue(int32_t argc, char**argv) {
 			uint8_t *p_msg = OSA_FixedMemMalloc(100);
 			if(p_msg != NULL) {
 				OS_ERR err;
-				OSTaskQPost(&TCB_task_filesystem, p_msg, 100, OS_OPT_POST_FIFO, &err);
+				OSTaskQPost(&pAppObj->TCB_task_filesystem, p_msg, 100, OS_OPT_POST_FIFO, &err);
 				if(err != OS_ERR_NONE) {
 					LREP("task queue post failed \r\n");
 				} else {
@@ -245,15 +245,4 @@ void status(int32_t argc, char **argv) {
 }
 
 
-void task_shell(task_param_t param)
-{
-	OS_ERR err;
-	shell_init(cmd_table, my_shell_init);
-	LREP(SHELL_PROMPT);
-	while(1) {
-		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, 0, &err);
-		if(err == OS_ERR_NONE) {
-			shell_task(NULL);
-		}
-	}
-}
+

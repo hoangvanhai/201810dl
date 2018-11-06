@@ -10,11 +10,29 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <app_cfg.h>
 
 typedef struct SMsg_ {
 	uint16_t	id;
 	uint8_t		*pData;
 }SMsg;
+
+
+typedef struct SDigitalInput_ {
+	uint32_t 	phy[DIGITAL_INPUT_NUM_CHANNEL];
+	bool 		value[DIGITAL_INPUT_NUM_CHANNEL];
+}SDigitalInput;
+
+typedef struct SDigitalOutput_ {
+	uint32_t 	phy[DIGITAL_OUTPUT_NUM_CHANNEL];
+	bool 		value[DIGITAL_OUTPUT_NUM_CHANNEL];
+}SDigitalOutput;
+
+typedef struct SAnalogInput_ {
+	uint32_t 	phy[ANALOG_INPUT_NUM_CHANNEL];
+	double 		value[ANALOG_INPUT_NUM_CHANNEL];
+}SAnalogInput;
+
 
 typedef enum ETagInputType_ {
 	TIT_AI = 0,

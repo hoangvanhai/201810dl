@@ -62,6 +62,9 @@
 #define TIMER_ISR_PRIORITY					3
 #define DEBUG_UART_ISR_PRIORITY				4
 
+#define DIGITAL_INPUT_NUM_CHANNEL			8
+#define DIGITAL_OUTPUT_NUM_CHANNEL			6
+#define ANALOG_INPUT_NUM_CHANNEL			12
 
 /**************************** Type Definitions *******************************/
 
