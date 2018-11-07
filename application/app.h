@@ -34,15 +34,40 @@
 #include <hw_profile.h>
 
 /************************** Constant Definitions *****************************/
+
+#define	CFG_SET						0x80
+#define CFG_GET						0x00
+#define CFG_COMMON					0x01
+#define CFG_TAG						0x02
+
+#define SERVER_FTP_IP_IDX			0
+#define SERVER_FTP_IP_WIDTH			4
+#define SERVER_FTP_PORT_IDX			(SERVER_FTP_IP_IDX + SERVER_FTP_IP_WIDTH)
+#define SERVER_FTP_PORT_WIDTH		2
+#define SERVER_CTRL_IP_IDX			(SERVER_FTP_PORT_IDX + SERVER_FTP_PORT_WIDTH)
+#define SERVER_CTRL_IP_WIDTH		4
+#define SERVER_CTRL_PORT_IDX		(SERVER_CTRL_IP_IDX + SERVER_CTRL_IP_WIDTH)
+#define SERVER_CTRL_PORT_WIDTH		2
+#define DEVICE_IP_IDX				(SERVER_CTRL_PORT_IDX + SERVER_CTRL_PORT_WIDTH)
+#define DEVICE_IP_WIDTH				4
+#define DEVICE_TINH_IDX				(DEVICE_IP_IDX + DEVICE_IP_WIDTH)
+#define DEVICE_TINH_WIDTH			6
+#define DEVICE_COSO_IDX				(DEVICE_TINH_IDX + DEVICE_TINH_WIDTH)
+#define DEVICE_COSO_WIDTH			6
+#define DEVICE_TRAM_IDX				(DEVICE_COSO_IDX + DEVICE_COSO_WIDTH)
+#define DEVICE_TRAM_WIDTH			10
+#define DEVICE_SCAN_DUR_IDX			(DEVICE_TRAM_IDX + DEVICE_TRAM_WIDTH)
+#define DEVICE_SCAN_DUR_WIDTH		1
+#define DEVICE_LOG_DUR_IDX			(DEVICE_SCAN_DUR_IDX + DEVICE_SCAN_DUR_WIDTH)
+#define DEVICE_LOG_DUR_WIDTH		1
+
+
+
+
 #define APP_TASK_DEFINE(task, stackSize)                          \
     OS_TCB TCB_##task;                                            \
     task_stack_t task##_stack[(stackSize)/sizeof(task_stack_t)];  \
     task_handler_t task##_task_handler;
-
-#define APP_TASK_INIT_HANDLER(p, task) 		(p)->task##_task_handler = &((p)->TCB_##task)
-
-#define App_SetSysStatus(pApp, state)    	(pApp)->eStatus |= (state)
-#define App_ClearSysStatus(pApp, state)  	(pApp)->eStatus &= ~(state)
 
 /**************************** Type Definitions *******************************/
 typedef struct SApp_ {
@@ -54,20 +79,29 @@ typedef struct SApp_ {
 	SDigitalInput		sDI;
 	SDigitalOutput		sDO;
 	SAnalogInput		sAI;
+	SModbusValue		sMB;
 	APP_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
 	APP_TASK_DEFINE(task_filesystem, 	TASK_FILESYSTEM_STACK_SIZE);
 	APP_TASK_DEFINE(task_modbus, 		TASK_MODBUS_STACK_SIZE);
 	APP_TASK_DEFINE(task_serialcomm,	TASK_SERIAL_COMM_STACK_SIZE);
 	APP_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
 
+	SSysCfg				sCfg;
 	OS_TMR 				hTimer;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
+#define APP_TASK_INIT_HANDLER(p, task) 		(p)->task##_task_handler = &((p)->TCB_##task)
+#define App_SetSysStatus(pApp, state)    	(pApp)->eStatus |= (state)
+#define App_ClearSysStatus(pApp, state)  	(pApp)->eStatus &= ~(state)
+
 /************************** Function Prototypes ******************************/
 /* Application interface */
 void 			App_Init(SApp *pApp);
+int				App_LoadConfig(SApp *pApp, const char* cfg_path);
+int 			App_SetConfig(SApp *pApp, uint8_t *pData);
+int				App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type);
 void			App_InitTaskHandle(SApp *pApp);
 int				App_CreateAppTask(SApp *pApp);
 void 			App_TaskShell(task_param_t );
@@ -100,7 +134,12 @@ int				App_ModbusDoRead(SApp *pApp);
 int				App_InitDI(SApp *pApp);
 int 			App_InitDO(SApp *pApp);
 int				App_InitAI(SApp *pApp);
+int 			App_UpdateTagContent(SApp *pApp);
+int 			App_DiContinueRead(SApp *pApp);
 
+double			App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index);
+double			App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr);
+bool			App_GetDILevelByIndex(SDigitalInput *pHandle, uint16_t index);
 
 /************************** Variable Definitions *****************************/
 

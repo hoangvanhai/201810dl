@@ -65,6 +65,7 @@
 #define DIGITAL_INPUT_NUM_CHANNEL			8
 #define DIGITAL_OUTPUT_NUM_CHANNEL			6
 #define ANALOG_INPUT_NUM_CHANNEL			12
+#define SYSTEM_NUM_TAG						ANALOG_INPUT_NUM_CHANNEL
 
 /**************************** Type Definitions *******************************/
 

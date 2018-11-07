@@ -25,6 +25,7 @@
 #include <app.h>
 #include <rtc_comm.h>
 #include <app_shell.c>
+#include <task_filesystem.h>
 /************************** Constant Definitions *****************************/
 
 /**************************** Type Definitions *******************************/
@@ -38,9 +39,9 @@ static void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type);
 /************************** Variable Definitions *****************************/
 SApp sApp;
 SApp *pAppObj = &sApp;
-
+FATFS fs0, fs1;
 extern float max_latch, min_latch;
-
+uint8_t shared_buff[4096];
 extern const shell_command_t cmd_table[];
 
 /*****************************************************************************/
@@ -72,6 +73,128 @@ void	App_InitTaskHandle(SApp *pApp) {
 	APP_TASK_INIT_HANDLER(pApp, task_serialcomm);
 	APP_TASK_INIT_HANDLER(pApp, task_periodic);
 }
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int App_LoadConfig(SApp *pApp, const char *cfg_path) {
+
+	FIL fil;        /* File object */
+	FRESULT fr;     /* FatFs return code */
+	uint32_t read;
+	int retVal = -1;
+
+	if(check_file_existed(cfg_path)) {
+		/* Register work area to the default drive */
+		//f_mount(0, &fs0);
+		fr = f_open(&fil, cfg_path, FA_READ);
+		if (fr) {
+			LREP("open file error: %d\r\n", fr);
+			return retVal;
+		}
+
+		fr = f_read(&fil, (void*)&pApp->sCfg, 4096, &read);
+
+		if(!fr) {
+			if(read > 0) {
+				LREP("load config content ok\r\n");
+				retVal = 0;
+			} else {
+				retVal = -2;
+			}
+		} else {
+			retVal = -3;
+		}
+
+		/* Close the file */
+		f_close(&fil);
+	}
+
+	return retVal;
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int App_SetConfig(SApp *pApp, uint8_t *pData) {
+	switch(pData[0]) {
+	case CFG_COMMON | CFG_SET:
+		if(pData[1] == sizeof(SSystemInfo)) {
+			memcpy(&pApp->sCfg.sCom, &pData[2], sizeof(SSystemInfo));
+		} else {
+			ASSERT_NONVOID(FALSE, -1);
+		}
+		break;
+
+	case CFG_TAG | CFG_SET: {
+			uint8_t idx;
+			if(pData[1] != (sizeof(STag) + 1)) {
+				idx = pData[2];
+				memcpy(&pApp->sCfg.sTag[idx], &pData[3], sizeof(STag));
+			} else {
+				ASSERT_NONVOID(FALSE, -2);
+			}
+		}
+
+		break;
+
+	default:
+		ASSERT_NONVOID(FALSE, -3);
+		break;
+	}
+
+	return 0;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+int App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type) {
+
+	switch(cfg) {
+	case CFG_COMMON | CFG_GET:
+	if(type == CFG_CONN_SERIAL) {
+		uint8_t *sendData = OSA_FixedMemMalloc(sizeof(SSystemInfo) + 2);
+		sendData[0] = CFG_COMMON | CFG_GET;
+		sendData[1] = sizeof(SSystemInfo);
+		memcpy(&sendData[2], &pApp->sCfg.sCom, sizeof(SSystemInfo));
+		App_SendPC(pApp, sendData, sizeof(SSystemInfo) + 2, true);
+		OSA_FixedMemFree(sendData);
+	}
+	break;
+
+	case CFG_TAG | CFG_GET:
+	if(type == CFG_CONN_SERIAL) {
+		uint8_t *sendData = OSA_FixedMemMalloc(sizeof(STag) + 2);
+		sendData[0] = CFG_TAG | CFG_GET;
+		sendData[1] = sizeof(STag);
+		memcpy(&sendData[2], &pApp->sCfg.sTag[idx], sizeof(STag));
+		App_SendPC(pApp, sendData, sizeof(STag) + 2, true);
+		OSA_FixedMemFree(sendData);
+	}
+	break;
+
+	default:
+		break;
+	}
+
+	return 0;
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -83,37 +206,37 @@ void	App_InitTaskHandle(SApp *pApp) {
 
 void App_TaskPeriodic(task_param_t parg) {
 
-	SApp *pApp = (SApp *)parg;
+//	SApp *pApp = (SApp *)parg;
 
-	ASSERT(RTC_InitDateTime(&pApp->sDateTime) == 0);
-	OSA_SleepMs(100);
-
-	if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-		if(pApp->sDateTime.tm_year == 1990) {
-			RTC_SetDateTime(0, 0, 1, 1, 2018);
-		}
-
-	} else {
-		ASSERT(FALSE);
-	}
+//	ASSERT(RTC_InitDateTime(&pApp->sDateTime) == 0);
+//	OSA_SleepMs(100);
+//
+//	if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
+//		if(pApp->sDateTime.tm_year == 1990) {
+//			RTC_SetDateTime(0, 0, 1, 1, 2018);
+//		}
+//
+//	} else {
+//		ASSERT(FALSE);
+//	}
 
 	//FM_Init(0);
 
 	while(1) {
 		OSA_SleepMs(1000);
-		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-
-			LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n",
-					pApp->sDateTime.tm_sec, pApp->sDateTime.tm_min,
-					pApp->sDateTime.tm_hour, pApp->sDateTime.tm_wday,
-					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_mon,
-					pApp->sDateTime.tm_year);
-
-			/* LREP("[Max %.3f - Min %.3f]\r\n", max_latch, min_latch); */
-
-		} else {
-
-		}
+//		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
+//
+//			LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n",
+//					pApp->sDateTime.tm_sec, pApp->sDateTime.tm_min,
+//					pApp->sDateTime.tm_hour, pApp->sDateTime.tm_wday,
+//					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_mon,
+//					pApp->sDateTime.tm_year);
+//
+//			/* LREP("[Max %.3f - Min %.3f]\r\n", max_latch, min_latch); */
+//
+//		} else {
+//
+//		}
 	}
 }
 /*****************************************************************************/
@@ -137,6 +260,31 @@ void App_TaskShell(task_param_t param)
 	}
 }
 
+#if 0
+OSTmrCreate(&hTimer,
+			(CPU_CHAR *)"timer",
+			(OS_TICK)0,
+			(OS_TICK)100,
+			(OS_OPT)OS_OPT_TMR_PERIODIC,
+			(OS_TMR_CALLBACK_PTR) Clb_TimerControl,
+			(void*)NULL,
+			(OS_ERR*)&err);
+
+if (err == OS_ERR_NONE) {
+	/* Timer was created but NOT started */
+	LREP("timer created successful\r\n");
+	OSTmrStart(&hTimer, &err);
+
+	if (err == OS_ERR_NONE) {
+		/* Timer was created but NOT started */
+		LREP("timer started ok\r\n");
+	} else {
+		LREP("timer start failed\r\n");
+	}
+} else {
+	LREP("timer create failed\r\n");
+}
+#endif
 
 
 
@@ -155,33 +303,6 @@ void App_TaskModbus(task_param_t param)
 	void 	*p_msg;
 	OS_MSG_SIZE msg_size;
 	CPU_TS	ts;
-	LREP("start create timer\r\n");
-
-
-//	OSTmrCreate(&hTimer,
-//				(CPU_CHAR *)"timer",
-//				(OS_TICK)0,
-//				(OS_TICK)100,
-//				(OS_OPT)OS_OPT_TMR_PERIODIC,
-//				(OS_TMR_CALLBACK_PTR) Clb_TimerControl,
-//				(void*)NULL,
-//				(OS_ERR*)&err);
-//
-//	if (err == OS_ERR_NONE) {
-//		/* Timer was created but NOT started */
-//		LREP("timer created successful\r\n");
-//		OSTmrStart(&hTimer, &err);
-//
-//		if (err == OS_ERR_NONE) {
-//			/* Timer was created but NOT started */
-//			LREP("timer started ok\r\n");
-//		} else {
-//			LREP("timer start failed\r\n");
-//		}
-//	} else {
-//		LREP("timer create failed\r\n");
-//	}
-
 
 	Modbus_Init(&pApp->sModbus, BOARD_MODBUS_UART_INSTANCE, BOARD_MODBUS_UART_BAUD, 0, 0);
 
@@ -327,6 +448,219 @@ void Clb_TimerControl(void *p_tmr, void *p_arg);
 void Clb_TimerControl(void *p_tmr, void *p_arg) {
 	GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
 }
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int	App_InitModbus(SApp *pApp){
+
+	return 0;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int	App_DeinitModbus(SApp *pApp){
+
+	return 0;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int	App_ModbusDoRead(SApp *pApp){
+	int retVal;
+	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+		if(pApp->sCfg.sTag[i].input_type == TIT_MB) {
+			uint8_t data[4];
+			uint16_t rlen;
+			retVal = MBMaster_Read(pApp->sCfg.sTag[i].input_id, pApp->sCfg.sTag[i].slave_reg_addr, 0x03, 1, data, &rlen);
+			if(retVal != MB_SUCCESS) {
+				pApp->sCfg.sTag[i].status = TAG_STT_MB_FAILED;
+			} else {
+				pApp->sCfg.sTag[i].status = TAG_STT_OK;
+				uint32_t readVal;
+				readVal = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
+				pApp->sCfg.sTag[i].scratch_value = (float)readVal;
+			}
+		}
+	}
+
+	return 0;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int App_UpdateTagContent(SApp *pApp) {
+	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+		// get main value
+		if(pApp->sCfg.sTag[i].input_type == TIT_AI) {
+			pApp->sCfg.sTag[i].scratch_value = App_GetAIValueByIndex(&pApp->sAI, pApp->sCfg.sTag[i].input_id);
+		} else {
+			pApp->sCfg.sTag[i].scratch_value = App_GetMBValueByAddress(&pApp->sMB, pApp->sCfg.sTag[i].input_id);
+		}
+
+		/* value = scratch * (raw_max - raw_min) / (scr_max - scr_min) */
+		pApp->sCfg.sTag[i].raw_value = pApp->sCfg.sTag[i].scratch_value *
+				(pApp->sCfg.sTag[i].raw_max - pApp->sCfg.sTag[i].raw_min) /
+				(pApp->sCfg.sTag[i].scratch_max - pApp->sCfg.sTag[i].scratch_min);
+
+		/* value = a + b * value */
+		pApp->sCfg.sTag[i].raw_value = 	pApp->sCfg.sTag[i].coef_a +
+									pApp->sCfg.sTag[i].raw_value * pApp->sCfg.sTag[i].coef_b;
+
+		// get status
+		if(pApp->sCfg.sTag[i].has_calib && pApp->sCfg.sTag[i].has_error) {
+			bool error, calib;
+			calib = App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_calib);
+			error = App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_error);
+			if(error) {
+				pApp->sCfg.sTag[i].stt[0] = '0';
+				pApp->sCfg.sTag[i].stt[1] = '2';
+				pApp->sCfg.sTag[i].stt[2] = 0;
+			} else {
+				if(calib) {
+					pApp->sCfg.sTag[i].stt[0] = '0';
+					pApp->sCfg.sTag[i].stt[1] = '1';
+					pApp->sCfg.sTag[i].stt[2] = 0;
+				} else {
+					pApp->sCfg.sTag[i].stt[0] = 0;
+					pApp->sCfg.sTag[i].stt[1] = 0;
+					pApp->sCfg.sTag[i].stt[2] = 0;
+				}
+			}
+		}
+	}
+
+	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+		double comp_o2 = 1, comp_press = 1, comp_temp= 1;
+		switch(pApp->sCfg.sTag[i].comp_type) {
+		case CT_NONE:
+			break;
+		case CT_OXY:
+			/*
+			 * Fo2 = (20.9 - O2(std)) / (20.9 - O2(m))
+			 * */
+			if((20.9 - pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_o2].raw_value) != 0 &&
+					(20.9 - pApp->sCfg.sTag[i].o2_comp) != 0) {
+					comp_o2 = (20.9 - pApp->sCfg.sTag[i].o2_comp) /
+							(20.9 - pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_o2].raw_value);
+			} else {
+				ASSERT(FALSE);
+			}
+
+			break;
+		case CT_TERMP_PRESS:
+			/*
+			 * Ft = (273 + T(m))/(273+ T(std))
+	         * Fp = P(std)/P(m)
+			 *
+			 * */
+			if((273 + pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_temp].raw_value) != 0 &&
+					(273 + pApp->sCfg.sTag[i].temp_comp) != 0) {
+				comp_temp = (273 + pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_temp].raw_value) /
+						(273 + pApp->sCfg.sTag[i].temp_comp);
+			} else {
+				ASSERT(FALSE);
+			}
+
+			if(pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_press].raw_value != 0 &&
+					pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_press].raw_value != 0) {
+				comp_press = pApp->sCfg.sTag[i].press_comp /
+					pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_press].raw_value;
+			} else {
+				ASSERT(FALSE);
+			}
+
+			break;
+		default:
+			ASSERT(FALSE);
+			break;
+
+		}
+
+		pApp->sCfg.sTag[i].std_value = pApp->sCfg.sTag[i].raw_value * comp_o2 * comp_temp * comp_press;
+	}
+
+	return 0;
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int	App_SendPC(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
+	return Trans_Send(&pApp->sTransPc, len, data, ack ? 0xA0 : 0x20);
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+double	App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index) {
+	return pHandle->Node[index].value;
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+double	App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr) {
+	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+		if(pHandle->Node[i].id == addr) {
+			return pHandle->Node[i].value;
+		}
+	}
+	return 0xFFFFFFFF;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+bool App_GetDILevelByIndex(SDigitalInput *pHandle, uint16_t index) {
+	return pHandle->Node[index].lev;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 
 /*****************************************************************************/
 /** @brief

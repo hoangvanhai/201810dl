@@ -26,6 +26,10 @@ typedef enum ESysStatus_ {
 	SYS_ERR_SUI			= 1 < 15,
 }ESysStatus;
 
+typedef enum ECfgConnType_ {
+	CFG_CONN_SERIAL = 0,
+	CFG_CONN_NET
+}ECfgConnType;
 
 typedef struct SMsg_ {
 	uint16_t	id;
@@ -33,21 +37,33 @@ typedef struct SMsg_ {
 }SMsg;
 
 
+typedef struct SLNode_ {
+	uint32_t 	id;
+	bool		lev;
+}SLNode;
+
+
+typedef struct SVNode_ {
+	uint32_t 	id;
+	double 		value;
+}SVNode;
+
+
 typedef struct SDigitalInput_ {
-	uint32_t 	phy[DIGITAL_INPUT_NUM_CHANNEL];
-	bool 		value[DIGITAL_INPUT_NUM_CHANNEL];
+	SLNode		Node[DIGITAL_INPUT_NUM_CHANNEL];
 }SDigitalInput;
 
 typedef struct SDigitalOutput_ {
-	uint32_t 	phy[DIGITAL_OUTPUT_NUM_CHANNEL];
-	bool 		value[DIGITAL_OUTPUT_NUM_CHANNEL];
+	SLNode 		Node[DIGITAL_OUTPUT_NUM_CHANNEL];
 }SDigitalOutput;
 
 typedef struct SAnalogInput_ {
-	uint32_t 	phy[ANALOG_INPUT_NUM_CHANNEL];
-	double 		value[ANALOG_INPUT_NUM_CHANNEL];
+	SVNode		Node[ANALOG_INPUT_NUM_CHANNEL];
 }SAnalogInput;
 
+typedef struct SModbusValue {
+	SVNode		Node[SYSTEM_NUM_TAG];
+}SModbusValue;
 
 typedef enum ETagInputType_ {
 	TIT_AI = 0,
@@ -72,6 +88,7 @@ typedef struct STag_ {
 	uint16_t		id;
 	ETagStatus		status;
 	uint8_t			desc[15];
+	uint8_t			stt[3];
 	bool			enable;
 	bool			report;
 	bool      		has_calib; //
@@ -106,5 +123,23 @@ typedef struct STag_ {
 
 
 
+typedef struct SSystemInfo_ {
+	uint32_t		server_ftp_ip;
+	uint16_t		server_ftp_port;
+	uint32_t		server_ctrl_ip;
+	uint16_t		server_ctrl_port;
+	uint32_t		dev_ip;
+	uint8_t			tinh[6];
+	uint8_t			coso[6];
+	uint8_t			tram[10];
+	uint8_t			scan_dur;	// second
+	uint8_t			log_dur;	// minute
+}SSystemInfo;
+
+
+typedef struct SSysCfg_ {
+	STag				sTag[SYSTEM_NUM_TAG];
+	SSystemInfo			sCom;
+}SSysCfg;
 
 #endif /* APPLICATION_DEFINITION_H_ */

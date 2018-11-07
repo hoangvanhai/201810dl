@@ -86,7 +86,6 @@ int main(void)
     LREP("chip id = 0x%x\r\n", gSlaveId);
     LREP("OS Tick rate = %d\r\n", OSCfg_TickRate_Hz);
 
-    LREP("timeout int mask = 0x%x\r\n", SDHC_HAL_CMD_TIMEOUT_ERR_INT);
     LREP("size of tag = %d\r\n", sizeof(STag));
 
     OSA_Init();

@@ -39,14 +39,4 @@ void Tag_AiDi_ReadAll();
 
 /*****************************************************************************/
 
-
-
-
-#define TAG_MAX_CHANNEL		12
-#define TAG_MAX_DI_NUM		8
-#define TAG_MAX_DO_NUM		4
-
-
-extern STag g_tagArray[TAG_MAX_CHANNEL];
-
 #endif /* APPLICATION_INTERFACE_TAG_MANAGER_H_ */

@@ -106,5 +106,36 @@ int init_filesystem() {
 }
 
 
+bool check_file_existed(const char *path) {
+    FRESULT fr;
+    FILINFO fno;
 
+    fr = f_stat(path, &fno);
+
+    switch (fr) {
+    case FR_OK:
+        LREP("Size: %lu\n", fno.fsize);
+//        LREP("Timestamp: %u/%02u/%02u, %02u:%02u\r\n",
+//               (fno.fdate >> 9) + 1980,
+//			   fno.fdate >> 5 & 15,
+//			   fno.fdate & 31,
+//               fno.ftime >> 11,
+//			   fno.ftime >> 5 & 63);
+
+        LREP("Attributes: %c%c%c%c%c\r\n",
+               (fno.fattrib & AM_DIR) ? 'D' : '-',
+               (fno.fattrib & AM_RDO) ? 'R' : '-',
+               (fno.fattrib & AM_HID) ? 'H' : '-',
+               (fno.fattrib & AM_SYS) ? 'S' : '-',
+               (fno.fattrib & AM_ARC) ? 'A' : '-');
+        break;
+
+    case FR_NO_FILE:
+    	LREP("It is not exist.\r\n");
+        break;
+
+    default:
+    	LREP("An error occured. (%d)\r\n", fr);
+    }
+}
 
