@@ -32,13 +32,16 @@
 #include <master.h>
 #include <rtc_comm.h>
 #include <hw_profile.h>
-
+#include <lwip/netif.h>
+#include <task_filesystem.h>
 /************************** Constant Definitions *****************************/
 
 #define	CFG_SET						0x80
 #define CFG_GET						0x00
 #define CFG_COMMON					0x01
 #define CFG_TAG						0x02
+#define CFG_COM_TAG					0x03		// indicate this is terminate frame
+												// logger should write config to sdcard
 
 #define SERVER_FTP_IP_IDX			0
 #define SERVER_FTP_IP_WIDTH			4
@@ -87,7 +90,11 @@ typedef struct SApp_ {
 	APP_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
 
 	SSysCfg				sCfg;
-	OS_TMR 				hTimer;
+	OS_TMR 				hCtrlTimer;
+
+	FATFS				fs0;
+	FATFS				fs1;
+
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
@@ -100,6 +107,9 @@ typedef struct SApp_ {
 /* Application interface */
 void 			App_Init(SApp *pApp);
 int				App_LoadConfig(SApp *pApp, const char* cfg_path);
+int 			App_SaveConfig(SApp *pApp, const char* cfg_path);
+int				App_GenDefaultConfig(SSysCfg *pHandle);
+int				App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx);
 int 			App_SetConfig(SApp *pApp, uint8_t *pData);
 int				App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type);
 void			App_InitTaskHandle(SApp *pApp);
@@ -142,7 +152,6 @@ double			App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr);
 bool			App_GetDILevelByIndex(SDigitalInput *pHandle, uint16_t index);
 
 /************************** Variable Definitions *****************************/
-
 extern SApp		sApp;
 extern SApp 	*pAppObj;
 /*****************************************************************************/

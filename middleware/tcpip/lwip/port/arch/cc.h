@@ -98,7 +98,7 @@ typedef int sys_prot_t;
 // Platform specific diagnostic output
 
 // non-fatal, print a message.
-#define LWIP_PLATFORM_DIAG(x)                     do {LREP(x);LREP("\r\n");} while(0)
+#define LWIP_PLATFORM_DIAG(x)                     do {LREP x ;LREP("\r\n");} while(0)
 // fatal, print message and abandon execution.
 #define LWIP_PLATFORM_ASSERT(x)                   sys_assert( x )
 

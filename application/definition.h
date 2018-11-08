@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <app_cfg.h>
+#include <lwip/netif.h>
+
 
 typedef enum ESysStatus_ {
 	SYS_ERR_NONE		= 1 < 0,
@@ -91,55 +93,56 @@ typedef struct STag_ {
 	uint8_t			stt[3];
 	bool			enable;
 	bool			report;
-	bool      		has_calib; //
-	bool      		has_error; //
-	bool      		alarm_enable; //
-	ETagInputType	input_type;	// ai or modbus
-	uint16_t		input_id; // slave address or ai index
-	uint16_t		slave_reg_addr;
-	ECompType		comp_type; // compose none/o2/temp-press
-	uint8_t    		name[15]; //
+	bool      		has_calib; 		//
+	bool      		has_error; 		//
+	bool      		alarm_enable; 	//
+	ETagInputType	input_type;		// ai or modbus
+	uint16_t		input_id; 		// slave address or ai index
+	uint16_t		slave_reg_addr; // register addr to read value
+	ECompType		comp_type; 		// compose none/o2/temp-press
+	uint8_t    		name[15]; 		//
 	uint8_t    		raw_unit[15]; //
 	uint8_t    		std_unit[15]; //
-	uint16_t       	pin_calib; //
-	uint16_t       	pin_error; //
-	uint16_t       	input_o2; //
-	uint16_t       	input_temp; //
-	uint16_t       	input_press; //
-	float    		o2_comp; //
-	float    		temp_comp; //
-	float    		press_comp; //
-	float    		raw_min;    //
-	float    		raw_max;    //
+	uint16_t       	pin_calib;   //	index on DI
+	uint16_t       	pin_error;   //	index on DI
+	uint16_t       	input_o2;    //	index on AI / MB
+	uint16_t       	input_temp;  //	index on AI / MB
+	uint16_t       	input_press; // index on AI / MB
+	float    		o2_comp; 	 //
+	float    		temp_comp;   //
+	float    		press_comp;  //
+	float    		raw_min;     //
+	float    		raw_max;     //
 	float    		scratch_min; //
 	float    		scratch_max; //
-	float    		coef_a;  //
-	float    		coef_b;  //
-	float    		alarm_value; //
-	float    		scratch_value; //
-	float    		raw_value; //
-	float    		std_value; //
+	float    		coef_a;  	 //
+	float    		coef_b;  	 //
+	float    		alarm_value; 	//
+	float    		scratch_value; 	//
+	float    		raw_value; 		//
+	float    		std_value; 		//
 }STag;
 
 
 
-typedef struct SSystemInfo_ {
-	uint32_t		server_ftp_ip;
+typedef struct SCommon_ {
+	ip_addr_t		dev_ip;
+	ip_addr_t		server_ftp_ip;
 	uint16_t		server_ftp_port;
-	uint32_t		server_ctrl_ip;
+	ip_addr_t		server_ctrl_ip;
 	uint16_t		server_ctrl_port;
-	uint32_t		dev_ip;
 	uint8_t			tinh[6];
 	uint8_t			coso[6];
 	uint8_t			tram[10];
 	uint8_t			scan_dur;	// second
 	uint8_t			log_dur;	// minute
-}SSystemInfo;
+	uint32_t		modbus_brate;
+}SCommon;
 
 
 typedef struct SSysCfg_ {
 	STag				sTag[SYSTEM_NUM_TAG];
-	SSystemInfo			sCom;
+	SCommon				sCom;
 }SSysCfg;
 
 #endif /* APPLICATION_DEFINITION_H_ */

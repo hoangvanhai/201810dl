@@ -27,7 +27,7 @@
 #include <app_shell.c>
 #include <task_filesystem.h>
 /************************** Constant Definitions *****************************/
-
+#define CONFIG_FILE_PATH		"/config.dat"
 /**************************** Type Definitions *******************************/
 
 /***************** Macros (Inline Functions) Definitions *********************/
@@ -39,9 +39,8 @@ static void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type);
 /************************** Variable Definitions *****************************/
 SApp sApp;
 SApp *pAppObj = &sApp;
-FATFS fs0, fs1;
 extern float max_latch, min_latch;
-uint8_t shared_buff[4096];
+//uint8_t shared_buff[4096];
 extern const shell_command_t cmd_table[];
 
 /*****************************************************************************/
@@ -53,7 +52,13 @@ extern const shell_command_t cmd_table[];
  *  @note
  */
 void App_Init(SApp *pApp) {
+
 	App_InitTaskHandle(pApp);
+
+	App_LoadConfig(pApp, CONFIG_FILE_PATH);
+
+
+
 	pApp->eStatus = SYS_ERR_NONE;
 }
 
@@ -113,6 +118,9 @@ int App_LoadConfig(SApp *pApp, const char *cfg_path) {
 
 		/* Close the file */
 		f_close(&fil);
+	} else {
+
+		retVal = App_SaveConfig(pApp, cfg_path);
 	}
 
 	return retVal;
@@ -126,11 +134,111 @@ int App_LoadConfig(SApp *pApp, const char *cfg_path) {
  *  @return Void.
  *  @note
  */
+int App_SaveConfig(SApp *pApp, const char* cfg_path) {
+	FIL fil;        /* File object */
+	FRESULT fr;     /* FatFs return code */
+	uint32_t written;
+	int retVal = -1;
+
+	fr = f_open(&fil, cfg_path, FA_CREATE_ALWAYS);
+	if (fr) {
+		LREP("create file error: %d\r\n", fr);
+		return retVal;
+	}
+
+	fr = f_write(&fil, (void*)&pApp->sCfg, sizeof(SSysCfg), &written);
+
+	if(!fr) {
+		if(written > 0) {
+			LREP("save config content ok\r\n");
+			retVal = 0;
+		} else {
+			retVal = -2;
+		}
+	} else {
+		retVal = -3;
+	}
+
+	/* Close the file */
+	f_close(&fil);
+	return retVal;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+int	App_GenDefaultConfig(SSysCfg *pHandle) {
+
+	memset(pHandle, 0, sizeof(SSysCfg));
+
+	pHandle->sCom.coso[0] = 'C';
+	pHandle->sCom.coso[1] = 'O';
+	pHandle->sCom.coso[2] = 'S';
+	pHandle->sCom.coso[3] = 'O';
+
+	pHandle->sCom.tinh[0] = 'T';
+	pHandle->sCom.tinh[1] = 'I';
+	pHandle->sCom.tinh[2] = 'N';
+	pHandle->sCom.tinh[3] = 'H';
+
+	pHandle->sCom.tram[0] = 'T';
+	pHandle->sCom.tram[1] = 'R';
+	pHandle->sCom.tram[2] = 'A';
+	pHandle->sCom.tram[3] = 'M';
+
+	pHandle->sCom.scan_dur 	= 1;
+	pHandle->sCom.log_dur 	= 5;
+	pHandle->sCom.modbus_brate = 9600;
+
+	IP4_ADDR(&pHandle->sCom.dev_ip, 192,168,1,2);
+	IP4_ADDR(&pHandle->sCom.server_ftp_ip, 192,168,1,12);
+	pHandle->sCom.server_ftp_port = 21;
+	IP4_ADDR(&pHandle->sCom.server_ctrl_ip, 192,168,1,22);
+	pHandle->sCom.server_ctrl_port = 1186;
+
+	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+		App_VerifyTagConfig(&pHandle->sTag[i], i);
+	}
+
+	return 0;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int	App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx) {
+
+	pHandle->id = tagIdx;
+	pHandle->input_id = tagIdx;
+	pHandle->input_id = MIN(pHandle->input_id, SYSTEM_NUM_TAG - 1);
+	pHandle->pin_calib = MIN(pHandle->pin_calib, DIGITAL_INPUT_NUM_CHANNEL - 1);
+	pHandle->pin_error = MIN(pHandle->pin_error, DIGITAL_INPUT_NUM_CHANNEL - 1);
+
+	return 0;
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int App_SetConfig(SApp *pApp, uint8_t *pData) {
 	switch(pData[0]) {
 	case CFG_COMMON | CFG_SET:
-		if(pData[1] == sizeof(SSystemInfo)) {
-			memcpy(&pApp->sCfg.sCom, &pData[2], sizeof(SSystemInfo));
+		if(pData[1] == sizeof(SCommon)) {
+			memcpy(&pApp->sCfg.sCom, &pData[2], sizeof(SCommon));
 		} else {
 			ASSERT_NONVOID(FALSE, -1);
 		}
@@ -147,6 +255,8 @@ int App_SetConfig(SApp *pApp, uint8_t *pData) {
 		}
 
 		break;
+
+	case CFG_COM_TAG | CFG_SET:
 
 	default:
 		ASSERT_NONVOID(FALSE, -3);
@@ -169,11 +279,11 @@ int App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type) {
 	switch(cfg) {
 	case CFG_COMMON | CFG_GET:
 	if(type == CFG_CONN_SERIAL) {
-		uint8_t *sendData = OSA_FixedMemMalloc(sizeof(SSystemInfo) + 2);
+		uint8_t *sendData = OSA_FixedMemMalloc(sizeof(SCommon) + 2);
 		sendData[0] = CFG_COMMON | CFG_GET;
-		sendData[1] = sizeof(SSystemInfo);
-		memcpy(&sendData[2], &pApp->sCfg.sCom, sizeof(SSystemInfo));
-		App_SendPC(pApp, sendData, sizeof(SSystemInfo) + 2, true);
+		sendData[1] = sizeof(SCommon);
+		memcpy(&sendData[2], &pApp->sCfg.sCom, sizeof(SCommon));
+		App_SendPC(pApp, sendData, sizeof(SCommon) + 2, true);
 		OSA_FixedMemFree(sendData);
 	}
 	break;
@@ -304,7 +414,7 @@ void App_TaskModbus(task_param_t param)
 	OS_MSG_SIZE msg_size;
 	CPU_TS	ts;
 
-	Modbus_Init(&pApp->sModbus, BOARD_MODBUS_UART_INSTANCE, BOARD_MODBUS_UART_BAUD, 0, 0);
+
 
 	uint8_t rx_buf[264];
 	uint16_t rx_length;
@@ -459,6 +569,7 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
  */
 int	App_InitModbus(SApp *pApp){
 
+	Modbus_Init(&pApp->sModbus, BOARD_MODBUS_UART_INSTANCE, BOARD_MODBUS_UART_BAUD, 0, 0);
 	return 0;
 }
 /*****************************************************************************/
@@ -502,9 +613,9 @@ int	App_ModbusDoRead(SApp *pApp){
 	return 0;
 }
 /*****************************************************************************/
-/** @brief
- *
- *
+/** @brief get scratch value -> calculate to raw value -> calculate to std value
+ *	-> get status
+ *  ->
  *  @param
  *  @return Void.
  *  @note
@@ -653,6 +764,142 @@ double	App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr) {
 bool App_GetDILevelByIndex(SDigitalInput *pHandle, uint16_t index) {
 	return pHandle->Node[index].lev;
 }
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int	App_InitDateTime(SApp *pApp) {
+
+	int retVal;
+
+	retVal = RTC_InitDateTime(&pApp->sDateTime);
+	ASSERT_NONVOID(retVal == 0, retVal);
+
+	OSA_SleepMs(100);
+
+	retVal = RTC_GetTimeDate(&pApp->sDateTime);
+
+	if(retVal == 0) {
+		if(pApp->sDateTime.tm_year == 1990) {
+			RTC_SetDateTime(0, 0, 1, 1, 2018);
+		}
+
+	} else {
+		ASSERT_NONVOID(FALSE, retVal);
+	}
+
+	return retVal;
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+SDateTime	App_GetDateTime(SApp *pApp) {
+	return pApp->sDateTime;
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int App_SetDateTime(SApp *pApp, SDateTime time) {
+	pApp->sDateTime = time;
+	return RTC_SetTimeDate(&pApp->sDateTime);
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
 /*****************************************************************************/
 /** @brief
  *
