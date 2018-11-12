@@ -637,12 +637,12 @@ void SDHC_HAL_SendCmd(SDHC_Type * base, const sdhc_hal_cmd_req_t* cmdReq)
                 | SDHC_XFERTYP_CMDTYP_MASK | SDHC_XFERTYP_BCEN_MASK | SDHC_XFERTYP_CICEN_MASK
                 | SDHC_XFERTYP_CCCEN_MASK | SDHC_XFERTYP_RSPTYP_MASK | SDHC_XFERTYP_DTDSEL_MASK
                 | SDHC_XFERTYP_AC12EN_MASK)));
-	LREP("dataBlkSize: %d - dataBlkCount: %d arg: %x index: %d flag: 0x%x\r\n",
+	/*LREP("dataBlkSize: %d - dataBlkCount: %d arg: %x index: %d flag: 0x%x\r\n",
 			cmdReq->dataBlkSize,
 			cmdReq->dataBlkCount,
 			cmdReq->arg,
 			cmdReq->index,
-			cmdReq->flags);
+			cmdReq->flags);*/
 }
 
 /*FUNCTION****************************************************************

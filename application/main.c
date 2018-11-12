@@ -26,7 +26,7 @@
 #include "fsl_debug_console.h"
 #include <includes.h>
 #include <board.h>
-#include <app.h>
+//#include <app.h>
 #include <task_filesystem.h>
 
 /************************** Constant Definitions *****************************/
@@ -54,6 +54,12 @@ const char *logo_msg = { "\r\n\n"
 
 uint32_t gSlaveId;
 
+void App_Periodic(void *param);
+FATFS FatFs_SDCARD;
+
+FIL writer;
+OSA_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
+
 /*****************************************************************************/
 /** @brief
  *
@@ -65,6 +71,7 @@ uint32_t gSlaveId;
 #if 1
 int main(void)
 {
+#if 0
     osa_status_t result;
 
     result = kStatus_OSA_Error;
@@ -182,7 +189,121 @@ int App_CreateAppTask(SApp *pApp) {
 
 
 	return result;
+#endif
+
+    uint32_t i;
+    osa_status_t retVal;
+    // initialize target hw
+    hardware_init();
+
+    // initialize the OS services
+    OSA_Init();
+
+    LREP("Application started \r\n");
+    // enable SDHC module instance
+    CLOCK_SYS_EnableSdhcClock(0);
+
+#ifdef MPU_INSTANCE_COUNT
+    // disable MPU
+    for(i = 0; i < MPU_INSTANCE_COUNT; i++)
+    {
+        MPU_HAL_Disable(g_mpuBase[i]);
+    }
+#endif
+
+
+    retVal = OSA_TaskCreate(App_Periodic,
+					(uint8_t *)"periodic",
+					TASK_PERIODIC_STACK_SIZE,
+					task_periodic_stack,
+					TASK_PERIODIC_PRIO,
+					(task_param_t)0,
+					false,
+					&task_periodic_task_handler);
+	if (retVal != kStatus_OSA_Success)
+	{
+		LREP("Failed to create periodic task\r\n\r\n");
+		return -1;
+	} else {
+		LREP("Task create successfully \r\n");
+	}
+
+
+
+
+    OSA_Start();
+
+    for(;;) {}                    // Should not achieve here
+
+    return 0;
 }
+
+
+
+const char *msg = "FS Waking up ok " __TIME__ " " __DATE__;
+
+void App_FS() {
+
+	int retVal;
+	memset(&FatFs_SDCARD, 0, sizeof(FATFS));
+
+	retVal = f_mount(1, &FatFs_SDCARD);
+
+	if(retVal != FR_OK) {
+		PRINTF("fat fs init error: %d\r\n", retVal);
+	} else {
+		PRINTF("fat fs init successful !\r\n");
+
+		retVal = f_mkdir("1:this_dir");
+		if(retVal != FR_OK) {
+			PRINTF("mkdir err = %d\r\n", retVal);
+		} else {
+			PRINTF("mkdir successful !\r\n");
+		}
+
+		retVal = f_open(&writer, "1:this_dir/FILE1.txt", FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+
+		if(retVal != FR_OK) {
+			PRINTF("open file error: %d\r\n", retVal);
+		} else {
+			uint32_t byte_written, size;
+			size = f_size(&writer);
+			PRINTF("file size = %d\r\n", size);
+			if(size > 0) {
+				PRINTF("file size = %d bytes\r\n", size);
+			} else {
+
+				retVal = f_write(&writer, (void*)msg, strlen(msg), &byte_written);
+				if(retVal != FR_OK) {
+					PRINTF("write to byte failed err: %d\r\n", retVal);
+				} else {
+					if(byte_written != strlen(msg)) {
+						PRINTF("write to file missing data, writereq = %d - writeact: %d\r\n", strlen(msg), byte_written);
+					} else {
+						PRINTF("write to file totally successful !\r\n");
+					}
+				}
+			}
+		}
+
+		f_close(&writer);
+
+	}
+}
+
+void App_Periodic(void *param) {
+
+	bool run = false;
+
+	while(1) {
+		if(run == false) {
+			run = true;
+			App_FS();
+		}
+		OSA_TimeDelay(1000);
+	}
+}
+
 
 #endif
 

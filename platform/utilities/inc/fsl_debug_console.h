@@ -48,6 +48,7 @@
 
 /*Configuration for toolchain's printf/scanf or KSDK version printf/scanf */
 #define LREP          	debug_printf
+#define PRINTF         	debug_printf
 //#define LREP          printf
 #define SCANF           debug_scanf
 //#define SCANF           scanf

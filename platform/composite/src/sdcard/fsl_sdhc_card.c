@@ -876,7 +876,6 @@ static sdhc_status_t SDCARD_DRV_InitSd(sdhc_card_t *card)
         err = kStatus_SDHC_SetCardBlockSizeFailed;
     }
 
-    LREP("RET: %d\r\n", err);
     return err;
 }
 
@@ -1403,7 +1402,7 @@ sdhc_status_t SDCARD_DRV_Init(sdhc_host_t *host, sdhc_card_t *card)
         return kStatus_SDHC_SetClockFailed;
     }
 
-    LREP("1.Config clock for host done !\r\n");
+    //LREP("1.Config clock for host done !\r\n");
     err = SDCARD_DRV_GoIdle(card);
     if (err)
     {
@@ -1411,7 +1410,7 @@ sdhc_status_t SDCARD_DRV_Init(sdhc_host_t *host, sdhc_card_t *card)
     }
     acmd41Arg = card->host->ocrSupported;
 
-    LREP("2. Set card goto idle done !\r\n");
+    //LREP("2. Set card goto idle done !\r\n");
 
     err = SDCARD_DRV_SendIfCond(card);
 
@@ -1420,13 +1419,13 @@ sdhc_status_t SDCARD_DRV_Init(sdhc_host_t *host, sdhc_card_t *card)
         /* SDHC or SDXC card */
         acmd41Arg |= SD_OCR_HCS;
         card->caps |= SDMMC_CARD_CAPS_SDHC;
-        LREP("3.Check card interface condition successful\r\n");
+        //LREP("3.Check card interface condition successful\r\n");
     }
     else
     {
         /* SDSC card */
         err = SDCARD_DRV_GoIdle(card);
-        LREP("3.Check card interface condition failed, set card to idle\r\n");
+        //LREP("3.Check card interface condition failed, set card to idle\r\n");
         if (err)
         {
             return kStatus_SDHC_SetCardToIdle;
@@ -1437,7 +1436,7 @@ sdhc_status_t SDCARD_DRV_Init(sdhc_host_t *host, sdhc_card_t *card)
 
     err = SDCARD_DRV_AppSendOpCond(card, acmd41Arg);
 
-    LREP("4. Send op cond done err =  %d!\r\n", err);
+    //LREP("4. Send op cond done err =  %d!\r\n", err);
 
     if (kStatus_SDHC_TimeoutError == err)
     {

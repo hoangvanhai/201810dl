@@ -366,10 +366,10 @@ static sdhc_status_t SDHC_DRV_PrepareData(uint32_t instance,
 	if ((host->mode == kSdhcTransModeAdma2)) {
 		/* ADMA2 */
 		ret = SDHC_DRV_FillAdma2Table(instance, req->data->buffer, totalSize);
-		LREP("Data: \r\n");
-		for(int i = 0; i < totalSize; i++)
-			LREP("0x%x ", req->data->buffer[i]);
-		LREP("\r\n");
+//		LREP("Data: \r\n");
+//		for(int i = 0; i < totalSize; i++)
+//			LREP("0x%x ", req->data->buffer[i]);
+//		LREP("\r\n");
 		if (ret != kStatus_SDHC_NoError) {
 			return ret;
 		}
@@ -378,8 +378,8 @@ static sdhc_status_t SDHC_DRV_PrepareData(uint32_t instance,
 	else {
 		/* ADMA1 */
 		ret = SDHC_DRV_FillAdma1Table(instance, req->data->buffer, totalSize);
-		for(int i = 0; i < totalSize; i++)
-			LREP("0x%x-", req->data->buffer[i]);
+//		for(int i = 0; i < totalSize; i++)
+//			LREP("0x%x-", req->data->buffer[i]);
 		if (ret != kStatus_SDHC_NoError) {
 			return ret;
 		}
@@ -388,7 +388,7 @@ static sdhc_status_t SDHC_DRV_PrepareData(uint32_t instance,
 
 	SDHC_HAL_SetAdmaAddress(g_sdhcBase[instance],
 			(uint32_t) host->admaTableAddress);
-	LREP("dmatable Address = 0x%x\r\n", host->admaTableAddress);
+//	LREP("dmatable Address = 0x%x\r\n", host->admaTableAddress);
 	return ret;
 }
 
@@ -898,8 +898,8 @@ static void SDHC_DRV_DataIrq(uint32_t instance, uint32_t irq) {
 
 	if (irq & (SDHC_HAL_DATA_ERR_INT | SDHC_HAL_DMA_ERR_INT)) {
 		SDHC_DRV_SetRequestError(req, irq);
-		LREP("ISR post data err irq = %x - mask hal = %x mask dma = %x\r\n",
-				irq,  SDHC_HAL_DATA_ERR_INT , SDHC_HAL_DMA_ERR_INT);
+//		LREP("ISR post data err irq = %x - mask hal = %x mask dma = %x\r\n",
+//				irq,  SDHC_HAL_DATA_ERR_INT , SDHC_HAL_DMA_ERR_INT);
 		OSA_SemaPost(req->complete);
 		return;
 	}
@@ -909,7 +909,6 @@ static void SDHC_DRV_DataIrq(uint32_t instance, uint32_t irq) {
 	} else if (irq & SDHC_HAL_BUF_WRITE_READY_INT) {
 		SDHC_DRV_PioWriteBlock(instance, req);
 	} else if (irq & SDHC_HAL_DATA_COMPLETE_INT) {
-		LREP("post data \r\n");
 		OSA_SemaPost(req->complete);
 	} else if (irq & SDHC_HAL_DMA_INT) {
 		if (g_hosts[instance]->mode != kSdhcTransModeSdma) {
@@ -930,7 +929,7 @@ static void SDHC_DRV_CmdIrq(uint32_t instance, uint32_t irq) {
 	assert(instance < SDHC_INSTANCE_COUNT);
 	assert(irq & SDHC_HAL_CMD_ALL_INT);
 	req = g_hosts[instance]->currentReq;
-	LREP("irq = 0x%x\r\n", irq);
+	//LREP("irq = 0x%x\r\n", irq);
 	if (irq & SDHC_HAL_CMD_ERR_INT) {
 		//LREP("SDHC_DRV_CmdIrq %x\r\n", irq & SDHC_HAL_CMD_TIMEOUT_ERR_INT);
 		SDHC_DRV_SetRequestError(req, irq);
@@ -1352,8 +1351,6 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
 		if (kStatus_SDHC_NoError == SDHC_DRV_PrepareData(instance, req)) {
 			req->flags |= FSL_SDHC_REQ_FLAGS_USE_DMA;
 		}
-	} else {
-		LREP("req->data = 0x%x\r\n", req->data);
 	}
 
 #if defined BSP_FSL_SDHC_USING_IRQ
@@ -1406,8 +1403,6 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
 #endif
 		LREP("Send command failed \r\n");
 		return kStatus_SDHC_Failed;
-	} else {
-		LREP("send command ok\r\n");
 	}
 
 
