@@ -36,13 +36,16 @@
 /************************** Function Prototypes ******************************/
 static void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type);
 static void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type);
+void FileSystem_Init();
 /************************** Variable Definitions *****************************/
 SApp sApp;
 SApp *pAppObj = &sApp;
 extern float max_latch, min_latch;
 //uint8_t shared_buff[4096];
 extern const shell_command_t cmd_table[];
-
+const char *msg = "FS Waking up ok " __TIME__ " " __DATE__;
+FATFS FatFs_SDCARD;
+FIL writer;
 /*****************************************************************************/
 /** @brief
  *
@@ -316,39 +319,51 @@ int App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type) {
 
 void App_TaskPeriodic(task_param_t parg) {
 
-//	SApp *pApp = (SApp *)parg;
-
-//	ASSERT(RTC_InitDateTime(&pApp->sDateTime) == 0);
-//	OSA_SleepMs(100);
+////	SApp *pApp = (SApp *)parg;
 //
-//	if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-//		if(pApp->sDateTime.tm_year == 1990) {
-//			RTC_SetDateTime(0, 0, 1, 1, 2018);
-//		}
+////	ASSERT(RTC_InitDateTime(&pApp->sDateTime) == 0);
+////	OSA_SleepMs(100);
+////
+////	if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
+////		if(pApp->sDateTime.tm_year == 1990) {
+////			RTC_SetDateTime(0, 0, 1, 1, 2018);
+////		}
+////
+////	} else {
+////		ASSERT(FALSE);
+////	}
 //
-//	} else {
-//		ASSERT(FALSE);
+//	//FM_Init(0);
+//
+//	while(1) {
+//		OSA_SleepMs(1000);
+//		LREP("APPDATA\r\n");
+////		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
+////
+////			LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n",
+////					pApp->sDateTime.tm_sec, pApp->sDateTime.tm_min,
+////					pApp->sDateTime.tm_hour, pApp->sDateTime.tm_wday,
+////					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_mon,
+////					pApp->sDateTime.tm_year);
+////
+////			/* LREP("[Max %.3f - Min %.3f]\r\n", max_latch, min_latch); */
+////
+////		} else {
+////
+////		}
 //	}
 
-	//FM_Init(0);
+
+	bool run = false;
 
 	while(1) {
-		OSA_SleepMs(1000);
-		LREP("APPDATA\r\n");
-//		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-//
-//			LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n",
-//					pApp->sDateTime.tm_sec, pApp->sDateTime.tm_min,
-//					pApp->sDateTime.tm_hour, pApp->sDateTime.tm_wday,
-//					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_mon,
-//					pApp->sDateTime.tm_year);
-//
-//			/* LREP("[Max %.3f - Min %.3f]\r\n", max_latch, min_latch); */
-//
-//		} else {
-//
-//		}
+		if(run == false) {
+			run = true;
+			FileSystem_Init();
+		}
+		OSA_TimeDelay(1000);
 	}
+
 }
 /*****************************************************************************/
 /** @brief
@@ -481,39 +496,15 @@ void App_TaskSerialcomm(task_param_t param) {
 
 void App_TaskFilesystem(task_param_t param)
 {
-//	OS_ERR err;
-//	void 	*p_msg;
-//	OS_MSG_SIZE msg_size;
-//	CPU_TS	ts;
+	bool run = false;
 
-//	BOOL run = FALSE;
-
-
-
-    while (1)
-    {
-
-    	OSA_SleepMs(1000);
-//    	if(run == FALSE) {
-//    		run = TRUE;
-//    		if(init_filesystem() != FR_OK) {
-//				LREP("Init FAT FS failed \r\n");
-//			} else {
-//				LREP("Init FAT FS successful \r\n");
-//			}
-//    	}
-
-    	/*
-		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, 0, &err);
-
-    	p_msg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
-		if(err == OS_ERR_NONE) {
-
-			LREP("filesystem get msg size = %d ts = %d\r\n", msg_size, ts);
-
-			OSA_FixedMemFree((uint8_t*)p_msg);
-		}*/
-    }
+	while(1) {
+		if(run == false) {
+			run = true;
+			FileSystem_Init();
+		}
+		OSA_TimeDelay(1000);
+	}
 }
 /*****************************************************************************/
 /** @brief
@@ -864,7 +855,53 @@ void App_SetFTPCallback(SApp *pApp) {
  *  @return Void.
  *  @note
  */
+void FileSystem_Init() {
+	int retVal;
+	memset(&FatFs_SDCARD, 0, sizeof(FATFS));
 
+	retVal = f_mount(1, &FatFs_SDCARD);
+
+	if(retVal != FR_OK) {
+		PRINTF("fat fs init error: %d\r\n", retVal);
+	} else {
+		PRINTF("fat fs init successful !\r\n");
+
+		retVal = f_mkdir("1:this_dir");
+		if(retVal != FR_OK) {
+			PRINTF("mkdir err = %d\r\n", retVal);
+		} else {
+			PRINTF("mkdir successful !\r\n");
+		}
+
+		retVal = f_open(&writer, "1:this_dir/FILE1.txt", FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+
+		if(retVal != FR_OK) {
+			PRINTF("open file error: %d\r\n", retVal);
+		} else {
+			uint32_t byte_written, size;
+			size = f_size(&writer);
+			PRINTF("file size = %d\r\n", size);
+			if(size > 0) {
+				PRINTF("file size = %d bytes\r\n", size);
+			} else {
+
+				retVal = f_write(&writer, (void*)msg, strlen(msg), &byte_written);
+				if(retVal != FR_OK) {
+					PRINTF("write to byte failed err: %d\r\n", retVal);
+				} else {
+					if(byte_written != strlen(msg)) {
+						PRINTF("write to file missing data, writereq = %d - writeact: %d\r\n", strlen(msg), byte_written);
+					} else {
+						PRINTF("write to file totally successful !\r\n");
+					}
+				}
+			}
+		}
+
+		f_close(&writer);
+
+	}
+}
 /*****************************************************************************/
 /** @brief
  *

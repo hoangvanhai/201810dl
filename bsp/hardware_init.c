@@ -32,6 +32,7 @@
 #include "pin_mux.h"
 #include "fsl_clock_manager.h"
 #include "fsl_debug_console.h"
+#include <includes.h>
 
 void hardware_init(void) {
 
@@ -42,16 +43,29 @@ void hardware_init(void) {
   CLOCK_SYS_EnablePortClock(PORTD_IDX);
   CLOCK_SYS_EnablePortClock(PORTE_IDX);
 
-//  CLOCK_SYS_EnableSdhcClock(0);
+  CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
 
-  configure_sdhc_pins(0);
-//  configure_i2c_pins(1);
+  configure_sdhc_pins(BOARD_SDHC_INSTANCE);
+  configure_i2c_pins(BOARD_I2C_RTC_INSTANCE);
 //  configure_ftm_pins(FTM0_IDX);
   /* Init board clock */
   BOARD_ClockInit();
   dbg_uart_init();
 
-  //BOARD_InstallDebugIsr();
+#ifdef MPU_INSTANCE_COUNT /* File System need disabled MPU */
+    // disable MPU
+    for(int i = 0; i < MPU_INSTANCE_COUNT; i++)
+    {
+        MPU_HAL_Disable(g_mpuBase[i]);
+    }
+#endif
+
+    // Configure the power mode protection
+    SMC_HAL_SetProtection(SMC_BASE_PTR, kAllowPowerModeVlp);
+
+    GPIO_DRV_Init(NULL, ledPins);
+
+    GPIO_DRV_Init(sdhcCdPin, NULL);
 }
 
 /*!
