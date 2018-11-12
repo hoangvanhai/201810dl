@@ -316,9 +316,11 @@ void Modbus_RecvFF_Reset (SModbus *pModbus) {
 static void modbus_rx_handle(uint32_t instance, void * uartState) {
 	uart_state_t *state = (uart_state_t*)uartState;
 
-	if(FIFO_Push(&pThisL1->sRecvFIFO, state->rxBuff[0]) == FALSE) {
-		LREP("push fifo error \r\n");
-	}
+//	LREP("%02x ", state->rxBuff[0]);
+	debug_putchar(state->rxBuff[0]);
+//	if(FIFO_Push(&pThisL1->sRecvFIFO, state->rxBuff[0]) == FALSE) {
+//		LREP("push fifo error \r\n");
+//	}
 }
 
 /*****************************************************************************/

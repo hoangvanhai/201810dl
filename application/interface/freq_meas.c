@@ -53,13 +53,12 @@ void FM_Init(uint32_t instance) {
 		.BDMMode = kFtmBdmMode_11
 	};
 
-	FTM_DRV_Init(FTM_PERIOD_MEASUARE_INSTANCE, &ftm_user_cfg);
-	FTM_DRV_SetClock(FTM_PERIOD_MEASUARE_INSTANCE,kClock_source_FTM_SystemClk, kFtmDividedBy1);
-	FTM_DRV_SetupChnInputCapture(FTM_PERIOD_MEASUARE_INSTANCE, kFtmRisingAndFalling, CHAN0_IDX, 0);
-	FTM_DRV_SetTimeOverflowIntCmd(FTM_PERIOD_MEASUARE_INSTANCE, true);
-	FTM_HAL_EnableChnInt(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
+	FTM_DRV_Init(BOARD_FTM_INSTANCE, &ftm_user_cfg);
+	FTM_DRV_SetClock(BOARD_FTM_INSTANCE,kClock_source_FTM_SystemClk, kFtmDividedBy1);
+	FTM_DRV_SetupChnInputCapture(BOARD_FTM_INSTANCE, kFtmRisingAndFalling, BOARD_FTM_CHANNEL, 0);
+	FTM_DRV_SetTimeOverflowIntCmd(BOARD_FTM_INSTANCE, true);
+	FTM_HAL_EnableChnInt(g_ftmBase[BOARD_FTM_INSTANCE], BOARD_FTM_CHANNEL);
 	LREP("init ftm capture module done !\r\n");
-
 }
 
 
@@ -82,20 +81,20 @@ float duration =  0;
 void FTM0_IRQHandler(void)
 {
 	OSIntEnter();
-	if(FTM_HAL_HasTimerOverflowed(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE])) {
-		//FTM_HAL_ClearTimerOverflow(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE]);
-		FTM_BWR_SC_TOF(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], 0);
-		//totalCounter += FTM_HAL_GetMod(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE]);
+	if(FTM_HAL_HasTimerOverflowed(g_ftmBase[BOARD_FTM_INSTANCE])) {
+		//FTM_HAL_ClearTimerOverflow(g_ftmBase[BOARD_FTM_INSTANCE]);
+		FTM_BWR_SC_TOF(g_ftmBase[BOARD_FTM_INSTANCE], 0);
+		//totalCounter += FTM_HAL_GetMod(g_ftmBase[BOARD_FTM_INSTANCE]);
 		totalCounter += 0xFFFF;
 	}
 
-	if (FTM_HAL_HasChnEventOccurred(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX))
+	if (FTM_HAL_HasChnEventOccurred(g_ftmBase[BOARD_FTM_INSTANCE], BOARD_FTM_CHANNEL))
 	{
-		//totalCounter += FTM_HAL_GetChnCountVal(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
-		totalCounter += FTM_RD_CnV_VAL(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
-		//FTM_HAL_SetCounter(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], 0);
-		FTM_WR_CNT_COUNT(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], 0);
-		duration = ((float)(totalCounter) / (float)FTM_DRV_GetClock(FTM_PERIOD_MEASUARE_INSTANCE)) * 1000 * 2; //???
+		//totalCounter += FTM_HAL_GetChnCountVal(g_ftmBase[BOARD_FTM_INSTANCE], BOARD_FTM_CHANNEL);
+		totalCounter += FTM_RD_CnV_VAL(g_ftmBase[BOARD_FTM_INSTANCE], CHAN0_IDX);
+		//FTM_HAL_SetCounter(g_ftmBase[BOARD_FTM_INSTANCE], 0);
+		FTM_WR_CNT_COUNT(g_ftmBase[BOARD_FTM_INSTANCE], 0);
+		duration = ((float)(totalCounter) / (float)FTM_DRV_GetClock(BOARD_FTM_INSTANCE)) * 1000 * 2; //???
 		//duration = (float)(totalCounter) / (float)30000;
 		totalCounter = 0;
 #if 1
@@ -119,8 +118,8 @@ void FTM0_IRQHandler(void)
 		}
 #endif
 
-		//FTM_HAL_ClearChnEventStatus(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], CHAN0_IDX);
-		FTM_CLR_STATUS(g_ftmBase[FTM_PERIOD_MEASUARE_INSTANCE], 1U << CHAN0_IDX);
+		//FTM_HAL_ClearChnEventStatus(g_ftmBase[BOARD_FTM_INSTANCE], BOARD_FTM_CHANNEL);
+		FTM_CLR_STATUS(g_ftmBase[BOARD_FTM_INSTANCE], 1U << BOARD_FTM_CHANNEL);
 	}
 	OSIntExit();
     //FTM_DRV_IRQHandler(0U);

@@ -35,7 +35,7 @@
 #include "pin_mux.h"
 #include "gpio_pins.h"
 #include <fsl_debug_console.h>
-#include <hw_profile.h>
+#include <hardware_profile.h>
 
 /* The usb use native port  */
 #define USBCFG_HOST_PORT_NATIVE         (1)
@@ -56,8 +56,6 @@ void BOARD_ClockInit(void);
 void BOARD_InitOsc0(void);
 
 /* Function to initialize RTC external clock base on board configuration. */
-void BOARD_InitRtcOsc(void);
-
 bool BOARD_IsSDCardDetected(void);
 
 /*Function to handle board-specified initialization*/

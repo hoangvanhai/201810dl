@@ -7,7 +7,7 @@ extern "C" {
 #include "Transceiver.h"
 #include "mem.h"
 #include "queue.h"
-#include "app_cfg.h"
+#include "hardware_profile.h"
 #include <fsl_debug_console.h>
 
 /************************** Constant Definitions *****************************/

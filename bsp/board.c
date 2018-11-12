@@ -127,21 +127,6 @@ void BOARD_InitOsc0(void)
     CLOCK_SYS_OscInit(0U, &osc0Config);
 }
 
-/* Function to initialize RTC external clock base on board configuration. */
-void BOARD_InitRtcOsc(void)
-{
-    rtc_osc_user_config_t rtcOscConfig =
-    {
-        .freq                = RTC_XTAL_FREQ,
-        .enableCapacitor2p   = RTC_SC2P_ENABLE_CONFIG,
-        .enableCapacitor4p   = RTC_SC4P_ENABLE_CONFIG,
-        .enableCapacitor8p   = RTC_SC8P_ENABLE_CONFIG,
-        .enableCapacitor16p  = RTC_SC16P_ENABLE_CONFIG,
-        .enableOsc           = RTC_OSC_ENABLE_CONFIG,
-    };
-
-    CLOCK_SYS_RtcOscInit(0U, &rtcOscConfig);
-}
 
 static void CLOCK_SetBootConfig(clock_manager_user_config_t const* config)
 {
@@ -170,9 +155,6 @@ void BOARD_ClockInit(void)
     PORT_HAL_SetMuxMode(EXTAL0_PORT, EXTAL0_PIN, EXTAL0_PINMUX);
     PORT_HAL_SetMuxMode(XTAL0_PORT, XTAL0_PIN, XTAL0_PINMUX);
     BOARD_InitOsc0();
-
-    // Setup RTC external clock if used.
-    BOARD_InitRtcOsc();
 
     /* Set system clock configuration. */
 #if (CLOCK_INIT_CONFIG == CLOCK_VLPR)

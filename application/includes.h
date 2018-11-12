@@ -51,6 +51,7 @@
 
 // application
 #include <app_cfg.h>
+#include <hardware_profile.h>
 #include <definition.h>
 #include <typedefs.h>
 #endif /* APPLICATION_INCLUDES_H_ */

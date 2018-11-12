@@ -31,7 +31,7 @@
 #include <definition.h>
 #include <master.h>
 #include <rtc_comm.h>
-#include <hw_profile.h>
+
 #include <lwip/netif.h>
 #include <task_filesystem.h>
 /************************** Constant Definitions *****************************/
@@ -105,6 +105,7 @@ typedef struct SApp_ {
 
 /************************** Function Prototypes ******************************/
 /* Application interface */
+/* high level initialize */
 void 			App_Init(SApp *pApp);
 int				App_LoadConfig(SApp *pApp, const char* cfg_path);
 int 			App_SaveConfig(SApp *pApp, const char* cfg_path);
@@ -112,6 +113,8 @@ int				App_GenDefaultConfig(SSysCfg *pHandle);
 int				App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx);
 int 			App_SetConfig(SApp *pApp, uint8_t *pData);
 int				App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type);
+
+/* task body */
 void			App_InitTaskHandle(SApp *pApp);
 int				App_CreateAppTask(SApp *pApp);
 void 			App_TaskShell(task_param_t );
@@ -120,18 +123,14 @@ void 			App_TaskModbus(task_param_t );
 void 			App_TaskSerialcomm(task_param_t);
 void 			App_TaskPeriodic(task_param_t);
 
-// Date time
+/* Date time */
 int				App_InitDateTime(SApp *pApp);
 SDateTime		App_GetDateTime(SApp *pApp);
 int 			App_SetDateTime(SApp *pApp, SDateTime time);
 
 // Communication
-int				App_InitTransUI(SApp *pApp);
-int				App_InitTransPC(SApp *pApp);
 int 			App_SendUI(SApp *pApp, uint8_t *data, uint8_t len, bool ack);
 int				App_SendPC(SApp *pApp, uint8_t *data, uint8_t len, bool ack);
-void			App_SetTransUICallback(SApp *pApp, EL3Event evt, FClbL3Event func);
-void			App_SetTransPCCallback(SApp *pApp, EL3Event evt, FClbL3Event func);
 void			App_SetNetPCCallback(SApp *pApp);
 void 			App_SetFTPCallback(SApp *pApp);
 

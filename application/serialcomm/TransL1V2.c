@@ -4,7 +4,7 @@
 #include <string.h>
 #include "typedefs.h"
 #include "TransL1V2.h"
-#include "app_cfg.h"
+#include "hardware_profile.h"
 #include "fsl_debug_console.h"
 
 #if (TRANSL1_VER	== TRANSL1_V2)

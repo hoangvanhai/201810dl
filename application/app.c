@@ -334,6 +334,7 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	while(1) {
 		OSA_SleepMs(1000);
+		LREP("APPDATA\r\n");
 //		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
 //
 //			LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n",
@@ -414,7 +415,7 @@ void App_TaskModbus(task_param_t param)
 	OS_MSG_SIZE msg_size;
 	CPU_TS	ts;
 
-
+	App_InitModbus(pApp);
 
 	uint8_t rx_buf[264];
 	uint16_t rx_length;
@@ -714,17 +715,7 @@ int App_UpdateTagContent(SApp *pApp) {
 	return 0;
 }
 
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-int	App_SendPC(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
-	return Trans_Send(&pApp->sTransPc, len, data, ack ? 0xA0 : 0x20);
-}
+
 /*****************************************************************************/
 /** @brief
  *
@@ -819,6 +810,7 @@ int App_SetDateTime(SApp *pApp, SDateTime time) {
 	pApp->sDateTime = time;
 	return RTC_SetTimeDate(&pApp->sDateTime);
 }
+
 /*****************************************************************************/
 /** @brief
  *
@@ -827,7 +819,43 @@ int App_SetDateTime(SApp *pApp, SDateTime time) {
  *  @return Void.
  *  @note
  */
+int App_SendUI(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
+	return Trans_Send(&pApp->sTransUi, len, data, ack ? 0xA0 : 0x20);
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int	App_SendPC(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
+	return Trans_Send(&pApp->sTransPc, len, data, ack ? 0xA0 : 0x20);
+}
 
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void App_SetNetPCCallback(SApp *pApp) {
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void App_SetFTPCallback(SApp *pApp) {
+
+}
 /*****************************************************************************/
 /** @brief
  *
