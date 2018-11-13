@@ -97,6 +97,8 @@ typedef struct SApp_ {
 	FATFS				sFS0;
 	FATFS				sFS1;
 
+	uint8_t				currPath[256];
+
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/

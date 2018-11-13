@@ -4,15 +4,16 @@
 /*------------------------------------------------------------------------*/
 
 #include <stdlib.h>		/* ANSI memory controls */
+#include <stdint.h>
 #include <malloc.h>		/* ANSI memory controls */
-
+#include <includes.h>
 #include "../ff.h"
 
 
-#if _FS_REENTRANT
-/*------------------------------------------------------------------------*/
-/* Create a Synchronization Object
-/*------------------------------------------------------------------------*/
+#if FF_FS_REENTRANT
+/*------------------------------------------------------------------------
+* Create a Synchronization Object
+*------------------------------------------------------------------------*/
 /* This function is called in f_mount function to create a new
 /  synchronization object, such as semaphore and mutex. When a FALSE is
 /  returned, the f_mount function fails with FR_INT_ERR.
@@ -126,18 +127,17 @@ void ff_rel_grant (
 
 
 
-#if _USE_LFN == 3	/* LFN with a working buffer on the heap */
+#if FF_USE_LFN == 3	/* LFN with a working buffer on the heap */
 /*------------------------------------------------------------------------*/
 /* Allocate a memory block                                                */
 /*------------------------------------------------------------------------*/
 /* If a NULL is returned, the file function fails with FR_NOT_ENOUGH_CORE.
 */
 
-void* ff_memalloc (	/* Returns pointer to the allocated memory block */
-	uint32_t msize		/* Number of bytes to allocate */
-)
+void* ff_memalloc (UINT msize)
 {
 	return malloc(msize);
+	//return OSA_FixedMemMalloc(msize);
 }
 
 
@@ -145,11 +145,10 @@ void* ff_memalloc (	/* Returns pointer to the allocated memory block */
 /* Free a memory block                                                    */
 /*------------------------------------------------------------------------*/
 
-void ff_memfree (
-	void* mblock	/* Pointer to the memory block to free */
-)
+void ff_memfree (void* mblock)
 {
 	free(mblock);
+	//OSA_FixedMemFree(mblock);
 }
 
 #endif

@@ -73,7 +73,9 @@ OS_MEM		g_hMemPartition128;
 #if OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK > 0
 OS_MEM		g_hMemPartition272;
 #endif
-
+#if OS_MEM_PARTITION_512_TOTAL_NUM_BLOCK > 0
+OS_MEM		g_hMemPartition512;
+#endif
 
 /*
 For each memory block we need to reserve two first bytes for storing partition ID.
@@ -101,6 +103,9 @@ uint8_t		*g_ucMemStorage128[OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK][130];
 #endif
 #if OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK > 0
 uint8_t		*g_ucMemStorage272[OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK][274];
+#endif
+#if OS_MEM_PARTITION_512_TOTAL_NUM_BLOCK > 0
+uint8_t		*g_ucMemStorage512[OS_MEM_PARTITION_512_TOTAL_NUM_BLOCK][514];
 #endif
 
 // ---------------------------------------------------------------------------------------------------
@@ -189,6 +194,17 @@ uint8_t* OSA_FixedMemMalloc(uint32_t uiSize)
 
 	}
 #endif
+#if OS_MEM_PARTITION_512_TOTAL_NUM_BLOCK > 0
+	else if ((uiSize > OS_MEM_PARTITION_272) && (uiSize <= OS_MEM_PARTITION_512))
+	{
+
+		// Get memory from partition
+		pucAllocMem = OSMemGet(&g_hMemPartition512, &ucError);
+		// Save the ID of partition as the actual allocated memory
+		uiSize = OS_MEM_PARTITION_512;
+
+	}
+#endif
 
 	else {
 		LREP("Invalid size memory require: %d\r\n", (long)uiSize);
@@ -266,6 +282,12 @@ void OSA_FixedMemFree(uint8_t* pucAllocMem)
 #if OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK > 0
 		case OS_MEM_PARTITION_272:
 			OSMemPut(&g_hMemPartition272, (void*) pucCompleteAllocMem, &ucError);
+			HELPER_TRACE_FREE_STATUS();
+			break;
+#endif
+#if OS_MEM_PARTITION_512_TOTAL_NUM_BLOCK > 0
+		case OS_MEM_PARTITION_512:
+			OSMemPut(&g_hMemPartition512, (void*) pucCompleteAllocMem, &ucError);
 			HELPER_TRACE_FREE_STATUS();
 			break;
 #endif
@@ -364,6 +386,19 @@ uint8_t OSA_FixedMemInit(void)
     if(ucError != OS_ERR_NONE)
     {
         LREP("\r\nCan not Create Partition 266 bytes");
+    }
+#endif
+#if OS_MEM_PARTITION_512_TOTAL_NUM_BLOCK > 0
+    OSMemCreate(&g_hMemPartition512,
+       			(CPU_CHAR*)"mem512",
+   				&g_ucMemStorage512[0][0],
+				OS_MEM_PARTITION_512_TOTAL_NUM_BLOCK,
+				514,
+   				&ucError);
+
+    if(ucError != OS_ERR_NONE)
+    {
+        LREP("\r\nCan not Create Partition 512 bytes");
     }
 #endif
     //LREP("\r\nMemory is initialized!");

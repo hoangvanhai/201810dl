@@ -50,6 +50,8 @@ extern const shell_command_t cmd_table[];
  */
 void App_Init(SApp *pApp) {
 
+	memset(pApp->currPath, 0, 256);
+
 	if(App_InitFS(pApp) == FR_OK) {
 		LREP("App init FS successfully \r\n");
 	}
@@ -93,7 +95,7 @@ int App_LoadConfig(SApp *pApp, const char *cfg_path) {
 	uint32_t read;
 	int retVal = -1;
 
-	if(check_file_existed(cfg_path)) {
+	if(check_obj_existed(cfg_path)) {
 		/* Register work area to the default drive */
 		fr = f_open(&fil, cfg_path, FA_READ);
 		if (fr) {
@@ -101,7 +103,7 @@ int App_LoadConfig(SApp *pApp, const char *cfg_path) {
 			return retVal;
 		}
 
-		fr = f_read(&fil, (void*)&pApp->sCfg, 4096, &read);
+		fr = f_read(&fil, (void*)&pApp->sCfg, sizeof(SSysCfg), (UINT*)&read);
 
 		if(!fr) {
 			if(read > 0) {
@@ -144,7 +146,7 @@ int App_SaveConfig(SApp *pApp, const char* cfg_path) {
 		return retVal;
 	}
 
-	fr = f_write(&fil, (void*)&pApp->sCfg, sizeof(SSysCfg), &written);
+	fr = f_write(&fil, (void*)&pApp->sCfg, sizeof(SSysCfg), (UINT*)&written);
 
 	if(!fr) {
 		if(written > 0) {
@@ -312,46 +314,28 @@ int App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type) {
  *  @note
  */
 int	App_InitFS(SApp *pApp) {
-	FIL writer;
+
 	int retVal;
-
-	uint32_t length;
-
 	memset(&pApp->sFS0, 0, sizeof(FATFS));
 
-	retVal = f_mount(1, &pApp->sFS0);
+	retVal = f_mount(&pApp->sFS0, "", 0);
 
 	if(retVal != FR_OK) {
 		return retVal;
 	}
 
-	retVal = f_open(&writer, "1:InitFS.txt", FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
-
-	if(retVal != FR_OK) {
-		LREP("fat fs init error: %d\r\n", retVal);
+	if(!check_obj_existed("conf")) {
+		retVal = f_mkdir("conf");
+		if(retVal != FR_OK) {
+			LREP("mkdir err = %d\r\n", retVal);
+		} else {
+			LREP("mkdir successful !\r\n");
+		}
 	} else {
-		f_write(&writer, "test msg for init FS\r\n", 20, &length);
-
+		LREP("directory conf existed \r\n");
 	}
 
-	f_close(&writer);
-
-	if(f_chdir("1:this_dir") != FR_OK) {
-		LREP("change dir failed\r\n");
-	} else {
-		LREP("change dir ok\r\n");
-	}
-
-	uint8_t * path = OSA_FixedMemMalloc(100);
-	memset(path, 0, 100);
-	int err = f_getcwd((char*)path, 100);
-	if(err == FR_OK) {
-		LREP("current path = %s\r\n", path);
-	} else {
-		LREP("getcwd failed err = %d\r\n", err);
-	}
-
-	OSA_FixedMemFree(path);
+	current_directory();
 
 
 	return retVal;

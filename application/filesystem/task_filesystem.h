@@ -25,8 +25,11 @@ typedef enum
 #define TEST_START_BLOCK        4U
 
 
-bool check_file_existed(const char *path);
-
-test_result_t demo_card_data_access(void);
+bool check_obj_existed(const char *path);
+int	show_content(char *path);
+int scan_files(char *path);
+int current_directory();
+int remove_directory(char *path);
+int delete_node (TCHAR* path, UINT sz_buff, FILINFO* fno);
 
 #endif /* FILESYSTEM_TASK_FILESYSTEM_H_ */

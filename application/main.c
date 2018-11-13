@@ -71,9 +71,6 @@ int main(void)
     LREP("Application started built time: " __TIME__ " " __DATE__ "\r\n");
 
 
-//    char *test = 0x00;
-//    *test = 123;
-
     // get cpu uid low value for slave
     gSlaveId = SIM_UIDL_UID(SIM_BASE_PTR);
 
