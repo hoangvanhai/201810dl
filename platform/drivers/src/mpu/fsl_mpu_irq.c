@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "fsl_mpu_driver.h"
+#include "fsl_debug_console.h"
 #if FSL_FEATURE_SOC_MPU_COUNT
 
 /******************************************************************************
@@ -43,9 +44,10 @@ void HardFault_Handler()
 }
 #else
 /* MPU IRQ handler that would cover the same name's APIs in startup code */
-void BusFault_Handler()
-{
-}
+//void BusFault_Handler(void)
+//{
+//	LREP("BusFault_Handler\r\n");
+//}
 #endif
 
 #endif

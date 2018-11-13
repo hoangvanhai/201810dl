@@ -37,7 +37,7 @@
 
 
 /************************** Function Prototypes ******************************/
-
+void App_StartTask(task_param_t arg);
 /************************** Variable Definitions *****************************/
 
 const char *logo_msg = { "\r\n\n"
@@ -65,9 +65,14 @@ uint32_t gSlaveId;
 
 int main(void)
 {
+	osa_status_t result;
     hardware_init();
     LREP(logo_msg);
     LREP("Application started built time: " __TIME__ " " __DATE__ "\r\n");
+
+
+//    char *test = 0x00;
+//    *test = 123;
 
     // get cpu uid low value for slave
     gSlaveId = SIM_UIDL_UID(SIM_BASE_PTR);
@@ -78,17 +83,68 @@ int main(void)
 
     OSA_Init();
 
-    OSA_FixedMemInit();
+    App_InitTaskHandle(&sApp);
 
-    App_Init(&sApp);
+    result = OSA_TaskCreate(App_StartTask,
+                    (uint8_t *)"startup",
+                    TASK_STARTUP_STACK_SIZE,
+                    sApp.task_startup_stack,
+                    TASK_STARTUP_PRIO,
+                    (task_param_t)&sApp,
+                    false,
+                    &sApp.task_startup_task_handler);
+    if (result != kStatus_OSA_Success)
+    {
+        LREP("Failed to create startup task\r\n\r\n");
+        return -1;
+    }
 
-    App_CreateAppTask(&sApp);
 
     OSA_Start();
 
     for(;;) {}                    // Should not achieve here
 }
 
+void App_StartTask(task_param_t arg) {
+
+	OS_ERR err;
+
+	SApp *pApp = (SApp*)arg;
+
+	OSA_FixedMemInit();
+
+	App_Init(pApp);
+
+	App_CreateAppTask(pApp);
+
+	OSTmrCreate(&pApp->hCtrlTimer,
+				(CPU_CHAR *)"timer",
+				(OS_TICK)0,
+				(OS_TICK)100,
+				(OS_OPT)OS_OPT_TMR_PERIODIC,
+				(OS_TMR_CALLBACK_PTR) Clb_TimerControl,
+				(void*)NULL,
+				(OS_ERR*)&err);
+
+	if (err == OS_ERR_NONE) {
+		/* Timer was created but NOT started */
+		LREP("timer created successful\r\n");
+		OSTmrStart(&pApp->hCtrlTimer, &err);
+		if (err == OS_ERR_NONE) {
+			/* Timer was created but NOT started */
+			LREP("timer started ok\r\n");
+		} else {
+			LREP("timer start failed\r\n");
+		}
+	} else {
+		LREP("timer create failed\r\n");
+	}
+
+
+	while(1) {
+		OSA_SleepMs(1000);
+	}
+}
 
 int App_CreateAppTask(SApp *pApp) {
 

@@ -54,4 +54,5 @@
 #include <hardware_profile.h>
 #include <definition.h>
 #include <typedefs.h>
+#include <os_helper.h>
 #endif /* APPLICATION_INCLUDES_H_ */

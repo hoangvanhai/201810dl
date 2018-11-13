@@ -39,6 +39,7 @@
 #include <Transceiver.h>
 #include <rtc_comm.h>
 
+
 void clear_screen(int32_t argc, char**argv);
 void send_queue(int32_t argc, char**argv);
 void help_cmd(int32_t argc, char **argv);
@@ -46,6 +47,15 @@ void setdate(int32_t argc, char **argv);
 void settime(int32_t argc, char **argv);
 void status(int32_t argc, char **argv);
 void restart(int32_t argc, char**argv);
+
+void list(int32_t argc, char **argv);
+void mkdir(int32_t argc, char **argv);
+void rmdir(int32_t argc, char **argv);
+void create_file(int32_t argc, char**argv);
+void remove_file(int32_t argc, char **argv);
+void chdir(int32_t argc, char **argv);
+void cwd(int32_t argc, char **argv);
+
 void my_shell_init(void);
 
 
@@ -58,6 +68,13 @@ const shell_command_t cmd_table[] =
 	{"settime", 2u, 2u, settime, 		"set time", "<min> <hour>"},
 	{"setdate", 3u, 3u, setdate, 		"set date", "<date> <month> <year>"},
 	{"status", 	0u, 0u, status, 		"show system status", ""},
+	{"list", 	0u, 0u, list, 			"list all item in current wd", ""},
+	{"mkdir", 	1u, 1u, mkdir, 			"make directory", "<dir>"},
+	{"rmdir", 	1u, 1u, rmdir, 			"remove directory", "<dir>"},
+	{"create", 	1u, 1u, create_file, 	"create file", "<file name>"},
+	{"remove", 	1u, 1u, remove_file, 	"remove file", "<file name>"},
+	{"chdir", 	1u, 1u, chdir, 			"change work directory", "<dir>"},
+	{"cwd", 	0u, 0u, cwd, 			"print work directory", ""},
 	{0, 0u, 0u, 0, 0, 0}
 };
 
@@ -244,5 +261,161 @@ void status(int32_t argc, char **argv) {
 			pAppObj->sDateTime.tm_hour, pAppObj->sDateTime.tm_min, pAppObj->sDateTime.tm_sec);
 }
 
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 
+FRESULT scan_files (
+    char* path        /* Start node to be scanned (***also used as work area***) */
+)
+{
+    FRESULT res;
+    DIR dir;
+    int i;
+    static FILINFO fno;
+
+
+    res = f_opendir(&dir, path);                       /* Open the directory */
+    if (res == FR_OK) {
+        for (;;) {
+            res = f_readdir(&dir, &fno);                   /* Read a directory item */
+            if (res != FR_OK || fno.fname[0] == 0) break;  /* Break on error or end of dir */
+            if (fno.fattrib & AM_DIR) {                    /* It is a directory */
+                i = strlen(path);
+                sprintf(&path[i], "/%s", fno.fname);
+                res = scan_files(path);                    /* Enter the directory */
+                if (res != FR_OK) break;
+                path[i] = 0;
+            } else {                                       /* It is a file. */
+                printf("%s/%s\n", path, fno.fname);
+            }
+        }
+        //f_closedir(&dir)
+    }
+
+    return res;
+}
+
+void list(int32_t argc, char **argv) {
+	int err = scan_files("1:this_dir/");
+	if(err != FR_OK) {
+		LREP("scan file err = %d\r\n", err);
+	}
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void mkdir(int32_t argc, char **argv) {
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void rmdir(int32_t argc, char **argv) {
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void remove_file(int32_t argc, char** argv) {
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void create_file(int32_t argc, char** argv) {
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void chdir(int32_t argc, char **argv) {
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void cwd(int32_t argc, char **argv) {
+
+//	uint8_t * path = OSA_FixedMemMalloc(200);
+//	memset(path, 0, 200);
+//	int err = f_getlabel((char*)path, 200);
+//	if(err == FR_OK) {
+//		LREP("current path = %s\r\n", path);
+//	} else {
+//		LREP("getcwd failed err = %d\r\n", err);
+//	}
+//
+//	OSA_FixedMemFree(path);
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 

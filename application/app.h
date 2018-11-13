@@ -83,17 +83,19 @@ typedef struct SApp_ {
 	SDigitalOutput		sDO;
 	SAnalogInput		sAI;
 	SModbusValue		sMB;
+
 	APP_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
 	APP_TASK_DEFINE(task_filesystem, 	TASK_FILESYSTEM_STACK_SIZE);
 	APP_TASK_DEFINE(task_modbus, 		TASK_MODBUS_STACK_SIZE);
 	APP_TASK_DEFINE(task_serialcomm,	TASK_SERIAL_COMM_STACK_SIZE);
 	APP_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
+	APP_TASK_DEFINE(task_startup,		TASK_STARTUP_STACK_SIZE);
 
 	SSysCfg				sCfg;
 	OS_TMR 				hCtrlTimer;
 
-	FATFS				fs0;
-	FATFS				fs1;
+	FATFS				sFS0;
+	FATFS				sFS1;
 
 }SApp;
 
@@ -113,6 +115,9 @@ int				App_GenDefaultConfig(SSysCfg *pHandle);
 int				App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx);
 int 			App_SetConfig(SApp *pApp, uint8_t *pData);
 int				App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type);
+
+/* File system */
+int				App_InitFS(SApp *pApp);
 
 /* task body */
 void			App_InitTaskHandle(SApp *pApp);
@@ -149,6 +154,9 @@ int 			App_DiContinueRead(SApp *pApp);
 double			App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index);
 double			App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr);
 bool			App_GetDILevelByIndex(SDigitalInput *pHandle, uint16_t index);
+
+/* Callback section */
+void Clb_TimerControl(void *p_tmr, void *p_arg);
 
 /************************** Variable Definitions *****************************/
 extern SApp		sApp;

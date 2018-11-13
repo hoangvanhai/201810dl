@@ -41,16 +41,16 @@
 #define	OS_MEM_PARTITION_16                             16      // Used
 #define	OS_MEM_PARTITION_32                             32      // Used
 #define	OS_MEM_PARTITION_64                             64      // Used
-#define	OS_MEM_PARTITION_128                            128		// Not Used
-#define	OS_MEM_PARTITION_272                            274		// Not Used
+#define	OS_MEM_PARTITION_128                            128		// Used
+#define	OS_MEM_PARTITION_272                            274		// Used
 
 
 #define OS_MEM_PARTITION_8_TOTAL_NUM_BLOCK				20
 #define OS_MEM_PARTITION_16_TOTAL_NUM_BLOCK				30
 #define OS_MEM_PARTITION_32_TOTAL_NUM_BLOCK				10
 #define OS_MEM_PARTITION_64_TOTAL_NUM_BLOCK				8
-#define OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK			4
-#define OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK			20
+#define OS_MEM_PARTITION_128_TOTAL_NUM_BLOCK			15
+#define OS_MEM_PARTITION_272_TOTAL_NUM_BLOCK			15
 
 
 /**************************** Type Definitions *******************************/

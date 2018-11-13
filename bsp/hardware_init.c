@@ -66,6 +66,8 @@ void hardware_init(void) {
     GPIO_DRV_Init(NULL, ledPins);
 
     GPIO_DRV_Init(sdhcCdPin, NULL);
+
+    BOARD_EnableAllFault();
 }
 
 /*!

@@ -300,8 +300,10 @@ uint8_t usb_otg_board_init(uint8_t controller_id)
  *  @return Void.
  *  @note
  */
-void TRAP_HardFault(void) {
-	LREP("HARD FAULT \r\n");
+void HardFault_Handler(void) {
+	LREP("SCB->SHCSR = 0x%x SCB->CFSR = 0x%x\r\n", SCB->SHCSR, SCB->CFSR);
+	LREP("HARD FAULT ADDRESS 0x%x\r\n", SCB->HFSR);
+	BOARD_GetFaultType();
 }
 /*****************************************************************************/
 /** @brief
@@ -311,8 +313,10 @@ void TRAP_HardFault(void) {
  *  @return Void.
  *  @note
  */
-void TRAP_BusFault(void) {
-	LREP("BUS FAULT \r\n");
+void BusFault_Handler(void) {
+	LREP("SCB->SHCSR = 0x%x SCB->CFSR = 0x%x\r\n", SCB->SHCSR, SCB->CFSR);
+	LREP("BUS FAULT ADDRESS: 0x%x\r\n", SCB->BFAR);
+	BOARD_GetFaultType();
 }
 /*****************************************************************************/
 /** @brief
@@ -322,8 +326,8 @@ void TRAP_BusFault(void) {
  *  @return Void.
  *  @note
  */
-void TRAP_UsageFault(void) {
-	LREP("USAGE FAULT \r\n");
+void UsageFault_Handler(void) {
+
 }
 /*****************************************************************************/
 /** @brief
@@ -333,11 +337,107 @@ void TRAP_UsageFault(void) {
  *  @return Void.
  *  @note
  */
-void BOARD_InstallDebugIsr(void) {
-	OSA_InstallIntHandler(HardFault_IRQn, TRAP_HardFault);
-	OSA_InstallIntHandler(BusFault_IRQn, TRAP_HardFault);
-	OSA_InstallIntHandler(UsageFault_IRQn, TRAP_HardFault);
+void MemManage_Handler(void) {
+	LREP("SCB->SHCSR = 0x%x SCB->CFSR = 0x%x\r\n", SCB->SHCSR, SCB->CFSR);
+	LREP("MEMMAN FAULT ADDRESS 0x%x\r\n", SCB->MMFAR);
+	BOARD_GetFaultType();
 }
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void BOARD_EnableAllFault(void) {
+
+	SCB->SHCSR |= 	SCB_SHCSR_USGFAULTENA_Msk |
+					SCB_SHCSR_BUSFAULTENA_Msk |
+					SCB_SHCSR_MEMFAULTENA_Msk;
+}
+
+
+void BOARD_DisableAllFault(void) {
+
+	SCB->SHCSR &= 	(~SCB_SHCSR_USGFAULTENA_Msk) |
+					(~SCB_SHCSR_BUSFAULTENA_Msk) |
+					(~SCB_SHCSR_MEMFAULTENA_Msk);
+}
+
+int BOARD_GetFaultType(void) {
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_DIVBYZERO) {
+		LREP("CPU_REG_NVIC_CFSR_DIVBYZERO\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_UNALIGNED) {
+		LREP("CPU_REG_NVIC_CFSR_UNALIGNED\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_NOCP) {
+		LREP("CPU_REG_NVIC_CFSR_NOCP\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_INVPC) {
+		LREP("CPU_REG_NVIC_CFSR_INVPC\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_INVSTATE) {
+		LREP("CPU_REG_NVIC_CFSR_INVSTATE\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_UNDEFINSTR) {
+		LREP("CPU_REG_NVIC_CFSR_UNDEFINSTR\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_BFARVALID) {
+		LREP("CPU_REG_NVIC_CFSR_BFARVALID\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_STKERR) {
+		LREP("CPU_REG_NVIC_CFSR_STKERR\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_UNSTKERR) {
+		LREP("CPU_REG_NVIC_CFSR_UNSTKERR\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_IMPRECISERR) {
+		LREP("CPU_REG_NVIC_CFSR_IMPRECISERR\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_PRECISERR) {
+		LREP("CPU_REG_NVIC_CFSR_PRECISERR\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_IBUSERR) {
+		LREP("CPU_REG_NVIC_CFSR_IBUSERR\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_MMARVALID) {
+		LREP("CPU_REG_NVIC_CFSR_MMARVALID\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_MSTKERR) {
+		LREP("CPU_REG_NVIC_CFSR_MSTKERR\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_MUNSTKERR) {
+		LREP("CPU_REG_NVIC_CFSR_MUNSTKERR\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_DACCVIOL) {
+		LREP("CPU_REG_NVIC_CFSR_DACCVIOL\r\n\r\n");
+	}
+
+	if(SCB->CFSR & CPU_REG_NVIC_CFSR_IACCVIOL) {
+		LREP("CPU_REG_NVIC_CFSR_IACCVIOL\r\n\r\n");
+	}
+
+	return SCB->CFSR;
+}
+
 
 /*******************************************************************************
  * EOF

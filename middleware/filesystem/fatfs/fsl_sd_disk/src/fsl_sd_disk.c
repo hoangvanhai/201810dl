@@ -238,10 +238,11 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
 
     if (kStatus_SDHC_NoError != SDHC_DRV_Init(SDHC_INSTANCE_ID, &g_sdhcHost, &config))
     {
+    	ASSERT(false);
         return STA_NOINIT;
     }
 
-    LREP("INIT SDHC DRV OK\r\n\r\n");
+
 
 #if ! defined CD_USING_GPIO
     do
@@ -277,7 +278,7 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
     if (kStatus_SDHC_NoError != SDCARD_DRV_Init(&g_sdhcHost, &g_sdhcCard))
     {
         SDHC_DRV_Shutdown(SDHC_INSTANCE_ID);
-        LREP("INIT SDCARD DRV FAILED\r\n\r\n");
+        ASSERT(false);
         return STA_NOINIT;
     }
     return 0;

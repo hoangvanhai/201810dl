@@ -185,7 +185,6 @@ typedef struct {
 #endif
 
 
-
 /* DBCS code ranges and SBCS extend char conversion table */
 
 #if _CODE_PAGE == 932	/* Japanese Shift-JIS */
