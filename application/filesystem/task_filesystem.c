@@ -61,6 +61,26 @@ bool check_obj_existed(const char *path) {
 
     switch (fr) {
     case FR_OK:
+        retVal = true;
+        break;
+
+    case FR_NO_FILE:
+    	LREP("It is not exist.\r\n");
+        break;
+    default:
+    	LREP("An error occured. (%d)\r\n", fr);
+    }
+    return retVal;
+}
+
+bool obj_stat(const char* path) {
+    FRESULT fr;
+    static FILINFO fno;
+    bool retVal = false;
+    fr = f_stat(path, &fno);
+
+    switch (fr) {
+    case FR_OK:
         LREP("Size: %lu\r\n", fno.fsize);
         LREP("Timestamp: %u/%02u/%02u, %02u:%02u\r\n",
                (fno.fdate >> 9) + 1980,
@@ -89,7 +109,6 @@ bool check_obj_existed(const char *path) {
 
     return retVal;
 }
-
 /*****************************************************************************/
 /** @brief
  *
@@ -178,7 +197,7 @@ int remove_directory(char *path) {
 	static FILINFO fno;
 
 #if _USE_LFN
-	fno.lfname = 0; /* Disable LFN output */
+	fno.fname = 0; /* Disable LFN output */
 #endif
 	fr = f_opendir(&dir, path);
 	if (fr == FR_OK) {
@@ -202,6 +221,8 @@ int remove_directory(char *path) {
 		path[--i] = '\0';
 		f_closedir(&dir);
 	}
+
+	if (fr == FR_OK) fr = f_unlink(path);  /* Delete the empty directory */
 
 	return fr;
 }
@@ -257,5 +278,57 @@ int delete_node (
     if (fr == FR_OK) fr = f_unlink(path);  /* Delete the empty directory */
     return fr;
 }
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int cat(char *path) {
+	int retVal;
+	FIL file;
+	uint8_t *line = OSA_FixedMemMalloc(100);
+
+	if(line != NULL) {
+		UINT read;
+		retVal = f_open(&file, path, FA_OPEN_EXISTING | FA_READ);
+		if(retVal == FR_OK) {
+			int fr;
+			do {
+				memset(line, 0, 100);
+				fr = f_read(&file, line, 100, &read);
+				if(read > 0) {
+					LREP("%s", line);
+				}
+			} while(fr == FR_OK && read > 0);
+		} else {
+			LREP("cat file err = %d\r\n", retVal);
+		}
+
+		OSA_FixedMemFree(line);
+	} else {
+		retVal = -1;
+	}
+
+	return retVal;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

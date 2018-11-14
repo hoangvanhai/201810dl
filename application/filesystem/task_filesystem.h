@@ -26,10 +26,12 @@ typedef enum
 
 
 bool check_obj_existed(const char *path);
+bool obj_stat(const char* path);
 int	show_content(char *path);
 int scan_files(char *path);
 int current_directory();
 int remove_directory(char *path);
 int delete_node (TCHAR* path, UINT sz_buff, FILINFO* fno);
+int cat(char *path);
 
 #endif /* FILESYSTEM_TASK_FILESYSTEM_H_ */

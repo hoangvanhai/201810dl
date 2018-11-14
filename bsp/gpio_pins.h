@@ -68,30 +68,38 @@ extern const gpio_output_pin_user_config_t ledPins[];
 
 extern const gpio_output_pin_user_config_t mbRs485Pin[];
 
+extern const gpio_input_pin_user_config_t DigitalInputPin[];
 
-///*! @brief Pin names */
-//enum _gpio_pins_pinNames{
-//  kGpioSW1                    = GPIO_MAKE_PIN(GPIOC_IDX, 6U),
-//  kGpioSW3                    = GPIO_MAKE_PIN(GPIOA_IDX, 4U),
-//  kGpioSdhc0Cd                = GPIO_MAKE_PIN(GPIOB_IDX, 20U),
-//  kGpioLED1                   = GPIO_MAKE_PIN(GPIOE_IDX, 6U),
-//  kGpioLED2                   = GPIO_MAKE_PIN(GPIOE_IDX, 7U),
-//  kGpioLED3                   = GPIO_MAKE_PIN(GPIOE_IDX, 8U),
-//  kGpioLED4                   = GPIO_MAKE_PIN(GPIOE_IDX, 9U),
-//  kGpioSdcardCardDetection    = GPIO_MAKE_PIN(PORTD_IDX, 15U),  /* Connects the TWR_MEM, this's SPI Card detector pin */
-//};
+extern const gpio_output_pin_user_config_t DigitalOutputPin[];
+
 
 
 /*! @brief Pin names */
 enum _gpio_pins_pinNames{
-  kGpioSW1                    = GPIO_MAKE_PIN(GPIOC_IDX, 6U),
-  kGpioSW3                    = GPIO_MAKE_PIN(GPIOA_IDX, 4U),
-  kGpioSdhc0Cd                = GPIO_MAKE_PIN(GPIOE_IDX, 6U),
-  kGpioLEDRED                 = GPIO_MAKE_PIN(GPIOB_IDX, 22U),
-  kGpioLEDGREEN               = GPIO_MAKE_PIN(GPIOE_IDX, 26U),
-  kGpioLEDBLUE                = GPIO_MAKE_PIN(GPIOB_IDX, 21U),
-  kGpioSdcardCardDetection    = GPIO_MAKE_PIN(PORTD_IDX, 15U),  /* Connects the TWR_MEM, this's SPI Card detector pin */
-  kGpioMbRs485                = GPIO_MAKE_PIN(GPIOE_IDX, 10U),
+	kGpioSW1                    = GPIO_MAKE_PIN(GPIOC_IDX, 6U),
+	kGpioSW3                    = GPIO_MAKE_PIN(GPIOA_IDX, 4U),
+	kGpioSdhc0Cd                = GPIO_MAKE_PIN(GPIOE_IDX, 6U),
+	kGpioLEDRED                 = GPIO_MAKE_PIN(GPIOB_IDX, 22U),
+	kGpioLEDGREEN               = GPIO_MAKE_PIN(GPIOE_IDX, 26U),
+	kGpioLEDBLUE                = GPIO_MAKE_PIN(GPIOB_IDX, 21U),
+	kGpioSdcardCardDetection    = GPIO_MAKE_PIN(PORTD_IDX, 15U),  /* Connects the TWR_MEM, this's SPI Card detector pin */
+	kGpioMbRs485                = GPIO_MAKE_PIN(GPIOE_IDX, 10U),
+
+	DigitalInput0				= GPIO_MAKE_PIN(GPIOC_IDX, 0U),
+	DigitalInput1				= GPIO_MAKE_PIN(GPIOC_IDX, 1U),
+	DigitalInput2				= GPIO_MAKE_PIN(GPIOC_IDX, 2U),
+	DigitalInput3				= GPIO_MAKE_PIN(GPIOC_IDX, 3U),
+	DigitalInput4				= GPIO_MAKE_PIN(GPIOC_IDX, 4U),
+	DigitalInput5				= GPIO_MAKE_PIN(GPIOC_IDX, 5U),
+	DigitalInput6				= GPIO_MAKE_PIN(GPIOC_IDX, 6U),
+	DigitalInput7				= GPIO_MAKE_PIN(GPIOC_IDX, 7U),
+
+	DigitalOutput0				= GPIO_MAKE_PIN(GPIOC_IDX, 8U),
+	DigitalOutput1				= GPIO_MAKE_PIN(GPIOC_IDX, 9U),
+	DigitalOutput2				= GPIO_MAKE_PIN(GPIOC_IDX, 10U),
+	DigitalOutput3				= GPIO_MAKE_PIN(GPIOC_IDX, 11U),
+	DigitalOutput4				= GPIO_MAKE_PIN(GPIOC_IDX, 12U),
+	DigitalOutput5				= GPIO_MAKE_PIN(GPIOC_IDX, 13U),
 };
 
 extern gpio_input_pin_user_config_t sdcardCardDectionPin[];

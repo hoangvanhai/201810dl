@@ -26,8 +26,9 @@
 #include <rtc_comm.h>
 #include <app_shell.c>
 #include <task_filesystem.h>
+#include <lib_str.h>
 /************************** Constant Definitions *****************************/
-#define CONFIG_FILE_PATH		"/config.dat"
+
 /**************************** Type Definitions *******************************/
 
 /***************** Macros (Inline Functions) Definitions *********************/
@@ -50,14 +51,29 @@ extern const shell_command_t cmd_table[];
  */
 void App_Init(SApp *pApp) {
 
+	int err;
 	memset(pApp->currPath, 0, 256);
 
-	if(App_InitFS(pApp) == FR_OK) {
-		LREP("App init FS successfully \r\n");
+	err = App_InitFS(pApp);
+
+	if(err == FR_OK) {
+		LREP("app init FS successfully \r\n");
+	} else {
+		LREP("app init FS failed err = %d \r\n", err);
+	}
+
+	err = App_LoadConfig(pApp, CONFIG_FILE_PATH);
+	if(err == FR_OK) {
+		LREP("app load config successfully \r\n");
+	} else {
+		LREP("app load config failed err = %d\r\n", err);
 	}
 
 
-	//App_LoadConfig(pApp, CONFIG_FILE_PATH);
+	App_InitDI(pApp);
+	App_InitDO(pApp);
+	App_InitAI(pApp);
+
 
 	pApp->eStatus = SYS_ERR_NONE;
 }
@@ -97,7 +113,7 @@ int App_LoadConfig(SApp *pApp, const char *cfg_path) {
 
 	if(check_obj_existed(cfg_path)) {
 		/* Register work area to the default drive */
-		fr = f_open(&fil, cfg_path, FA_READ);
+		fr = f_open(&fil, cfg_path, FA_OPEN_EXISTING | FA_READ);
 		if (fr) {
 			LREP("open file error: %d\r\n", fr);
 			return retVal;
@@ -119,6 +135,7 @@ int App_LoadConfig(SApp *pApp, const char *cfg_path) {
 		/* Close the file */
 		f_close(&fil);
 	} else {
+		LREP("gen def config \r\n");
 		App_GenDefaultConfig(&pApp->sCfg);
 		retVal = App_SaveConfig(pApp, cfg_path);
 	}
@@ -136,27 +153,26 @@ int App_LoadConfig(SApp *pApp, const char *cfg_path) {
  */
 int App_SaveConfig(SApp *pApp, const char* cfg_path) {
 	FIL fil;        /* File object */
-	FRESULT fr;     /* FatFs return code */
 	uint32_t written;
-	int retVal = -1;
+	int retVal;
 
-	fr = f_open(&fil, cfg_path, FA_CREATE_ALWAYS);
-	if (fr) {
-		LREP("create file error: %d\r\n", fr);
+	retVal = f_open(&fil, cfg_path, FA_CREATE_ALWAYS | FA_WRITE);
+	if (retVal != FR_OK) {
+		LREP("create file error: %d\r\n", retVal);
 		return retVal;
 	}
 
-	fr = f_write(&fil, (void*)&pApp->sCfg, sizeof(SSysCfg), (UINT*)&written);
+	retVal = f_write(&fil, (void*)&pApp->sCfg, sizeof(SSysCfg), (UINT*)&written);
 
-	if(!fr) {
+	if(retVal == FR_OK) {
 		if(written > 0) {
 			LREP("save config content ok\r\n");
-			retVal = 0;
 		} else {
-			retVal = -2;
+			LREP("write length %d less than expected %d\r\n", written, sizeof(SSysCfg));
+			retVal = -1;
 		}
 	} else {
-		retVal = -3;
+		LREP("f_write return error: %d\r\n", retVal);
 	}
 
 	/* Close the file */
@@ -192,7 +208,7 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	pHandle->sCom.tram[3] = 'M';
 
 	pHandle->sCom.scan_dur 	= 1;
-	pHandle->sCom.log_dur 	= 5;
+	pHandle->sCom.log_dur 	= 1;	//5;
 	pHandle->sCom.modbus_brate = 9600;
 
 	IP4_ADDR(&pHandle->sCom.dev_ip, 192,168,1,2);
@@ -202,7 +218,7 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	pHandle->sCom.server_ctrl_port = 1186;
 
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
-		App_VerifyTagConfig(&pHandle->sTag[i], i);
+		App_DefaultTag(&pHandle->sTag[i], i);
 	}
 
 	return 0;
@@ -222,10 +238,38 @@ int	App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx) {
 	pHandle->input_id = MIN(pHandle->input_id, SYSTEM_NUM_TAG - 1);
 	pHandle->pin_calib = MIN(pHandle->pin_calib, DIGITAL_INPUT_NUM_CHANNEL - 1);
 	pHandle->pin_error = MIN(pHandle->pin_error, DIGITAL_INPUT_NUM_CHANNEL - 1);
-
+	pHandle->name[sizeof(pHandle->name) - 1] = 0;
+	pHandle->raw_unit[sizeof(pHandle->raw_unit) - 1] = 0;
+	pHandle->std_unit[sizeof(pHandle->std_unit) - 1] = 0;
 	return 0;
 }
 
+int App_DefaultTag(STag *pHandle, uint8_t tagIdx) {
+
+	pHandle->id = tagIdx;
+	pHandle->input_id = tagIdx;
+	pHandle->input_id = MIN(pHandle->input_id, SYSTEM_NUM_TAG - 1);
+	pHandle->pin_calib = MIN(pHandle->pin_calib, DIGITAL_INPUT_NUM_CHANNEL - 1);
+	pHandle->pin_error = MIN(pHandle->pin_error, DIGITAL_INPUT_NUM_CHANNEL - 1);
+	pHandle->enable = true;
+	pHandle->report = true;
+	pHandle->has_error = false;
+	pHandle->has_calib = false;
+	pHandle->alarm_enable = false;
+	pHandle->input_type = TIT_AI;
+	pHandle->raw_min = 0;
+	pHandle->raw_max = 100;
+	pHandle->scratch_min = 0;
+	pHandle->scratch_max = 1000;
+	pHandle->coef_a = 0;
+	pHandle->coef_b = 1;
+
+	Str_Copy_N((CPU_CHAR*)pHandle->name, "DEFAULT", sizeof(pHandle->name));
+	Str_Copy_N((CPU_CHAR*)pHandle->raw_unit, "RAW_UNIT", sizeof(pHandle->raw_unit));
+	Str_Copy_N((CPU_CHAR*)pHandle->std_unit, "STD_UNIT", sizeof(pHandle->std_unit));
+
+	return 0;
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -351,38 +395,70 @@ int	App_InitFS(SApp *pApp) {
 
 void App_TaskPeriodic(task_param_t parg) {
 
-//	SApp *pApp = (SApp *)parg;
+	SApp *pApp = (SApp *)parg;
 
-//	ASSERT(RTC_InitDateTime(&pApp->sDateTime) == 0);
-//	OSA_SleepMs(100);
-//
-//	if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-//		if(pApp->sDateTime.tm_year == 1990) {
-//			RTC_SetDateTime(0, 0, 1, 1, 2018);
-//		}
-//
-//	} else {
-//		ASSERT(FALSE);
-//	}
+	int log_min = pApp->sCfg.sCom.log_dur > 0 ? pApp->sCfg.sCom.log_dur : 1;
+	int last_min = 0;
+	bool logged = false;
+
+	/*
+	ASSERT(RTC_InitDateTime(&pApp->sDateTime) == 0);
+	OSA_SleepMs(100);
+
+	if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
+		if(pApp->sDateTime.tm_year == 1990) {
+			RTC_SetDateTime(0, 0, 1, 1, 2018);
+		}
+
+	} else {
+		ASSERT(FALSE);
+	}
 
 	//FM_Init(0);
+	*/
+
+
+	rnga_user_config_t rngaConfig;
+
+	// Initialize RNGA
+	rngaConfig.isIntMasked         = true;
+	rngaConfig.highAssuranceEnable = true;
+
+	RNGA_DRV_Init(0, &rngaConfig);
+
+	pApp->sDateTime.tm_mday = 1;
+	pApp->sDateTime.tm_mon = 1;
+	pApp->sDateTime.tm_year = 2018;
+
+	LREP("log min = %d\r\n", log_min);
 
 	while(1) {
 		OSA_SleepMs(1000);
-//		LREP("APPDATA\r\n");
-//		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-//
-//			LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n",
-//					pApp->sDateTime.tm_sec, pApp->sDateTime.tm_min,
-//					pApp->sDateTime.tm_hour, pApp->sDateTime.tm_wday,
-//					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_mon,
-//					pApp->sDateTime.tm_year);
-//
-//			/* LREP("[Max %.3f - Min %.3f]\r\n", max_latch, min_latch); */
-//
-//		} else {
-//
-//		}
+		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
+			 /*LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
+					pApp->sDateTime.tm_year, pApp->sDateTime.tm_mon,
+					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_hour,
+					pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec); */
+			LREP("#");
+
+		}
+
+		App_DiReadAllPort(pApp);
+		App_AiReadAllPort(pApp);
+		App_UpdateTagContent(pApp);
+
+        if(pApp->sDateTime.tm_min != last_min && logged) {
+            logged = false;
+        }
+
+
+		if((logged == false) && (pApp->sDateTime.tm_min % log_min == 0)) {
+			LREP("generate log file\r\n");
+			App_GenerateLogFile(pApp);
+			last_min = pApp->sDateTime.tm_min;
+			logged = true;
+		}
+
 	}
 
 }
@@ -442,7 +518,8 @@ void App_TaskModbus(task_param_t param)
 
 			LREP("modbus get msg size = %d ts = %d\r\n", msg_size, ts);
 
-			retVal = Modbus_SendAndRecv(&pApp->sModbus, (uint8_t*)p_msg, 264, rx_buf, &rx_length, 100);
+			retVal = Modbus_SendAndRecv(&pApp->sModbus,
+					(uint8_t*)p_msg, 264, rx_buf, &rx_length, 100);
 
 			if(retVal != TRANS_SUCCESS) {
 				LREP("Modbus send err: %d\r\n", retVal);
@@ -471,7 +548,8 @@ void App_TaskSerialcomm(task_param_t param) {
 	Trans_RegisterClbEvent((STrans*)&pApp->sTransPc, TRANS_EVT_RECV_DATA, Clb_TransPC_RecvEvent);
 	Trans_RegisterClbEvent((STrans*)&pApp->sTransPc, TRANS_EVT_SENT_DATA, Clb_TransPC_SentEvent);
 
-	Trans_Init((STrans*)&pApp->sTransPc, BOARD_TRANSPC_UART_INSTANCE, BOARD_TRANSPC_UART_BAUD, &pApp->TCB_task_serialcomm);
+	Trans_Init((STrans*)&pApp->sTransPc, BOARD_TRANSPC_UART_INSTANCE,
+			BOARD_TRANSPC_UART_BAUD, &pApp->TCB_task_serialcomm);
 
 	LREP("task serial comm init done !\r\n");
 	LREP("SFrameInfo Size: %d\r\n", sizeof(SFrameInfo));
@@ -495,8 +573,6 @@ void App_TaskSerialcomm(task_param_t param) {
 
 void App_TaskFilesystem(task_param_t param)
 {
-	bool run = false;
-
 	while(1) {
 		OSA_TimeDelay(1000);
 	}
@@ -512,6 +588,25 @@ void App_TaskFilesystem(task_param_t param)
 void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
 	static uint32_t count = 0;
 	LREP("Recv frm event: %d - ctrl = 0x%x\r\n", count++, u8Type);
+
+	SFrameInfo *pFrameInfo = (SFrameInfo *)MEM_BODY((SMem*)pData);
+
+	switch(u8Type & 0x3F) {
+	case FRM_DATA:
+		if(pFrameInfo->pu8Data[0] & CFG_SET) {
+			App_SetConfig(pAppObj, pFrameInfo->pu8Data);
+		} else {
+
+			//App_GetConfig(pAppObj, pFrameInfo->pu8Data, CFG_CONN_SERIAL);
+		}
+		break;
+
+	default:
+		ASSERT(false);
+		break;
+	}
+
+
 }
 /*****************************************************************************/
 /** @brief
@@ -543,6 +638,7 @@ void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type) {
  */
 void Clb_TimerControl(void *p_tmr, void *p_arg) {
 	GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
+	App_GenerateFakeTime(pAppObj);
 }
 
 /*****************************************************************************/
@@ -584,7 +680,8 @@ int	App_ModbusDoRead(SApp *pApp){
 		if(pApp->sCfg.sTag[i].input_type == TIT_MB) {
 			uint8_t data[4];
 			uint16_t rlen;
-			retVal = MBMaster_Read(pApp->sCfg.sTag[i].input_id, pApp->sCfg.sTag[i].slave_reg_addr, 0x03, 1, data, &rlen);
+			retVal = MBMaster_Read(pApp->sCfg.sTag[i].input_id,
+					pApp->sCfg.sTag[i].slave_reg_addr, 0x03, 1, data, &rlen);
 			if(retVal != MB_SUCCESS) {
 				pApp->sCfg.sTag[i].status = TAG_STT_MB_FAILED;
 			} else {
@@ -598,6 +695,50 @@ int	App_ModbusDoRead(SApp *pApp){
 
 	return 0;
 }
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int	App_InitDI(SApp *pApp) {
+	for(int i = 0; i < DIGITAL_INPUT_NUM_CHANNEL; i++) {
+		pApp->sDI.Node[i].id = DigitalInputPin[i].pinName;
+	}
+	return 0;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int App_InitDO(SApp *pApp) {
+
+	for(int i = 0; i < DIGITAL_OUTPUT_NUM_CHANNEL; i++) {
+		pApp->sCfg.sDO.Node[i].port = DigitalOutputPin[i].pinName;
+	}
+	return 0;
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int	App_InitAI(SApp *pApp) {
+
+	return 0;
+}
+
 /*****************************************************************************/
 /** @brief get scratch value -> calculate to raw value -> calculate to std value
  *	-> get status
@@ -610,9 +751,11 @@ int App_UpdateTagContent(SApp *pApp) {
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 		// get main value
 		if(pApp->sCfg.sTag[i].input_type == TIT_AI) {
-			pApp->sCfg.sTag[i].scratch_value = App_GetAIValueByIndex(&pApp->sAI, pApp->sCfg.sTag[i].input_id);
+			pApp->sCfg.sTag[i].scratch_value =
+					App_GetAIValueByIndex(&pApp->sAI, pApp->sCfg.sTag[i].input_id);
 		} else {
-			pApp->sCfg.sTag[i].scratch_value = App_GetMBValueByAddress(&pApp->sMB, pApp->sCfg.sTag[i].input_id);
+			pApp->sCfg.sTag[i].scratch_value =
+					App_GetMBValueByAddress(&pApp->sMB, pApp->sCfg.sTag[i].input_id);
 		}
 
 		/* value = scratch * (raw_max - raw_min) / (scr_max - scr_min) */
@@ -630,18 +773,18 @@ int App_UpdateTagContent(SApp *pApp) {
 			calib = App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_calib);
 			error = App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_error);
 			if(error) {
-				pApp->sCfg.sTag[i].stt[0] = '0';
-				pApp->sCfg.sTag[i].stt[1] = '2';
-				pApp->sCfg.sTag[i].stt[2] = 0;
+				pApp->sCfg.sTag[i].meas_stt[0] = '0';
+				pApp->sCfg.sTag[i].meas_stt[1] = '2';
+				pApp->sCfg.sTag[i].meas_stt[2] = 0;
 			} else {
 				if(calib) {
-					pApp->sCfg.sTag[i].stt[0] = '0';
-					pApp->sCfg.sTag[i].stt[1] = '1';
-					pApp->sCfg.sTag[i].stt[2] = 0;
+					pApp->sCfg.sTag[i].meas_stt[0] = '0';
+					pApp->sCfg.sTag[i].meas_stt[1] = '1';
+					pApp->sCfg.sTag[i].meas_stt[2] = 0;
 				} else {
-					pApp->sCfg.sTag[i].stt[0] = 0;
-					pApp->sCfg.sTag[i].stt[1] = 0;
-					pApp->sCfg.sTag[i].stt[2] = 0;
+					pApp->sCfg.sTag[i].meas_stt[0] = 0;
+					pApp->sCfg.sTag[i].meas_stt[1] = 0;
+					pApp->sCfg.sTag[i].meas_stt[2] = 0;
 				}
 			}
 		}
@@ -688,13 +831,20 @@ int App_UpdateTagContent(SApp *pApp) {
 			}
 
 			break;
+
+		case CT_TEMP_PRESS_OXY:
+			break;
+
 		default:
 			ASSERT(FALSE);
 			break;
 
 		}
 
-		pApp->sCfg.sTag[i].std_value = pApp->sCfg.sTag[i].raw_value * comp_o2 * comp_temp * comp_press;
+		pApp->sCfg.sTag[i].std_value = pApp->sCfg.sTag[i].raw_value *
+										comp_o2 * comp_temp * comp_press;
+
+		//LREP("%s - %.2f\r\n", pApp->sCfg.sTag[i].name,  pApp->sCfg.sTag[i].std_value);
 	}
 
 	return 0;
@@ -748,7 +898,7 @@ bool App_GetDILevelByIndex(SDigitalInput *pHandle, uint16_t index) {
  *  @return Void.
  *  @note
  */
-int	App_InitDateTime(SApp *pApp) {
+inline int	App_InitDateTime(SApp *pApp) {
 
 	int retVal;
 
@@ -779,7 +929,7 @@ int	App_InitDateTime(SApp *pApp) {
  *  @return Void.
  *  @note
  */
-SDateTime	App_GetDateTime(SApp *pApp) {
+inline SDateTime	App_GetDateTime(SApp *pApp) {
 	return pApp->sDateTime;
 }
 
@@ -791,7 +941,7 @@ SDateTime	App_GetDateTime(SApp *pApp) {
  *  @return Void.
  *  @note
  */
-int App_SetDateTime(SApp *pApp, SDateTime time) {
+inline int App_SetDateTime(SApp *pApp, SDateTime time) {
 	pApp->sDateTime = time;
 	return RTC_SetTimeDate(&pApp->sDateTime);
 }
@@ -804,7 +954,7 @@ int App_SetDateTime(SApp *pApp, SDateTime time) {
  *  @return Void.
  *  @note
  */
-int App_SendUI(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
+inline int App_SendUI(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
 	return Trans_Send(&pApp->sTransUi, len, data, ack ? 0xA0 : 0x20);
 }
 /*****************************************************************************/
@@ -815,7 +965,7 @@ int App_SendUI(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
  *  @return Void.
  *  @note
  */
-int	App_SendPC(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
+inline int	App_SendPC(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
 	return Trans_Send(&pApp->sTransPc, len, data, ack ? 0xA0 : 0x20);
 }
 
@@ -849,53 +999,13 @@ void App_SetFTPCallback(SApp *pApp) {
  *  @return Void.
  *  @note
  */
-//void FileSystem_Init() {
-//	int retVal;
-//	memset(&FatFs_SDCARD, 0, sizeof(FATFS));
-//
-//	retVal = f_mount(1, &FatFs_SDCARD);
-//
-//	if(retVal != FR_OK) {
-//		PRINTF("fat fs init error: %d\r\n", retVal);
-//	} else {
-//		PRINTF("fat fs init successful !\r\n");
-//
-//		retVal = f_mkdir("1:this_dir");
-//		if(retVal != FR_OK) {
-//			PRINTF("mkdir err = %d\r\n", retVal);
-//		} else {
-//			PRINTF("mkdir successful !\r\n");
-//		}
-//
-//		retVal = f_open(&writer, "1:this_dir/FILE1.txt", FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
-//
-//		if(retVal != FR_OK) {
-//			PRINTF("open file error: %d\r\n", retVal);
-//		} else {
-//			uint32_t byte_written, size;
-//			size = f_size(&writer);
-//			PRINTF("file size = %d\r\n", size);
-//			if(size > 0) {
-//				PRINTF("file size = %d bytes\r\n", size);
-//			} else {
-//
-//				retVal = f_write(&writer, (void*)msg, strlen(msg), &byte_written);
-//				if(retVal != FR_OK) {
-//					PRINTF("write to byte failed err: %d\r\n", retVal);
-//				} else {
-//					if(byte_written != strlen(msg)) {
-//						PRINTF("write to file missing data, writereq = %d - writeact: %d\r\n", strlen(msg), byte_written);
-//					} else {
-//						PRINTF("write to file totally successful !\r\n");
-//					}
-//				}
-//			}
-//		}
-//
-//		f_close(&writer);
-//
-//	}
-//}
+void App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic) {
+	for(int i = 0; i < DIGITAL_OUTPUT_NUM_CHANNEL; i++) {
+		if(Str_Cmp((CPU_CHAR*)pApp->sCfg.sDO.Node[i].name, name) == 0) {
+			GPIO_DRV_WritePinOutput(pApp->sCfg.sDO.Node[i].port, logic);
+		}
+	}
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -904,7 +1014,11 @@ void App_SetFTPCallback(SApp *pApp) {
  *  @return Void.
  *  @note
  */
-
+void App_DiReadAllPort(SApp *pApp) {
+	for(int i = 0; i < DIGITAL_INPUT_NUM_CHANNEL; i++) {
+		pApp->sDI.Node[i].lev = GPIO_DRV_ReadPinInput(pApp->sDI.Node[i].id);
+	}
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -913,7 +1027,19 @@ void App_SetFTPCallback(SApp *pApp) {
  *  @return Void.
  *  @note
  */
+void App_AiReadAllPort(SApp *pApp) {
+	uint32_t randout;
+	float randVal;
+	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
+		 RNGA_DRV_GetRandomData(0, &randout, sizeof(uint32_t));
+		 randout = abs(randout);
+		 randout = randout % 100000;
+		 randVal = randout / 100.0;
+		 //LREP("rand out = %.2f\r\n", randVal);
+		 pApp->sAI.Node[i].value = randVal;
 
+	}
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -922,7 +1048,112 @@ void App_SetFTPCallback(SApp *pApp) {
  *  @return Void.
  *  @note
  */
+int App_GenerateLogFile(SApp *pApp) {
 
+	int retVal = FR_OK;
+	FIL file;
+	/* get file name time*/
+	char *filename = (char*)OSA_FixedMemMalloc(64);
+	char *time = (char*)OSA_FixedMemMalloc(64);
+	char *year = (char*)OSA_FixedMemMalloc(16);
+	char *mon = (char*)OSA_FixedMemMalloc(32);
+	char *day = (char*)OSA_FixedMemMalloc(32);
+
+	sprintf(year, "%04d", pApp->sDateTime.tm_year);
+	sprintf(mon, "%04d/%02d", pApp->sDateTime.tm_year,
+			pApp->sDateTime.tm_mon);
+	sprintf(day, "%04d/%02d/%02d", pApp->sDateTime.tm_year,
+			pApp->sDateTime.tm_mon, pApp->sDateTime.tm_mday);
+
+	sprintf(time, "%04d%02d%02d%02d%02d%02d", pApp->sDateTime.tm_year,
+			pApp->sDateTime.tm_mon, pApp->sDateTime.tm_mday,
+			pApp->sDateTime.tm_hour, pApp->sDateTime.tm_min,
+			pApp->sDateTime.tm_sec);
+
+	if(!check_obj_existed(year)) {
+		retVal = f_mkdir(year);
+		if(retVal == FR_OK) {
+			LREP("mkdir %s err = %d\r\n", year, retVal);
+		} else {
+			LREP("mkdir %s successful !\r\n", year);
+		}
+	}
+
+	if(!check_obj_existed(mon)) {
+		retVal = f_mkdir(mon);
+		if(retVal == FR_OK) {
+			LREP("mkdir %s err = %d\r\n", mon, retVal);
+		} else {
+			LREP("mkdir %s successful !\r\n", mon);
+		}
+	}
+
+	if(!check_obj_existed(day)) {
+		retVal = f_mkdir(day);
+		if(retVal == FR_OK) {
+			LREP("mkdir %s err = %d\r\n", day, retVal);
+		} else {
+			LREP("mkdir %s successful !\r\n", day);
+		}
+	}
+
+
+	if(retVal == FR_OK) {
+		sprintf((char*)filename, "/%s_%s_%s_%s.txt", pApp->sCfg.sCom.tinh,
+				pApp->sCfg.sCom.coso, pApp->sCfg.sCom.tram, time);
+
+		memset(pApp->currFileName, 0, 256);
+		Str_Cat((char*)pApp->currFileName, day);
+		Str_Cat((char*)pApp->currFileName, filename);
+
+		LREP("create file: %s\r\n", pApp->currFileName);
+
+		retVal = f_open(&file, (char*)pApp->currFileName, FA_OPEN_ALWAYS | FA_WRITE);
+
+		if(retVal == FR_OK) {
+			char *row = (char*)OSA_FixedMemMalloc(256);
+			UINT written;
+
+			sprintf(row, "%-12s %12s %12s %15s %12s\r\n", "Thong so", "Gia tri", "Don vi", "Thoi gian", "Trang thai");
+			retVal = f_write(&file, row, Str_Len(row), &written);
+			LREP("%s", row);
+			for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+				if(pApp->sCfg.sTag[i].report) {
+					memset(row, 0, 256);
+					sprintf(row, "%-12s %12.2f %12s %15s %12s\r\n",
+							pApp->sCfg.sTag[i].name,
+							pApp->sCfg.sTag[i].std_value,
+							pApp->sCfg.sTag[i].std_unit,
+							time,
+							pApp->sCfg.sTag[i].meas_stt);
+
+					LREP("%s", row);
+
+					retVal = f_write(&file, row, Str_Len(row), &written);
+					if(retVal != FR_OK || written <= 0)
+						break;
+				}
+			}
+			OSA_FixedMemFree((uint8_t*)row);
+
+			if(retVal == FR_OK) {
+				// TODO: send file name to Net module
+			}
+		}
+
+		f_close(&file);
+	}
+
+
+
+    OSA_FixedMemFree((uint8_t*)filename);
+    OSA_FixedMemFree((uint8_t*)time);
+    OSA_FixedMemFree((uint8_t*)year);
+    OSA_FixedMemFree((uint8_t*)mon);
+    OSA_FixedMemFree((uint8_t*)day);
+
+    return retVal;
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -931,7 +1162,31 @@ void App_SetFTPCallback(SApp *pApp) {
  *  @return Void.
  *  @note
  */
+int	App_GenerateFakeTime(SApp *pApp) {
+	pApp->sDateTime.tm_sec++;
 
+	if(pApp->sDateTime.tm_sec > 59) {
+		pApp->sDateTime.tm_sec = 0;
+		pApp->sDateTime.tm_min++;
+	}
+
+	if(pApp->sDateTime.tm_min > 59) {
+		pApp->sDateTime.tm_min = 0;
+		pApp->sDateTime.tm_hour++;
+	}
+
+	if(pApp->sDateTime.tm_hour > 23) {
+		pApp->sDateTime.tm_hour = 0;
+		pApp->sDateTime.tm_mday++;
+	}
+
+	if(pApp->sDateTime.tm_mday > 30) {
+		pApp->sDateTime.tm_mday = 0;
+		pApp->sDateTime.tm_mon++;
+	}
+
+	return 0;
+}
 /*****************************************************************************/
 /** @brief
  *

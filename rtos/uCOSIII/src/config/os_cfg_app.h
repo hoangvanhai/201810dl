@@ -72,7 +72,7 @@
 
                                                             /* ----------------------- TIMERS ----------------------- */
 #define  OS_CFG_TMR_TASK_PRIO             16u               /* Priority of 'Timer Task'                               */
-#define  OS_CFG_TMR_TASK_RATE_HZ         10u                /* Rate for timers (10 Hz Typ.)                           */
+#define  OS_CFG_TMR_TASK_RATE_HZ         100u                /* Rate for timers (10 Hz Typ.)                           */
 #define  OS_CFG_TMR_TASK_STK_SIZE        100u               /* Stack size (number of CPU_STK elements)                */
 
 #endif

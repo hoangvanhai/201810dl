@@ -73,6 +73,8 @@ gpio_input_pin_user_config_t switchPins[] = {
   }
 };
 
+
+
 const gpio_input_pin_user_config_t sdhcCdPin[] = {
   {
     .pinName = kGpioSdhc0Cd,
@@ -85,6 +87,8 @@ const gpio_input_pin_user_config_t sdhcCdPin[] = {
     .pinName = GPIO_PINS_OUT_OF_RANGE,
   }
 };
+
+
 
 const gpio_output_pin_user_config_t ledPins[] = {
   {
@@ -112,6 +116,8 @@ const gpio_output_pin_user_config_t ledPins[] = {
     .pinName = GPIO_PINS_OUT_OF_RANGE,
   }
 };
+
+
 
 /* Declare SPI1 Card Detection pins for the spi sd card */
 gpio_input_pin_user_config_t sdcardCardDectionPin[] = {
@@ -142,6 +148,120 @@ const gpio_output_pin_user_config_t mbRs485Pin[] = {
         .pinName = GPIO_PINS_OUT_OF_RANGE,
     }
 };
+
+
+const gpio_output_pin_user_config_t DigitalOutputPin[] = {
+	{
+		.pinName = DigitalOutput0,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = DigitalOutput1,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = DigitalOutput2,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = DigitalOutput3,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = DigitalOutput4,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = DigitalOutput5,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = GPIO_PINS_OUT_OF_RANGE,
+	}
+};
+
+
+const gpio_input_pin_user_config_t DigitalInputPin[] = {
+	{
+		.pinName = DigitalInput0,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = DigitalInput1,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = DigitalInput2,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = DigitalInput3,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = DigitalInput4,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = DigitalInput5,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = DigitalInput6,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = DigitalInput7,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = GPIO_PINS_OUT_OF_RANGE,
+	}
+};
+
+
 
 
 /* END gpio_pins. */

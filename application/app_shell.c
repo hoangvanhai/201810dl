@@ -38,7 +38,7 @@
 #include <app.h>
 #include <Transceiver.h>
 #include <rtc_comm.h>
-
+#include <lib_str.h>
 
 void clear_screen(int32_t argc, char**argv);
 void send_queue(int32_t argc, char**argv);
@@ -47,6 +47,8 @@ void setdate(int32_t argc, char **argv);
 void settime(int32_t argc, char **argv);
 void status(int32_t argc, char **argv);
 void restart(int32_t argc, char**argv);
+void save_tag(int32_t argc, char**argv);
+void control(int32_t argc, char**argv);
 
 void list(int32_t argc, char **argv);
 void mkdir(int32_t argc, char **argv);
@@ -55,6 +57,8 @@ void create_file(int32_t argc, char**argv);
 void remove_file(int32_t argc, char **argv);
 void chdir(int32_t argc, char **argv);
 void cwd(int32_t argc, char **argv);
+void cat_file(int32_t argc, char **argv);
+void stat(int32_t argc, char **argv);
 
 void my_shell_init(void);
 
@@ -67,14 +71,18 @@ const shell_command_t cmd_table[] =
 	{"reset", 	0u, 0u, restart, 		"reset system", ""},
 	{"settime", 2u, 2u, settime, 		"set time", "<min> <hour>"},
 	{"setdate", 3u, 3u, setdate, 		"set date", "<date> <month> <year>"},
-	{"status", 	0u, 0u, status, 		"show system status", ""},
+	{"status", 	1u, 1u, status, 		"show system status", "<type>"},
+	{"tag", 	1u, 1u, save_tag, 		"save tag cfg", "<tag>"},
+	{"ctrl", 	1u, 1u, control, 		"control", "<param>"},
 	{"ls", 		0u, 0u, list, 			"list all item in current wd", ""},
 	{"mkdir", 	1u, 1u, mkdir, 			"make directory", "<dir>"},
 	{"rmdir", 	1u, 1u, rmdir, 			"remove directory", "<dir>"},
 	{"create", 	1u, 1u, create_file, 	"create file", "<file name>"},
-	{"remove", 	1u, 1u, remove_file, 	"remove file", "<file name>"},
-	{"cd", 	1u, 1u, chdir, 				"change work directory", "<dir>"},
+	{"rm", 		1u, 1u, remove_file, 	"remove file", "<file name>"},
+	{"cat", 	1u, 1u, cat_file, 		"show file content", "<file name>"},
+	{"cd", 		1u, 1u, chdir, 			"change work directory", "<dir>"},
 	{"pwd", 	0u, 0u, cwd, 			"print work directory", ""},
+	{"stat", 	1u, 1u, stat, 			"check file status", "<file name>"},
 	{0, 0u, 0u, 0, 0, 0}
 };
 
@@ -217,7 +225,8 @@ void setdate(int32_t argc, char **argv)
 		day = atoi(argv[1]);
 		month = atoi(argv[2]);
 		year = atoi(argv[3]);
-		if(RTC_SetDateTime(pAppObj->sDateTime.tm_min, pAppObj->sDateTime.tm_hour, day, month, year) == kStatus_I2C_Success) {
+		if(RTC_SetDateTime(pAppObj->sDateTime.tm_min,
+				pAppObj->sDateTime.tm_hour, day, month, year) == kStatus_I2C_Success) {
 			LREP("set date successful year = %d\r\n", year);
 		}
 	} else {
@@ -240,7 +249,9 @@ void settime(int32_t argc, char **argv)
 		int min, hour;
 		min = atoi(argv[1]);
 		hour = atoi(argv[2]);
-		RTC_SetDateTime(min, hour, pAppObj->sDateTime.tm_mday, pAppObj->sDateTime.tm_mon, pAppObj->sDateTime.tm_year);
+		RTC_SetDateTime(min, hour, pAppObj->sDateTime.tm_mday,
+						pAppObj->sDateTime.tm_mon,
+						pAppObj->sDateTime.tm_year);
 	} else {
 		LREP("argument not supported\r\n\n");
 	}
@@ -255,10 +266,28 @@ void settime(int32_t argc, char **argv)
  *  @return Void.
  *  @note
  */
+void print_tag(STag *pHandle) {
+	LREP("id: %d - enable %d - report %d - iid %d - ctyp %d - name %s\r\n",
+			pHandle->id, pHandle->enable, pHandle->report,
+			pHandle->input_id, pHandle->comp_type, pHandle->name);
+}
+
 void status(int32_t argc, char **argv) {
-	LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n\r\n",
-			pAppObj->sDateTime.tm_mday, pAppObj->sDateTime.tm_mon, pAppObj->sDateTime.tm_year,
-			pAppObj->sDateTime.tm_hour, pAppObj->sDateTime.tm_min, pAppObj->sDateTime.tm_sec);
+	if(strcmp(argv[1], "time") == 0) {
+		LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n\r\n",
+					pAppObj->sDateTime.tm_mday,
+					pAppObj->sDateTime.tm_mon,
+					pAppObj->sDateTime.tm_year,
+					pAppObj->sDateTime.tm_hour,
+					pAppObj->sDateTime.tm_min,
+					pAppObj->sDateTime.tm_sec);
+	} else if(strcmp(argv[1], "conf") == 0) {
+		//LREP("sizeof name = %d\r\n", sizeof(pAppObj->sCfg.sTag[0].name));
+		for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+			print_tag(&pAppObj->sCfg.sTag[i]);
+		}
+	}
+
 }
 
 /*****************************************************************************/
@@ -306,16 +335,25 @@ void mkdir(int32_t argc, char **argv) {
  *  @note
  */
 void rmdir(int32_t argc, char **argv) {
-	if(check_obj_existed(argv[1])) {
+	//if(check_obj_existed(argv[1]))
+	{
 		int err = remove_directory(argv[1]);
-		if(err != FR_OK) {
+//		FILINFO *fno = (FILINFO *)OSA_FixedMemMalloc(sizeof(FILINFO));
+//		if(fno == NULL) {
+//			LREP("malloc error\r\n");
+//			return;
+//		}
+//		int err = delete_node(argv[1], strlen(argv[1]), fno);
+
+		if(err == FR_OK) {
 			LREP("remove %s successfully\r\n", argv[1]);
 		} else {
-			LREP("remove %s failed err = %d \r\n", err);
+			LREP("remove %s failed err = %d \r\n", argv[1], err);
 		}
-	} else {
-		LREP("%s is not existed \r\n");
 	}
+//	else {
+//		LREP("%s is not existed \r\n");
+//	}
 }
 /*****************************************************************************/
 /** @brief
@@ -342,7 +380,17 @@ void remove_file(int32_t argc, char** argv) {
  *  @note
  */
 void create_file(int32_t argc, char** argv) {
-
+	FIL file;
+	int retVal = f_open(&file, argv[1], FA_CREATE_ALWAYS | FA_WRITE);
+	if(retVal != FR_OK) {
+		LREP("create file err = %d\r\n", retVal);
+	} else {
+		char *msg = "this is data file \r\n";
+		UINT written;
+		f_write(&file, msg, strlen(msg), &written);
+		LREP("create %s file success write string to file len = %d\r\n", argv[1], written);
+	}
+	f_close(&file);
 }
 /*****************************************************************************/
 /** @brief
@@ -380,7 +428,9 @@ void cwd(int32_t argc, char **argv) {
  *  @return Void.
  *  @note
  */
-
+void cat_file(int32_t argc, char **argv) {
+	cat(argv[1]);
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -389,7 +439,9 @@ void cwd(int32_t argc, char **argv) {
  *  @return Void.
  *  @note
  */
-
+void stat(int32_t argc, char **argv) {
+	obj_stat(argv[1]);
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -398,7 +450,14 @@ void cwd(int32_t argc, char **argv) {
  *  @return Void.
  *  @note
  */
-
+void save_tag(int32_t argc, char**argv) {
+	int idx = atoi(argv[1]);
+	if(idx < 0 || idx > 11) {
+		LREP("invalid index\r\n");
+		return;
+	}
+	Str_Copy((CPU_CHAR*)pAppObj->sCfg.sTag[idx].name, "SET_NAME");
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -407,4 +466,19 @@ void cwd(int32_t argc, char **argv) {
  *  @return Void.
  *  @note
  */
+void control(int32_t argc, char**argv) {
+	if(strcmp(argv[1], "save") == 0) {
+		App_SaveConfig(pAppObj, CONFIG_FILE_PATH);
+	} else {
+
+	}
+}
+
+
+
+
+
+
+
+
 

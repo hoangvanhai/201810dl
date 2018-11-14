@@ -61,6 +61,7 @@ int RTC_InitDateTime(SDateTime *time) {
  *  @note
  */
 int RTC_GetTimeDate(SDateTime *time) {
+	return 0;
 	if(time) {
 		uint8_t recvData[7];
 		memset(recvData, 0, 7);

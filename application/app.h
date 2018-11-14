@@ -35,7 +35,7 @@
 #include <lwip/netif.h>
 #include <task_filesystem.h>
 /************************** Constant Definitions *****************************/
-
+#define CONFIG_FILE_PATH		"/conf/config.dat"
 #define	CFG_SET						0x80
 #define CFG_GET						0x00
 #define CFG_COMMON					0x01
@@ -80,7 +80,6 @@ typedef struct SApp_ {
 	SModbus				sModbus;
 	SDateTime			sDateTime;
 	SDigitalInput		sDI;
-	SDigitalOutput		sDO;
 	SAnalogInput		sAI;
 	SModbusValue		sMB;
 
@@ -98,6 +97,7 @@ typedef struct SApp_ {
 	FATFS				sFS1;
 
 	uint8_t				currPath[256];
+	uint8_t				currFileName[256];
 
 }SApp;
 
@@ -115,6 +115,7 @@ int				App_LoadConfig(SApp *pApp, const char* cfg_path);
 int 			App_SaveConfig(SApp *pApp, const char* cfg_path);
 int				App_GenDefaultConfig(SSysCfg *pHandle);
 int				App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx);
+int 			App_DefaultTag(STag *pHandle, uint8_t tagIdx);
 int 			App_SetConfig(SApp *pApp, uint8_t *pData);
 int				App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type);
 
@@ -146,16 +147,22 @@ int				App_InitModbus(SApp *pApp);
 int				App_DeinitModbus(SApp *pApp);
 int				App_ModbusDoRead(SApp *pApp);
 
-// DI
+// DI DO
 int				App_InitDI(SApp *pApp);
 int 			App_InitDO(SApp *pApp);
 int				App_InitAI(SApp *pApp);
 int 			App_UpdateTagContent(SApp *pApp);
-int 			App_DiContinueRead(SApp *pApp);
+void 			App_DiReadAllPort(SApp *pApp);
+void			App_AiReadAllPort(SApp *pApp);
+
+void			App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic);
 
 double			App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index);
 double			App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr);
 bool			App_GetDILevelByIndex(SDigitalInput *pHandle, uint16_t index);
+
+int 			App_GenerateLogFile(SApp *pApp);
+int				App_GenerateFakeTime(SApp *pApp);
 
 /* Callback section */
 void Clb_TimerControl(void *p_tmr, void *p_arg);

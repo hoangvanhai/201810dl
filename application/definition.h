@@ -42,30 +42,37 @@ typedef struct SMsg_ {
 typedef struct SLNode_ {
 	uint32_t 	id;
 	bool		lev;
-}SLNode;
+}SLogicNode;
 
 
 typedef struct SVNode_ {
 	uint32_t 	id;
 	double 		value;
-}SVNode;
+}SValueNode;
+
+typedef struct SCtrlPort_ {
+	uint8_t	name[15];
+	uint32_t port;
+}SCtrlPort;
 
 
 typedef struct SDigitalInput_ {
-	SLNode		Node[DIGITAL_INPUT_NUM_CHANNEL];
+	SLogicNode		Node[DIGITAL_INPUT_NUM_CHANNEL];
 }SDigitalInput;
 
 typedef struct SDigitalOutput_ {
-	SLNode 		Node[DIGITAL_OUTPUT_NUM_CHANNEL];
+	SCtrlPort 		Node[DIGITAL_OUTPUT_NUM_CHANNEL];
 }SDigitalOutput;
 
 typedef struct SAnalogInput_ {
-	SVNode		Node[ANALOG_INPUT_NUM_CHANNEL];
+	SValueNode		Node[ANALOG_INPUT_NUM_CHANNEL];
 }SAnalogInput;
 
 typedef struct SModbusValue {
-	SVNode		Node[SYSTEM_NUM_TAG];
+	SValueNode		Node[SYSTEM_NUM_TAG];
 }SModbusValue;
+
+
 
 typedef enum ETagInputType_ {
 	TIT_AI = 0,
@@ -77,6 +84,7 @@ typedef enum ECompType_ {
 	CT_NONE = 0,
 	CT_OXY,
 	CT_TERMP_PRESS,
+	CT_TEMP_PRESS_OXY,
 }ECompType;
 
 typedef enum ETagStatus_ {
@@ -90,7 +98,7 @@ typedef struct STag_ {
 	uint16_t		id;
 	ETagStatus		status;
 	uint8_t			desc[15];
-	uint8_t			stt[3];
+	uint8_t			meas_stt[3];
 	bool			enable;
 	bool			report;
 	bool      		has_calib; 		//
@@ -143,6 +151,7 @@ typedef struct SCommon_ {
 typedef struct SSysCfg_ {
 	STag				sTag[SYSTEM_NUM_TAG];
 	SCommon				sCom;
+	SDigitalOutput		sDO;
 }SSysCfg;
 
 #endif /* APPLICATION_DEFINITION_H_ */

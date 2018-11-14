@@ -136,6 +136,7 @@ void ff_rel_grant (
 
 void* ff_memalloc (UINT msize)
 {
+	//LREP("malloc size: %d\r\n", msize);
 	return malloc(msize);
 	//return OSA_FixedMemMalloc(msize);
 }
@@ -147,6 +148,7 @@ void* ff_memalloc (UINT msize)
 
 void ff_memfree (void* mblock)
 {
+	//LREP("free up %x\r\n", (uint8_t*)mblock);
 	free(mblock);
 	//OSA_FixedMemFree(mblock);
 }
