@@ -11,6 +11,7 @@ extern "C" {
 #include "FiFo.h"
 #include "app_cfg.h"
 #include "TransDefS.h"
+#include "fsl_uart_driver.h"
 
 
 #if (TRANSL1_VER == TRANSL1_V1)
@@ -105,11 +106,8 @@ typedef struct _STransL1
 	
 	uint8_t 			arrRecvFIFO[SIZE_FIFO_RECV];
 	
-	SRS485DE			sRS485DE;			// To drive RS485
-		
-	#ifdef DEBUG_TRANSL1
-		STransL1DBG		sDBG;
-	#endif
+	uart_state_t 		trans_uart_state;
+	uint8_t 			rx_char, tx_char;
 
 } STransL1;
 
@@ -119,7 +117,7 @@ typedef struct _STransL1
 
 /************************** Function Prototypes ******************************/
 
-void 		TransL1_UARTInit(uint32_t u32UartPort, uint32_t u32Baudrate, uint8_t u8TxPrio, uint8_t u8RxPrio);
+void 		TransL1_UARTInit(STransL1 *pTransL1);
 uint8_t  	TransL1_Init( STransL1 *pTransL1,  uint32_t u32UartPort,
 							uint32_t u32BaudRate, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio);
 

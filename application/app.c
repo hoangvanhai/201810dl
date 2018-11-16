@@ -37,6 +37,8 @@
 /************************** Function Prototypes ******************************/
 static void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type);
 static void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type);
+static void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type);
+static void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type);
 /************************** Variable Definitions *****************************/
 SApp sApp;
 SApp *pAppObj = &sApp;
@@ -94,7 +96,7 @@ void App_Init(SApp *pApp) {
 
 void	App_InitTaskHandle(SApp *pApp) {
 	APP_TASK_INIT_HANDLER(pApp, task_shell);
-	APP_TASK_INIT_HANDLER(pApp, task_filesystem);
+	APP_TASK_INIT_HANDLER(pApp, task_ui);
 	APP_TASK_INIT_HANDLER(pApp, task_modbus);
 	APP_TASK_INIT_HANDLER(pApp, task_serialcomm);
 	APP_TASK_INIT_HANDLER(pApp, task_periodic);
@@ -444,7 +446,7 @@ void App_TaskPeriodic(task_param_t parg) {
 					pApp->sDateTime.tm_year, pApp->sDateTime.tm_mon,
 					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_hour,
 					pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec); */
-			LREP(".");
+			//LREP(".");
 			GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
 
 		}
@@ -551,10 +553,10 @@ void App_TaskSerialcomm(task_param_t param) {
 	OS_ERR	err;
 	CPU_TS	ts;
 
-	Trans_RegisterClbEvent((STrans*)&pApp->sTransPc, TRANS_EVT_RECV_DATA, Clb_TransPC_RecvEvent);
-	Trans_RegisterClbEvent((STrans*)&pApp->sTransPc, TRANS_EVT_SENT_DATA, Clb_TransPC_SentEvent);
+	Trans_RegisterClbEvent(&pApp->sTransPc, TRANS_EVT_RECV_DATA, Clb_TransPC_RecvEvent);
+	Trans_RegisterClbEvent(&pApp->sTransPc, TRANS_EVT_SENT_DATA, Clb_TransPC_SentEvent);
 
-	Trans_Init((STrans*)&pApp->sTransPc, BOARD_TRANSPC_UART_INSTANCE,
+	Trans_Init(&pApp->sTransPc, BOARD_TRANSPC_UART_INSTANCE,
 			BOARD_TRANSPC_UART_BAUD, &pApp->TCB_task_serialcomm);
 
 	LREP("task serial comm init done !\r\n");
@@ -562,7 +564,7 @@ void App_TaskSerialcomm(task_param_t param) {
 	while(1) {
 		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
-			Trans_Task((STrans *)&pApp->sTransPc);
+			Trans_Task(&pApp->sTransPc);
 		}
 	}
 }
@@ -577,10 +579,24 @@ void App_TaskSerialcomm(task_param_t param) {
  *  @note
  */
 
-void App_TaskFilesystem(task_param_t param)
+void App_TaskUserInterface(task_param_t param)
 {
+	SApp *pApp = (SApp *)param;
+	OS_ERR	err;
+	CPU_TS	ts;
+
+	Trans_RegisterClbEvent(&pApp->sTransUi, TRANS_EVT_RECV_DATA, Clb_TransUI_RecvEvent);
+	Trans_RegisterClbEvent(&pApp->sTransUi, TRANS_EVT_SENT_DATA, Clb_TransUI_SentEvent);
+
+	Trans_Init(&pApp->sTransUi, BOARD_TRANSUI_UART_INSTANCE,
+			BOARD_TRANSUI_UART_BAUD, &pApp->TCB_task_ui);
+
+	LREP("task user interface init done !\r\n");
 	while(1) {
-		OSA_TimeDelay(1000);
+		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
+		if(err == OS_ERR_NONE) {
+			Trans_Task(&pApp->sTransUi);
+		}
 	}
 }
 /*****************************************************************************/
@@ -668,6 +684,7 @@ void App_TaskStartup(task_param_t arg) {
 
 			WDOG_DRV_Refresh();
 		} else {
+			//LEP("Feed dog \r\n");
 			/* Feed dog to prevent WDG reset */
 			WDOG_DRV_Refresh();
 		}
@@ -727,6 +744,21 @@ void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type) {
  *  @return Void.
  *  @note
  */
+static void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type) {
+
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+static void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type) {
+
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -1301,10 +1333,12 @@ void sdhc_card_detection(void)
     if(!pAppObj->sdhcPlugged) {
     	NVIC_SystemReset();
     } else {
-    	OS_ERR err;
-    	App_SetCtrlCode(pAppObj, CTRL_INIT_SDCARD_1);
-    	OSTaskSemPost(&pAppObj->TCB_task_startup, OS_OPT_NONE, &err);
-    	ASSERT(err == OS_ERR_NONE);
+    	if(App_IsSysStatus(pAppObj, SYS_ERR_SDCARD_1)) {
+			OS_ERR err;
+			App_SetCtrlCode(pAppObj, CTRL_INIT_SDCARD_1);
+			OSTaskSemPost(&pAppObj->TCB_task_startup, OS_OPT_NONE, &err);
+			ASSERT(err == OS_ERR_NONE);
+    	}
     }
 }
 

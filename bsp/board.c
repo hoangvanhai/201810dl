@@ -34,6 +34,7 @@
 #include "fsl_debug_console.h"
 #include "pin_mux.h"
 #include "fsl_wdog_driver.h"
+#include "fsl_rnga_driver.h"
 
 /* Configuration for enter VLPR mode. Core clock = 4MHz. */
 const clock_manager_user_config_t g_defaultClockConfigVlpr =
@@ -357,6 +358,14 @@ void BOARD_CreateWDG(void) {
 
     WDOG_DRV_Init(&wdogConfig);
 
+}
+
+
+int BOARD_GenerateRandom(int min, int max) {
+	uint32_t randout;
+	RNGA_DRV_GetRandomData(0, &randout, sizeof(uint32_t));
+	randout = abs(randout);
+	return ((randout % (max - min + 1)) + min);
 }
 
 /*******************************************************************************

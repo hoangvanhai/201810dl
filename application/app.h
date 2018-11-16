@@ -85,7 +85,7 @@ typedef struct SApp_ {
 	SModbusValue		sMB;
 
 	APP_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
-	APP_TASK_DEFINE(task_filesystem, 	TASK_FILESYSTEM_STACK_SIZE);
+	APP_TASK_DEFINE(task_ui, 			TASK_UI_STACK_SIZE);
 	APP_TASK_DEFINE(task_modbus, 		TASK_MODBUS_STACK_SIZE);
 	APP_TASK_DEFINE(task_serialcomm,	TASK_SERIAL_COMM_STACK_SIZE);
 	APP_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
@@ -137,7 +137,7 @@ int				App_InitFS(SApp *pApp);
 void			App_InitTaskHandle(SApp *pApp);
 int				App_CreateAppTask(SApp *pApp);
 void 			App_TaskShell(task_param_t );
-void 			App_TaskFilesystem(task_param_t );
+void 			App_TaskUserInterface(task_param_t );
 void 			App_TaskModbus(task_param_t );
 void 			App_TaskSerialcomm(task_param_t);
 void 			App_TaskPeriodic(task_param_t);

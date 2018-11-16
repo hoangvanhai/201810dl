@@ -27,9 +27,9 @@ typedef enum
 {
     /*General return values*/
     MB_SUCCESS 				= 	0,
-	MB_FAILURE					=	1,
+	MB_FAILURE				=	1,
 
-	MB_ERR_MEM			=  	2,
+	MB_ERR_MEM				=  	2,
 
     /*return value and error code for Modbus & TransL2*/
 	MB_ERR_BUSY			=	10,

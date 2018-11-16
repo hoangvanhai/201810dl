@@ -57,15 +57,13 @@ void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, voi
      *-----------------------------------------------------------------------*/
 
     TransL2S_SetL1Para((STransL2S *)&pTrans->sTransL2,
-    		u32UartPort, u32BaudRate,
-			RS485_UI_DATA_PORT_BASE,
-			RS485_UI_DATA_PIN_IDX);
+    		u32UartPort, u32BaudRate, 0, 0);
 
     LREP("init transceiver protocol\r\n\n");
 #if (TRANSL1_VER == TRANSL1_V1)
-    TransL2S_Init(&pTrans->sTransL2, CHARGER_MY_ID, TRANS_PC_TX_PRIO, TRANS_PC_RX_PRIO, &pTrans->hSem);
+    TransL2S_Init(&pTrans->sTransL2, LOGGER_DEV_ID, TRANS_TX_PRIO, TRANS_RX_PRIO, &pTrans->hSem);
 #elif (TRANSL1_VER == TRANSL1_V2)
-    TransL2S_Init(&pTrans->sTransL2, CHARGER_MY_ID, TRANS_PC_TX_PRIO, TRANS_PC_RX_PRIO, pSemaphore, DMA_TX_TRANSPC);
+    TransL2S_Init(&pTrans->sTransL2, LOGGER_DEV_ID, TRANS_TX_PRIO, TRANS_RX_PRIO, pSemaphore, DMA_TX_TRANSPC);
 #endif
 
     TransL2S_SetCheckSeqNum(&pTrans->sTransL2,TRUE);
@@ -210,7 +208,7 @@ void Trans_SendTask(STrans *pTrans)
         }
 
         if(pMem != NULL) {
-            if(TransL2S_Send(pTransL2, RRC_UI_UI_DEST_ID, pMem) != TRANS_SUCCESS) {
+            if(TransL2S_Send(pTransL2, LOGGER_DEST_ID, pMem) != TRANS_SUCCESS) {
                 ASSERT(FALSE);
             } else {
 

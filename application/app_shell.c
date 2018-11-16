@@ -130,29 +130,10 @@ void send_queue(int32_t argc, char**argv) {
 			//OSA_SleepMs(100);
 			//}
 		} else if(strcmp(argv[1], "fs") == 0) {
-			int i = 0;
-			for(;i < 100; i++) {
-			LREP("send data to file system task\r\n");
-			uint8_t *p_msg = OSA_FixedMemMalloc(100);
-			if(p_msg != NULL) {
-				OS_ERR err;
-				OSTaskQPost(&pAppObj->TCB_task_filesystem, p_msg, 100, OS_OPT_POST_FIFO, &err);
-				if(err != OS_ERR_NONE) {
-					LREP("task queue post failed \r\n");
-				} else {
-					LREP("task queue post ok \r\n");
-				}
-			} else {
-				LREP("malloc failed \r\n");
-			}
-			OSA_SleepMs(100);
-			}
+
+
 		} else if(strcmp(argv[1], "t") == 0) {
-			uint8_t data[100];
-			for(int i = 0; i < 100; i++)
-				data[i] = i;
-			Trans_Send(&sApp.sTransPc, 100, data, FRM_DATA);
-			LREP("control passed\r\n");
+
 		} else {
 
 			LREP("argument not supported\r\n\n");
@@ -469,8 +450,22 @@ void save_tag(int32_t argc, char**argv) {
 void control(int32_t argc, char**argv) {
 	if(strcmp(argv[1], "save") == 0) {
 		App_SaveConfig(pAppObj, CONFIG_FILE_PATH);
-	} else {
-
+	} else if(strcmp(argv[1], "pc") == 0) {
+		uint8_t data[100];
+		uint32_t time;
+		for(int i = 0; i < 100; i++) {
+			App_SendPC(pAppObj, data, 100, false);
+			time = BOARD_GenerateRandom(20, 200);
+			LREP("sleep = %d\r\n", time);
+			OSA_SleepMs(time);
+		}
+	} else if(strcmp(argv[1], "ui") == 0) {
+		uint8_t data[100];
+		uint32_t time;
+		for(int i = 0; i < 100; i++) {
+			App_SendUI(pAppObj, data, 100, false);
+			OSA_SleepMs(100);
+		}
 	}
 }
 

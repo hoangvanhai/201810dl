@@ -28,11 +28,7 @@ inline void 		RS485_RX(STransL1 *pTransL1);
 inline void 		RS485_TX(STransL1 *pTransL1);
 inline void 		RS485_Init();
 /************************** Variable Definitions *****************************/
-
-uart_state_t trans_uart_state;
-static uint8_t rx_char, tx_char;
-STransL1 *pThisTransL1;
-
+STransL1 	*pUartPtr[UART_INSTANCE_COUNT] = {NULL, NULL, NULL, NULL, NULL, NULL};
 /*****************************************************************************/
 /** @brief
  *		   init UART port
@@ -43,21 +39,22 @@ STransL1 *pThisTransL1;
  */
 
 
-void TransL1_UARTInit(uint32_t u32UartPort, uint32_t u32Baudrate, uint8_t u8TxPrio, uint8_t u8RxPrio)
+void TransL1_UARTInit(STransL1 *pTransL1)
 {
 	uart_user_config_t trans_uart_cfg = {
-					.baudRate = u32Baudrate,
+					.baudRate = pTransL1->u32BaudRate,
 					.parityMode = kUartParityDisabled,
 					.stopBitCount = kUartTwoStopBit,
 					.bitCountPerChar = kUart8BitsPerChar,
 				};
 
-	configure_uart_pins(BOARD_TRANSPC_UART_INSTANCE);
+	configure_uart_pins(pTransL1->u32UartPort);
 
-	UART_DRV_Init(u32UartPort, &trans_uart_state, &trans_uart_cfg);
+	UART_DRV_Init(pTransL1->u32UartPort, &pTransL1->trans_uart_state, &trans_uart_cfg);
 
-	UART_DRV_InstallRxCallback(u32UartPort, TransL1_RX_Interrupt_Handle, &rx_char, NULL, true);
-	UART_DRV_InstallTxCallback(u32UartPort, TransL1_TX_Interrupt_Handle, &tx_char, NULL);
+	UART_DRV_InstallRxCallback(pTransL1->u32UartPort, TransL1_RX_Interrupt_Handle, &pTransL1->rx_char, NULL, true);
+	UART_DRV_InstallTxCallback(pTransL1->u32UartPort, TransL1_TX_Interrupt_Handle, &pTransL1->tx_char, NULL);
+	pUartPtr[pTransL1->u32UartPort] = pTransL1;
 }
 
 /*****************************************************************************/
@@ -134,8 +131,7 @@ uint8_t  TransL1_Init(STransL1 *pTransL1, uint32_t u32UartPort, uint32_t u32Baud
 	#ifdef DEBUG_TRANSL1
 	memset(&pTransL1->sDBG, 0, sizeof(STransL1DBG));
 	#endif
-	
-	pThisTransL1 = pTransL1;
+
 	//FIFO Queue to store received data from UART
 	FIFO_Create(&pTransL1->sRecvFIFO,pTransL1->arrRecvFIFO,SIZE_FIFO_RECV);
 	
@@ -159,7 +155,7 @@ uint8_t  TransL1_Init(STransL1 *pTransL1, uint32_t u32UartPort, uint32_t u32Baud
 	//set handle for uart isr
 
 	// init UART
-	TransL1_UARTInit(u32UartPort, u32BaudRate, u8TxIntPrio, u8RxIntPrio);
+	TransL1_UARTInit(pTransL1);
 		
 	RS485_RX(pTransL1);
 	
@@ -421,15 +417,18 @@ void TransL1_RecvFF_Reset (STransL1 *pTransL1) {
 inline void TransL1_RX_Interrupt_Handle(uint32_t instance, void* uartState)
 {
 	uart_state_t *state = (uart_state_t*)uartState;
+	STransL1 *pTransL1 = pUartPtr[instance];
+	if(pTransL1 == NULL) return;
 
-	if(FIFO_Push(&pThisTransL1->sRecvFIFO, state->rxBuff[0]) == FALSE) {
+
+	if(FIFO_Push(&pTransL1->sRecvFIFO, state->rxBuff[0]) == FALSE) {
 		LREP("push fifo error \r\n");
 	}
 
 	/* Callback function, signal to run the trans thread*/
-	if(pThisTransL1->fClbL1RecvData && pThisTransL1->pClbRecvByteParam) {
+	if(pTransL1->fClbL1RecvData) {
 		//LREP("%x ", state->rxBuff[0]);
-		pThisTransL1->fClbL1RecvData(pThisTransL1->pClbRecvByteParam);
+		pTransL1->fClbL1RecvData(pTransL1->pClbRecvByteParam);
 	}
 }
 /*****************************************************************************/
@@ -442,14 +441,16 @@ inline void TransL1_RX_Interrupt_Handle(uint32_t instance, void* uartState)
 inline void TransL1_TX_Interrupt_Handle(uint32_t instance, void* uartState)
 {
 	uart_state_t *state = (uart_state_t*)uartState;
+	STransL1 *pTransL1 = pUartPtr[instance];
+	if(pTransL1 == NULL) return;
 	if(state->txSize > 0) {
 		state->txBuff++;
 		state->txSize--;
 		if(state->txSize == 0) {
-			RS485_RX(pThisTransL1);
-			pThisTransL1->sFlag.Bits.bSending = FALSE;
-			if(pThisTransL1->fClbL1SendDone && pThisTransL1->pClbSendDoneParam) {
-				pThisTransL1->fClbL1SendDone(pThisTransL1->pClbSendDoneParam);
+			RS485_RX(pTransL1);
+			pTransL1->sFlag.Bits.bSending = FALSE;
+			if(pTransL1->fClbL1SendDone) {
+				pTransL1->fClbL1SendDone(pTransL1->pClbSendDoneParam);
 			}
 		}
 	}

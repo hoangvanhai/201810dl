@@ -224,9 +224,6 @@ void TransL2S_SetL1Para(STransL2S *pTransL2, uint32_t u32UartPort, uint32_t u32B
 
     pTransL1->u32UartPort		= u32UartPort;
     pTransL1->u32BaudRate		= u32BaudRate;
-
-    pTransL1->sRS485DE.u16Port 	= u16RS485Port;
-    pTransL1->sRS485DE.u16Pin  	= u16RS485Pin;
 }
 
 /*****************************************************************************/
