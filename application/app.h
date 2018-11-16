@@ -75,6 +75,7 @@
 /**************************** Type Definitions *******************************/
 typedef struct SApp_ {
 	ESysStatus			eStatus;
+	ECtrlCode			eCtrlCode;
 	STrans				sTransPc;
 	STrans				sTransUi;
 	SModbus				sModbus;
@@ -99,6 +100,7 @@ typedef struct SApp_ {
 	uint8_t				currPath[256];
 	uint8_t				currFileName[256];
 
+	bool				sdhcPlugged;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
@@ -106,6 +108,15 @@ typedef struct SApp_ {
 #define APP_TASK_INIT_HANDLER(p, task) 		(p)->task##_task_handler = &((p)->TCB_##task)
 #define App_SetSysStatus(pApp, state)    	(pApp)->eStatus |= (state)
 #define App_ClearSysStatus(pApp, state)  	(pApp)->eStatus &= ~(state)
+#define App_IsSysStatus(pApp, state)		((pApp)->eStatus & state)
+
+#define App_GetSdcard1Error(pApp)			((pApp)->eStatus & SYS_ERR_SDCARD_1)
+#define App_GetSdcard2Error(pApp)			((pApp)->eStatus & SYS_ERR_SDCARD_2)
+
+
+#define App_SetCtrlCode(pApp, code)			((pApp)->eCtrlCode |= code)
+#define App_ClearCtrlCode(pApp, code)		((pApp)->eCtrlCode &= ~(code))
+#define App_IsCtrlCodePending(pApp, code)   ((pApp)->eCtrlCode & code)
 
 /************************** Function Prototypes ******************************/
 /* Application interface */
@@ -130,6 +141,7 @@ void 			App_TaskFilesystem(task_param_t );
 void 			App_TaskModbus(task_param_t );
 void 			App_TaskSerialcomm(task_param_t);
 void 			App_TaskPeriodic(task_param_t);
+void 			App_TaskStartup(task_param_t);
 
 /* Date time */
 int				App_InitDateTime(SApp *pApp);

@@ -37,7 +37,7 @@
 
 
 /************************** Function Prototypes ******************************/
-void App_StartTask(task_param_t arg);
+void App_TaskStartup(task_param_t arg);
 /************************** Variable Definitions *****************************/
 
 const char *logo_msg = { "\r\n\n"
@@ -82,7 +82,7 @@ int main(void)
 
     App_InitTaskHandle(&sApp);
 
-    result = OSA_TaskCreate(App_StartTask,
+    result = OSA_TaskCreate(App_TaskStartup,
                     (uint8_t *)"startup",
                     TASK_STARTUP_STACK_SIZE,
                     sApp.task_startup_stack,
@@ -102,46 +102,6 @@ int main(void)
     for(;;) {}                    // Should not achieve here
 }
 
-void App_StartTask(task_param_t arg) {
-
-	OS_ERR err;
-
-	SApp *pApp = (SApp*)arg;
-
-	OSA_FixedMemInit();
-
-	App_Init(pApp);
-
-	App_CreateAppTask(pApp);
-
-	OSTmrCreate(&pApp->hCtrlTimer,
-				(CPU_CHAR *)"timer",
-				(OS_TICK)0,
-				(OS_TICK)100,
-				(OS_OPT)OS_OPT_TMR_PERIODIC,
-				(OS_TMR_CALLBACK_PTR) Clb_TimerControl,
-				(void*)NULL,
-				(OS_ERR*)&err);
-
-	if (err == OS_ERR_NONE) {
-		/* Timer was created but NOT started */
-		LREP("timer created successful\r\n");
-		OSTmrStart(&pApp->hCtrlTimer, &err);
-		if (err == OS_ERR_NONE) {
-			/* Timer was created but NOT started */
-			LREP("timer started ok\r\n");
-		} else {
-			LREP("timer start failed\r\n");
-		}
-	} else {
-		LREP("timer create failed\r\n");
-	}
-
-
-	while(1) {
-		OSA_SleepMs(1000);
-	}
-}
 
 int App_CreateAppTask(SApp *pApp) {
 

@@ -130,7 +130,7 @@ uint8_t  Modbus_Init(SModbus *pModbus, uint32_t uartInstance,
 {
 	pThisL1 = pModbus;
 	//FIFO Queue to store received data from UART
-	FIFO_Create(&pModbus->sRecvFIFO,pModbus->arrRecvFIFO, SIZE_FIFO_RECV);
+	FIFO_Create(&pModbus->sRecvFIFO, pModbus->arrRecvFIFO, SIZE_FIFO_RECV);
 	pModbus->rs485Pin = kGpioMbRs485;
 	RS485_Init();
 	RS485_TX(pModbus);	// do not want to receice any thing
@@ -148,7 +148,7 @@ uint8_t  Modbus_Init(SModbus *pModbus, uint32_t uartInstance,
 	return MB_SUCCESS;
 }
 
-uint8_t		Modbus_SendAndRecv		(SModbus *pModbus, uint8_t *psData,
+uint8_t	Modbus_SendAndRecv		(SModbus *pModbus, uint8_t *psData,
 									 uint16_t sSize, uint8_t *prData,
 									 uint16_t *rSize, uint16_t timeout) {
 	Modbus_RecvFF_Reset(pModbus);

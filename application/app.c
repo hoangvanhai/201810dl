@@ -51,6 +51,8 @@ extern const shell_command_t cmd_table[];
  */
 void App_Init(SApp *pApp) {
 
+	pApp->eStatus = SYS_ERR_NONE;
+
 	int err;
 	memset(pApp->currPath, 0, 256);
 
@@ -60,22 +62,25 @@ void App_Init(SApp *pApp) {
 		LREP("app init FS successfully \r\n");
 	} else {
 		LREP("app init FS failed err = %d \r\n", err);
+		App_SetSysStatus(pApp, SYS_ERR_SDCARD_1);
 	}
 
-	err = App_LoadConfig(pApp, CONFIG_FILE_PATH);
-	if(err == FR_OK) {
-		LREP("app load config successfully \r\n");
+	if(!App_GetSdcard1Error(pApp)) {
+		err = App_LoadConfig(pApp, CONFIG_FILE_PATH);
+		if(err == FR_OK) {
+			LREP("app load config successfully \r\n");
+		} else {
+			LREP("app load config failed err = %d\r\n", err);
+		}
 	} else {
-		LREP("app load config failed err = %d\r\n", err);
+		ASSERT(false);
+		LREP("sdcard 1 not found, init default config for dry running\r\n");
+		App_GenDefaultConfig(&pApp->sCfg);
 	}
-
 
 	App_InitDI(pApp);
 	App_InitDO(pApp);
 	App_InitAI(pApp);
-
-
-	pApp->eStatus = SYS_ERR_NONE;
 }
 
 /*****************************************************************************/
@@ -360,6 +365,7 @@ int App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type) {
 int	App_InitFS(SApp *pApp) {
 
 	int retVal;
+
 	memset(&pApp->sFS0, 0, sizeof(FATFS));
 
 	retVal = f_mount(&pApp->sFS0, "", 0);
@@ -379,8 +385,7 @@ int	App_InitFS(SApp *pApp) {
 		LREP("directory conf existed \r\n");
 	}
 
-	current_directory();
-
+	retVal = current_directory();
 
 	return retVal;
 }
@@ -439,7 +444,8 @@ void App_TaskPeriodic(task_param_t parg) {
 					pApp->sDateTime.tm_year, pApp->sDateTime.tm_mon,
 					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_hour,
 					pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec); */
-			LREP("#");
+			LREP(".");
+			GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
 
 		}
 
@@ -454,7 +460,7 @@ void App_TaskPeriodic(task_param_t parg) {
 
 		if((logged == false) && (pApp->sDateTime.tm_min % log_min == 0)) {
 			LREP("generate log file\r\n");
-			App_GenerateLogFile(pApp);
+			ASSERT(App_GenerateLogFile(pApp) == FR_OK);
 			last_min = pApp->sDateTime.tm_min;
 			logged = true;
 		}
@@ -585,6 +591,99 @@ void App_TaskFilesystem(task_param_t param)
  *  @return Void.
  *  @note
  */
+void App_TaskStartup(task_param_t arg) {
+
+	OS_ERR err;
+	CPU_TS	ts;
+	SApp *pApp = (SApp*)arg;
+
+	OSA_FixedMemInit();
+
+	App_Init(pApp);
+
+	App_CreateAppTask(pApp);
+
+	OSTmrCreate(&pApp->hCtrlTimer,
+				(CPU_CHAR *)"timer",
+				(OS_TICK)0,
+				(OS_TICK)100,
+				(OS_OPT)OS_OPT_TMR_PERIODIC,
+				(OS_TMR_CALLBACK_PTR) Clb_TimerControl,
+				(void*)NULL,
+				(OS_ERR*)&err);
+
+	if (err == OS_ERR_NONE) {
+		/* Timer was created but NOT started */
+		LREP("timer created successful\r\n");
+		OSTmrStart(&pApp->hCtrlTimer, &err);
+		if (err == OS_ERR_NONE) {
+			/* Timer was created but NOT started */
+			LREP("timer started ok\r\n");
+		} else {
+			LREP("timer start failed\r\n");
+		}
+	} else {
+		LREP("timer create failed\r\n");
+	}
+
+
+	while(1) {
+
+		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
+		if(err == OS_ERR_NONE) {
+			/* First, feed dog to prevent WDG reset */
+			WDOG_DRV_Refresh();
+
+			/* Check all pending command */
+			if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_1)) {
+				LREP("recv ctrl init sdcard 1\r\n");
+				int err = App_InitFS(pApp);
+				if(err != FR_OK) {
+					App_SetSysStatus(pApp, SYS_ERR_SDCARD_1);
+				} else {
+					App_ClearSysStatus(pApp, SYS_ERR_SDCARD_1);
+					ASSERT(App_LoadConfig(pApp, CONFIG_FILE_PATH) == FR_OK);
+				}
+
+				App_ClearCtrlCode(pApp, CTRL_INIT_SDCARD_1);
+			}
+
+			if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_2)) {
+				LREP("recv ctrl init sdcard 2\r\n");
+
+				App_ClearCtrlCode(pApp, CTRL_INIT_SDCARD_2);
+			}
+
+			if(App_IsCtrlCodePending(pApp, CTRL_INIT_MODBUS)) {
+				LREP("recv ctrl init modbus\r\n");
+				if(App_InitModbus(pApp) == MB_SUCCESS) {
+					App_ClearSysStatus(pApp, SYS_ERR_MODBUS);
+				} else {
+					App_SetSysStatus(pApp, SYS_ERR_MODBUS);
+				}
+
+				App_ClearCtrlCode(pApp, CTRL_INIT_MODBUS);
+			}
+
+
+			WDOG_DRV_Refresh();
+		} else {
+			/* Feed dog to prevent WDG reset */
+			WDOG_DRV_Refresh();
+		}
+
+
+	}
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
 	static uint32_t count = 0;
 	LREP("Recv frm event: %d - ctrl = 0x%x\r\n", count++, u8Type);
@@ -637,7 +736,7 @@ void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type) {
  *  @note
  */
 void Clb_TimerControl(void *p_tmr, void *p_arg) {
-	GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
+//	GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
 	App_GenerateFakeTime(pAppObj);
 }
 
@@ -651,8 +750,8 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
  */
 int	App_InitModbus(SApp *pApp){
 
-	Modbus_Init(&pApp->sModbus, BOARD_MODBUS_UART_INSTANCE, BOARD_MODBUS_UART_BAUD, 0, 0);
-	return 0;
+	return Modbus_Init(&pApp->sModbus, BOARD_MODBUS_UART_INSTANCE,
+			pApp->sCfg.sCom.modbus_brate, 0, 0);
 }
 /*****************************************************************************/
 /** @brief
@@ -1037,7 +1136,6 @@ void App_AiReadAllPort(SApp *pApp) {
 		 randVal = randout / 100.0;
 		 //LREP("rand out = %.2f\r\n", randVal);
 		 pApp->sAI.Node[i].value = randVal;
-
 	}
 }
 /*****************************************************************************/
@@ -1051,6 +1149,10 @@ void App_AiReadAllPort(SApp *pApp) {
 int App_GenerateLogFile(SApp *pApp) {
 
 	int retVal = FR_OK;
+
+	if(App_IsSysStatus(pApp, SYS_ERR_SDCARD_1))
+		return -1;
+
 	FIL file;
 	/* get file name time*/
 	char *filename = (char*)OSA_FixedMemMalloc(64);
@@ -1144,8 +1246,6 @@ int App_GenerateLogFile(SApp *pApp) {
 		f_close(&file);
 	}
 
-
-
     OSA_FixedMemFree((uint8_t*)filename);
     OSA_FixedMemFree((uint8_t*)time);
     OSA_FixedMemFree((uint8_t*)year);
@@ -1187,6 +1287,27 @@ int	App_GenerateFakeTime(SApp *pApp) {
 
 	return 0;
 }
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void sdhc_card_detection(void)
+{
+    pAppObj->sdhcPlugged = BOARD_IsSDCardDetected();
+    if(!pAppObj->sdhcPlugged) {
+    	NVIC_SystemReset();
+    } else {
+    	OS_ERR err;
+    	App_SetCtrlCode(pAppObj, CTRL_INIT_SDCARD_1);
+    	OSTaskSemPost(&pAppObj->TCB_task_startup, OS_OPT_NONE, &err);
+    	ASSERT(err == OS_ERR_NONE);
+    }
+}
+
 /*****************************************************************************/
 /** @brief
  *

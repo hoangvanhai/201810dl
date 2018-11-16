@@ -67,6 +67,7 @@ uint8_t usb_otg_board_init(uint8_t controller_id);
 
 void BOARD_EnableAllFault(void);
 int BOARD_GetFaultType(void);
+void BOARD_CreateWDG(void);
 
 #if defined(__cplusplus)
 }

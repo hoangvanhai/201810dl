@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, Freescale Semiconductor, Inc.
+ * Copyright (c) 2014, Freescale Semiconductor, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -28,61 +28,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
+#include "fsl_gpio_driver.h"
 #include "board.h"
-#include "pin_mux.h"
-#include "fsl_clock_manager.h"
-#include "fsl_debug_console.h"
-#include <includes.h>
 
-void hardware_init(void) {
+///////////////////////////////////////////////////////////////////////////////
+// Code
+///////////////////////////////////////////////////////////////////////////////
+extern void sdhc_card_detection(void);
+/*!
+ * @brief gpio IRQ handler with the same name in startup code
+ */
+void BOARD_SDHC_CD_GPIO_IRQ_HANDLER(void)
+{
+    PORT_Type * gpioBase = g_portBase[GPIO_EXTRACT_PORT(kGpioSdhc0Cd)];
+    uint32_t pin = GPIO_EXTRACT_PIN(kGpioSdhc0Cd);
 
-  /* enable clock for PORTs */
-  CLOCK_SYS_EnablePortClock(PORTA_IDX);
-  CLOCK_SYS_EnablePortClock(PORTB_IDX);
-  CLOCK_SYS_EnablePortClock(PORTC_IDX);
-  CLOCK_SYS_EnablePortClock(PORTD_IDX);
-  CLOCK_SYS_EnablePortClock(PORTE_IDX);
-
-  CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
-
-  configure_sdhc_pins(BOARD_SDHC_INSTANCE);
-  configure_i2c_pins(BOARD_I2C_RTC_INSTANCE);
-//  configure_ftm_pins(FTM0_IDX);
-  /* Init board clock */
-  BOARD_ClockInit();
-  dbg_uart_init();
-
-#ifdef MPU_INSTANCE_COUNT /* File System need disabled MPU */
-    // disable MPU
-    for(int i = 0; i < MPU_INSTANCE_COUNT; i++)
+    if(PORT_HAL_GetPortIntFlag(gpioBase) == (1 << pin))
     {
-        MPU_HAL_Disable(g_mpuBase[i]);
+        sdhc_card_detection();
     }
-#endif
-
-    // Configure the power mode protection
-    SMC_HAL_SetProtection(SMC_BASE_PTR, kAllowPowerModeVlp);
-
-    GPIO_DRV_Init(NULL, ledPins);
-
-    GPIO_DRV_Init(sdhcCdPin, NULL);
-
-//    GPIO_DRV_Init(DigitalInputPin, NULL);
-//    GPIO_DRV_Init(NULL, DigitalOutputPin);
-
-    BOARD_EnableAllFault();
-
-    BOARD_CreateWDG();
+    /* Clear interrupt flag.*/
+    PORT_HAL_ClearPortIntFlag(gpioBase);
 }
 
-/*!
-** @}
-*/
-/*
-** ###################################################################
-**
-**     This file was created by Processor Expert 10.4 [05.10]
-**     for the Freescale Kinetis series of microcontrollers.
-**
-** ###################################################################
-*/

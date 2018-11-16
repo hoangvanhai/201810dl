@@ -33,6 +33,7 @@
 #include "fsl_smc_hal.h"
 #include "fsl_debug_console.h"
 #include "pin_mux.h"
+#include "fsl_wdog_driver.h"
 
 /* Configuration for enter VLPR mode. Core clock = 4MHz. */
 const clock_manager_user_config_t g_defaultClockConfigVlpr =
@@ -187,110 +188,7 @@ void dbg_uart_init(void)
 
     DbgConsole_Init(BOARD_DEBUG_UART_INSTANCE, BOARD_DEBUG_UART_BAUD, kDebugConsoleUART);
 }
-/******************************************************************************
- *
- *   @name      usb_device_board_init
- *
- *   @brief     This function is to handle board-specified initialization
- *
- *   @param     controller_id:        refer to CONTROLLER_INDEX defined in usb_misc.h
- *                                    "0" stands for USB_CONTROLLER_KHCI_0.
- *   @return    status
- *                                    0 : successful
- *                                    1 : failed
- **
- *****************************************************************************/
-uint8_t usb_device_board_init(uint8_t controller_id)
-{
-    int8_t ret = 0;
 
-    if (0 == controller_id)
-    {
-        /* TO DO */
-        /*add board initialization code if have*/
-    }
-    else
-    {
-        ret = 1;
-    }
-
-    return ret;
-
-}
-#ifdef USBCFG_HOST_PORT_NATIVE
-#define kGpioUsbVbus                     GPIO_MAKE_PIN(GPIOC_IDX, 9U)
-/* Declare usb vbus gpio enable pin usb otg demo and host demo*/
-
-const gpio_output_pin_user_config_t usbvbusenablePin[] =
-{
-    {
-        .pinName = kGpioUsbVbus,
-        .config.outputLogic = 1,
-        .config.slewRate = kPortSlowSlewRate,
-        .config.isOpenDrainEnabled = false,
-        .config.driveStrength = kPortLowDriveStrength,
-    },
-    {
-        .pinName = GPIO_PINS_OUT_OF_RANGE,
-    }
-};
-#endif
-/******************************************************************************
- *
- *   @name        usb_host_board_init
- *
- *   @brief       This function is to handle board-specified initialization
- *
- *   @param     controller_id:        refer to CONTROLLER_INDEX defined in usb_misc.h
- *                                    "0" stands for USB_CONTROLLER_KHCI_0.
- *   @return         status
- *                                    0 : successful
- *                                    1 : failed
- **
- *****************************************************************************/
-uint8_t usb_host_board_init(uint8_t controller_id)
-{
-    int8_t ret = 0;
-    /*"0" stands for USB_CONTROLLER_KHCI_0 */
-    if (0 == controller_id)
-    {
-#ifdef USBCFG_HOST_PORT_NATIVE
-        /* Enable clock gating to all ports C*/
-        CLOCK_SYS_EnablePortClock(2);
-        GPIO_DRV_Init(NULL, usbvbusenablePin);
-        GPIO_DRV_WritePinOutput(kGpioUsbVbus, 1);
-#endif
-    }
-    else
-    {
-       ret = 1;
-    }
-
-    return ret;
-
-
-}
-/******************************************************************************
- *
- *   @name      usb_otg_board_init
- *
- *   @brief     This function is to handle board-specified initialization
- *
- *   @param     controller_id:        refer to CONTROLLER_INDEX defined in usb_misc.h
- *                                    "0" stands for USB_CONTROLLER_KHCI_0
- *   @return    status
- *                                    0 : successful
- *                                    1 : failed
- **
- *****************************************************************************/
-uint8_t usb_otg_board_init(uint8_t controller_id)
-{
-    uint8_t error = 0;
-    /* TO DO */
-    /*add board initialization code if have*/
-
-    return error;
-}
 
 /*****************************************************************************/
 /** @brief
@@ -438,6 +336,28 @@ int BOARD_GetFaultType(void) {
 	return SCB->CFSR;
 }
 
+
+void BOARD_CreateWDG(void) {
+    const wdog_config_t wdogConfig =
+    {
+        .wdogEnable             = true,// Watchdog mode
+        .timeoutValue          	= 2048U,// Watchdog overflow time is about 2s
+        .winEnable             	= false, //Disable window function
+        .windowValue           	= 0,    // Watchdog window value
+        .prescaler   			= kWdogClkPrescalerDivide1, // Watchdog clock prescaler
+        .updateEnable  			= true, // Update register enabled
+        .clkSrc           		= kWdogLpoClkSrc, // Watchdog clock source is LPO 1KHz
+#if FSL_FEATURE_WDOG_HAS_WAITEN
+        .workMode.kWdogEnableInWaitMode  = true, // Enable watchdog in wait mode
+#endif
+        .workMode.kWdogEnableInStopMode  = true, // Enable watchdog in stop mode
+        .workMode.kWdogEnableInDebugMode = false,// Disable watchdog in debug mode
+    };
+
+
+    WDOG_DRV_Init(&wdogConfig);
+
+}
 
 /*******************************************************************************
  * EOF
