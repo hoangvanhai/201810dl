@@ -1018,7 +1018,7 @@ double	App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr) {
  *  @return Void.
  *  @note
  */
-bool App_GetDILevelByIndex(SDigitalInput *pHandle, uint16_t index) {
+bool App_GetDILevelByIndex(SDigitalInputLog *pHandle, uint16_t index) {
 	return pHandle->Node[index].lev;
 }
 /*****************************************************************************/

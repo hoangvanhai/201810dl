@@ -43,29 +43,6 @@
 #define CFG_COM_TAG					0x03		// indicate this is terminate frame
 												// logger should write config to sdcard
 
-#define SERVER_FTP_IP_IDX			0
-#define SERVER_FTP_IP_WIDTH			4
-#define SERVER_FTP_PORT_IDX			(SERVER_FTP_IP_IDX + SERVER_FTP_IP_WIDTH)
-#define SERVER_FTP_PORT_WIDTH		2
-#define SERVER_CTRL_IP_IDX			(SERVER_FTP_PORT_IDX + SERVER_FTP_PORT_WIDTH)
-#define SERVER_CTRL_IP_WIDTH		4
-#define SERVER_CTRL_PORT_IDX		(SERVER_CTRL_IP_IDX + SERVER_CTRL_IP_WIDTH)
-#define SERVER_CTRL_PORT_WIDTH		2
-#define DEVICE_IP_IDX				(SERVER_CTRL_PORT_IDX + SERVER_CTRL_PORT_WIDTH)
-#define DEVICE_IP_WIDTH				4
-#define DEVICE_TINH_IDX				(DEVICE_IP_IDX + DEVICE_IP_WIDTH)
-#define DEVICE_TINH_WIDTH			6
-#define DEVICE_COSO_IDX				(DEVICE_TINH_IDX + DEVICE_TINH_WIDTH)
-#define DEVICE_COSO_WIDTH			6
-#define DEVICE_TRAM_IDX				(DEVICE_COSO_IDX + DEVICE_COSO_WIDTH)
-#define DEVICE_TRAM_WIDTH			10
-#define DEVICE_SCAN_DUR_IDX			(DEVICE_TRAM_IDX + DEVICE_TRAM_WIDTH)
-#define DEVICE_SCAN_DUR_WIDTH		1
-#define DEVICE_LOG_DUR_IDX			(DEVICE_SCAN_DUR_IDX + DEVICE_SCAN_DUR_WIDTH)
-#define DEVICE_LOG_DUR_WIDTH		1
-
-
-
 
 #define APP_TASK_DEFINE(task, stackSize)                          \
     OS_TCB TCB_##task;                                            \
@@ -80,7 +57,7 @@ typedef struct SApp_ {
 	STrans				sTransUi;
 	SModbus				sModbus;
 	SDateTime			sDateTime;
-	SDigitalInput		sDI;
+	SDigitalInputLog	sDI;
 	SAnalogInput		sAI;
 	SModbusValue		sMB;
 
@@ -171,7 +148,7 @@ void			App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic);
 
 double			App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index);
 double			App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr);
-bool			App_GetDILevelByIndex(SDigitalInput *pHandle, uint16_t index);
+bool			App_GetDILevelByIndex(SDigitalInputLog *pHandle, uint16_t index);
 
 int 			App_GenerateLogFile(SApp *pApp);
 int				App_GenerateFakeTime(SApp *pApp);

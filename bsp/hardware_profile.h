@@ -12,11 +12,11 @@
 #include <MK64F12_extension.h>
 
 /* The board name */
-#define BOARD_NAME                      "TWR-K64F120M"
+#define BOARD_NAME                      "DATA_LOGGER"
 
-#define CLOCK_VLPR 1U
-#define CLOCK_RUN  2U
-#define CLOCK_NUMBER_OF_CONFIGURATIONS 3U
+#define CLOCK_VLPR 						1U
+#define CLOCK_RUN  						2U
+#define CLOCK_NUMBER_OF_CONFIGURATIONS 	3U
 
 #ifndef CLOCK_INIT_CONFIG
 #define CLOCK_INIT_CONFIG CLOCK_RUN
@@ -61,11 +61,7 @@
 #define BOARD_MODBUS_UART_INSTANCE   		4
 #define BOARD_MODBUS_UART_BAUD       		115200
 
-#define TRANS_RX_PRIO						2
-#define TRANS_TX_PRIO						2
-#define TRANSL1_V1							1
-#define TRANSL1_V2							2
-#define TRANSL1_VER							TRANSL1_V1
+
 
 
 /* analog measurement */

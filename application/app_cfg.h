@@ -24,32 +24,7 @@
 #ifndef APPLICATION_APP_CFG_H_
 #define APPLICATION_APP_CFG_H_
 
-
-
-/***************************** Include Files *********************************/
-
 /************************** Constant Definitions *****************************/
-
-
-#define TRANS_UART_ISR_PRIORIRY				1
-#define ADC_ISR_PRIORITY					2
-#define TIMER_ISR_PRIORITY					3
-#define DEBUG_UART_ISR_PRIORITY				4
-
-#define DIGITAL_INPUT_NUM_CHANNEL			8
-#define DIGITAL_OUTPUT_NUM_CHANNEL			6
-#define ANALOG_INPUT_NUM_CHANNEL			12
-#define SYSTEM_NUM_TAG						ANALOG_INPUT_NUM_CHANNEL
-
-/**************************** Type Definitions *******************************/
-
-/***************** Macros (Inline Functions) Definitions *********************/
-
-/************************** Function Prototypes ******************************/
-
-/************************** Variable Definitions *****************************/
-
-/*****************************************************************************/
 
 
 // task prio
@@ -68,5 +43,14 @@
 #define TASK_SERIAL_COMM_STACK_SIZE		2024U
 #define TASK_PERIODIC_STACK_SIZE		4096U
 
+
+// COMUNICATION
+#define TRANS_RX_PRIO						2
+#define TRANS_TX_PRIO						2
+#define TRANSL1_V1							1
+#define TRANSL1_V2							2
+#define TRANSL1_VER							TRANSL1_V1
+
+/**************************** Type Definitions *******************************/
 
 #endif /* APPLICATION_APP_CFG_H_ */
