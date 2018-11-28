@@ -890,8 +890,9 @@ int App_InitDO(SApp *pApp) {
  *  @note
  */
 int	App_InitAI(SApp *pApp) {
-
-	return 0;
+	return Analog_Init(&pApp->sAnalogReader,
+						BOARD_ANALOG_UART_INSTANCE,
+						BOARD_ANALOG_UART_BAUD, 0, 0);
 }
 
 /*****************************************************************************/
@@ -904,14 +905,18 @@ int	App_InitAI(SApp *pApp) {
  */
 int App_UpdateTagContent(SApp *pApp) {
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+		// clear status first
+		pApp->sCfg.sTag[i].meas_stt[0] = 0;
 		// get main value
 		if(pApp->sCfg.sTag[i].input_type == TIT_AI) {
 			pApp->sCfg.sTag[i].scratch_value =
-					App_GetAIValueByIndex(&pApp->sAI, pApp->sCfg.sTag[i].input_id);
-		} else {
-			pApp->sCfg.sTag[i].scratch_value =
-					App_GetMBValueByAddress(&pApp->sMB, pApp->sCfg.sTag[i].input_id);
+				App_GetAIValueByIndex(&pApp->sAI, pApp->sCfg.sTag[i].input_id);
 		}
+		/* modbus input is already read value to scratch value */
+		//else {
+		//	pApp->sCfg.sTag[i].scratch_value =
+		//			App_GetMBValueByAddress(&pApp->sMB, pApp->sCfg.sTag[i].input_id);
+		//}
 
 		/* value = scratch * (raw_max - raw_min) / (scr_max - scr_min) */
 		pApp->sCfg.sTag[i].raw_value = pApp->sCfg.sTag[i].scratch_value *
@@ -923,25 +928,45 @@ int App_UpdateTagContent(SApp *pApp) {
 									pApp->sCfg.sTag[i].raw_value * pApp->sCfg.sTag[i].coef_b;
 
 		// get status
-		if(pApp->sCfg.sTag[i].has_calib && pApp->sCfg.sTag[i].has_error) {
-			bool error, calib;
-			calib = App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_calib);
-			error = App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_error);
+		// if has least error pin or calib pin, set status is normal
+		if(pApp->sCfg.sTag[i].has_calib || pApp->sCfg.sTag[i].has_error) {
+			pApp->sCfg.sTag[i].meas_stt[0] = '0';
+			pApp->sCfg.sTag[i].meas_stt[1] = '0';
+			pApp->sCfg.sTag[i].meas_stt[2] = 0;
+		}
+
+		// check calib signal on digital input
+		if(pApp->sCfg.sTag[i].has_calib) {
+			bool  calib =
+			App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_calib);
+			if(calib) {
+				pApp->sCfg.sTag[i].meas_stt[0] = '0';
+				pApp->sCfg.sTag[i].meas_stt[1] = '1';
+				pApp->sCfg.sTag[i].meas_stt[2] = 0;
+				// force zero when error condition
+				pApp->sCfg.sTag[i].raw_value = 0;
+			}
+		}
+
+		// check error signal in digital input
+		if(pApp->sCfg.sTag[i].has_error) {
+			bool error =
+			App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_error);
 			if(error) {
 				pApp->sCfg.sTag[i].meas_stt[0] = '0';
 				pApp->sCfg.sTag[i].meas_stt[1] = '2';
 				pApp->sCfg.sTag[i].meas_stt[2] = 0;
-			} else {
-				if(calib) {
-					pApp->sCfg.sTag[i].meas_stt[0] = '0';
-					pApp->sCfg.sTag[i].meas_stt[1] = '1';
-					pApp->sCfg.sTag[i].meas_stt[2] = 0;
-				} else {
-					pApp->sCfg.sTag[i].meas_stt[0] = 0;
-					pApp->sCfg.sTag[i].meas_stt[1] = 0;
-					pApp->sCfg.sTag[i].meas_stt[2] = 0;
-				}
+				pApp->sCfg.sTag[i].raw_value = 0;
 			}
+		}
+
+		// if value is out of range, set error
+		if(pApp->sCfg.sTag[i].scratch_value > pApp->sCfg.sTag[i].scratch_max ||
+				pApp->sCfg.sTag[i].scratch_value < pApp->sCfg.sTag[i].scratch_min) {
+			pApp->sCfg.sTag[i].meas_stt[0] = '0';
+			pApp->sCfg.sTag[i].meas_stt[1] = '2';
+			pApp->sCfg.sTag[i].meas_stt[2] = 0;
+			pApp->sCfg.sTag[i].raw_value = 0;
 		}
 	}
 
@@ -1026,7 +1051,7 @@ double	App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index) {
  *  @return Void.
  *  @note
  */
-double	App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr) {
+double App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr) {
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 		if(pHandle->Node[i].id == addr) {
 			return pHandle->Node[i].value;
@@ -1183,7 +1208,8 @@ void App_DiReadAllPort(SApp *pApp) {
  *  @note
  */
 void App_AiReadAllPort(SApp *pApp) {
-	uint32_t randout;
+
+	/*uint32_t randout;
 	float randVal;
 	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
 		 RNGA_DRV_GetRandomData(0, &randout, sizeof(uint32_t));
@@ -1192,6 +1218,31 @@ void App_AiReadAllPort(SApp *pApp) {
 		 randVal = randout / 100.0;
 		 //LREP("rand out = %.2f\r\n", randVal);
 		 pApp->sAI.Node[i].value = randVal;
+	}*/
+
+	uint8_t data[10];
+	uint16_t adc_value;
+	uint8_t recvLen;
+	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
+		if(pApp->sCfg.sTag[i].input_type == TIT_AI)
+			pApp->sCfg.sTag[i].status = TAG_STT_AI_FAILED;
+
+		Analog_RecvFF_Reset(&pApp->sAnalogReader);
+		Analog_SelectChannel(&pApp->sAnalogReader, i);
+		OSA_SleepMs(2000); // wait enough for slave mcu wakup and send data
+		recvLen = Analog_RecvData(&pApp->sAnalogReader, data, 10);
+		if(recvLen > 0) {
+			uint8_t crc8 = crc_8((const uint8_t*)data, recvLen - 1);
+			if(crc8 == data[recvLen-1]) {
+				if(data[0] == 0xAA) {
+					adc_value = data[1] << 8 | data[2];
+					pApp->sAI.Node[i].value = (float)adc_value;
+
+					if(pApp->sCfg.sTag[i].input_type == TIT_AI)
+						pApp->sCfg.sTag[i].status = TAG_STT_OK;
+				}
+			}
+		}
 	}
 }
 /*****************************************************************************/

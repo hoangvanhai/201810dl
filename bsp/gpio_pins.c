@@ -199,6 +199,40 @@ const gpio_output_pin_user_config_t DigitalOutputPin[] = {
 };
 
 
+const gpio_output_pin_user_config_t SelectAnalogPin[] = {
+	{
+		.pinName = SelectAnalog0,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = SelectAnalog1,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = SelectAnalog2,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = SelectAnalog3,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = GPIO_PINS_OUT_OF_RANGE,
+	}
+};
+
 const gpio_input_pin_user_config_t DigitalInputPin[] = {
 	{
 		.pinName = DigitalInput0,

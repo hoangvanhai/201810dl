@@ -72,6 +72,8 @@ extern const gpio_input_pin_user_config_t DigitalInputPin[];
 
 extern const gpio_output_pin_user_config_t DigitalOutputPin[];
 
+extern const gpio_output_pin_user_config_t SelectAnalogPin[];
+
 
 
 /*! @brief Pin names */
@@ -100,6 +102,11 @@ enum _gpio_pins_pinNames{
 	DigitalOutput3				= GPIO_MAKE_PIN(GPIOC_IDX, 11U),
 	DigitalOutput4				= GPIO_MAKE_PIN(GPIOC_IDX, 12U),
 	DigitalOutput5				= GPIO_MAKE_PIN(GPIOC_IDX, 13U),
+
+	SelectAnalog0				= GPIO_MAKE_PIN(GPIOB_IDX, 0U),
+	SelectAnalog1				= GPIO_MAKE_PIN(GPIOB_IDX, 1U),
+	SelectAnalog2				= GPIO_MAKE_PIN(GPIOB_IDX, 2U),
+	SelectAnalog3				= GPIO_MAKE_PIN(GPIOB_IDX, 3U),
 };
 
 extern gpio_input_pin_user_config_t sdcardCardDectionPin[];

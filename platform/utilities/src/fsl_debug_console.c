@@ -112,7 +112,7 @@ debug_console_status_t DbgConsole_Init(
 			uart_user_config_t debug_uart_cfg = {
 				.baudRate = baudRate,
 				.parityMode = kUartParityDisabled,
-				.stopBitCount = kUartTwoStopBit,
+				.stopBitCount = kUartOneStopBit,
 				.bitCountPerChar = kUart8BitsPerChar,
 			};
 

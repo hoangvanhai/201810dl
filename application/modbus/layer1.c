@@ -50,7 +50,7 @@ void Modbus_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxP
 	uart_user_config_t modbus_uart_cfg = {
 					.baudRate = u32Baudrate,
 					.parityMode = kUartParityDisabled,
-					.stopBitCount = kUartTwoStopBit,
+					.stopBitCount = kUartOneStopBit,
 					.bitCountPerChar = kUart8BitsPerChar,
 				};
 
@@ -138,7 +138,7 @@ uint8_t  Modbus_Init(SModbus *pModbus, uint32_t uartInstance,
 	pModbus->uartInstance	 	= uartInstance;
 	pModbus->u32BaudRate 		= u32BaudRate;
 	// init UART
-	LREP("init uart port: %d\r\n", uartInstance);
+	LREP("init uart port modbus: %d\r\n", uartInstance);
 	Modbus_Uart_Init(uartInstance, u32BaudRate, u8TxIntPrio, u8RxIntPrio);
 	RS485_RX(pModbus);
 
@@ -317,11 +317,11 @@ void Modbus_RecvFF_Reset (SModbus *pModbus) {
 static void modbus_rx_handle(uint32_t instance, void * uartState) {
 	uart_state_t *state = (uart_state_t*)uartState;
 
-//	LREP("%02x ", state->rxBuff[0]);
+	//LREP("%02x ", state->rxBuff[0]);
 	debug_putchar(state->rxBuff[0]);
-//	if(FIFO_Push(&pThisL1->sRecvFIFO, state->rxBuff[0]) == FALSE) {
-//		LREP("push fifo error \r\n");
-//	}
+	if(FIFO_Push(&pThisL1->sRecvFIFO, state->rxBuff[0]) == FALSE) {
+		LREP("push fifo error \r\n");
+	}
 }
 
 /*****************************************************************************/

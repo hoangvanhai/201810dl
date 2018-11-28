@@ -31,7 +31,7 @@
 #include <definition.h>
 #include <master-rtu.h>
 #include <rtc_comm.h>
-
+#include <analog.h>
 #include <lwip/netif.h>
 #include <filesystem.h>
 /************************** Constant Definitions *****************************/
@@ -56,6 +56,7 @@ typedef struct SApp_ {
 	STrans				sTransPc;
 	STrans				sTransUi;
 	SModbus				sModbus;
+	SAnalogReader		sAnalogReader;
 	SDateTime			sDateTime;
 	SDigitalInputLog	sDI;
 	SAnalogInput		sAI;
@@ -130,6 +131,7 @@ int 			App_SendUI(SApp *pApp, uint8_t *data, uint8_t len, bool ack);
 int				App_SendPC(SApp *pApp, uint8_t *data, uint8_t len, bool ack);
 void			App_SetNetPCCallback(SApp *pApp);
 void 			App_SetFTPCallback(SApp *pApp);
+
 
 // Modbus
 int				App_InitModbus(SApp *pApp);

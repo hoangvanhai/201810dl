@@ -44,7 +44,7 @@ void TransL1_UARTInit(STransL1 *pTransL1)
 	uart_user_config_t trans_uart_cfg = {
 					.baudRate = pTransL1->u32BaudRate,
 					.parityMode = kUartParityDisabled,
-					.stopBitCount = kUartTwoStopBit,
+					.stopBitCount = kUartOneStopBit,
 					.bitCountPerChar = kUart8BitsPerChar,
 				};
 

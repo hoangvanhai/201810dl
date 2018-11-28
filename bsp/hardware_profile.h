@@ -49,10 +49,12 @@
 #define XTAL0_PIN    						19
 #define XTAL0_PINMUX 						kPortPinDisabled
 
+
+#define BOARD_SIM_UART_INSTANCE				0
+#define BOARD_SIM_UART_BAUD					115200
 /* debug */
 #define BOARD_DEBUG_UART_INSTANCE   		1
 #define BOARD_DEBUG_UART_BAUD       		115200
-
 /* communication */
 #define BOARD_TRANSPC_UART_INSTANCE   		2
 #define BOARD_TRANSPC_UART_BAUD       		115200
@@ -60,7 +62,8 @@
 #define BOARD_TRANSUI_UART_BAUD       		115200
 #define BOARD_MODBUS_UART_INSTANCE   		4
 #define BOARD_MODBUS_UART_BAUD       		115200
-
+#define BOARD_ANALOG_UART_INSTANCE			5
+#define BOARD_ANALOG_UART_BAUD				9600
 
 
 
