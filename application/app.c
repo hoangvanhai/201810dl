@@ -25,7 +25,6 @@
 #include <app.h>
 #include <rtc_comm.h>
 #include <app_shell.c>
-#include <task_filesystem.h>
 #include <lib_str.h>
 /************************** Constant Definitions *****************************/
 
@@ -219,8 +218,10 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	pHandle->sCom.modbus_brate = 9600;
 
 	IP4_ADDR(&pHandle->sCom.dev_ip, 192,168,1,2);
-	IP4_ADDR(&pHandle->sCom.server_ftp_ip, 192,168,1,12);
-	pHandle->sCom.server_ftp_port = 21;
+	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 192,168,1,12);
+	pHandle->sCom.server_ftp_port1 = 21;
+	IP4_ADDR(&pHandle->sCom.server_ftp_ip2, 192,168,1,12);
+		pHandle->sCom.server_ftp_port2 = 21;
 	IP4_ADDR(&pHandle->sCom.server_ctrl_ip, 192,168,1,22);
 	pHandle->sCom.server_ctrl_port = 1186;
 
@@ -451,6 +452,7 @@ void App_TaskPeriodic(task_param_t parg) {
 
 		}
 
+
 		App_DiReadAllPort(pApp);
 		App_AiReadAllPort(pApp);
 		App_UpdateTagContent(pApp);
@@ -498,7 +500,7 @@ void App_TaskShell(task_param_t param)
 
 
 /*****************************************************************************/
-/** @brief
+/** @brief do read all modubs channel with read rate = sCfg.sCom.scan_dur
  *
  *
  *  @param
@@ -508,33 +510,29 @@ void App_TaskShell(task_param_t param)
 void App_TaskModbus(task_param_t param)
 {
 	SApp *pApp = (SApp *)param;
-	OS_ERR err;
-	void 	*p_msg;
-	OS_MSG_SIZE msg_size;
-	CPU_TS	ts;
 
 	App_InitModbus(pApp);
 
-	uint8_t rx_buf[264];
-	uint16_t rx_length;
-
 	while (1)
 	{
-		p_msg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
-		if(err == OS_ERR_NONE) {
-			uint8_t retVal;
+//		p_msg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
+//		if(err == OS_ERR_NONE) {
+//			uint8_t retVal;
+//
+//			LREP("modbus get msg size = %d ts = %d\r\n", msg_size, ts);
+//
+//			retVal = Modbus_SendAndRecv(&pApp->sModbus,
+//					(uint8_t*)p_msg, 264, rx_buf, &rx_length, 100);
+//
+//			if(retVal != TRANS_SUCCESS) {
+//				LREP("Modbus send err: %d\r\n", retVal);
+//			}
+//
+//			OSA_FixedMemFree((uint8_t*)p_msg);
+//		}
 
-			LREP("modbus get msg size = %d ts = %d\r\n", msg_size, ts);
-
-			retVal = Modbus_SendAndRecv(&pApp->sModbus,
-					(uint8_t*)p_msg, 264, rx_buf, &rx_length, 100);
-
-			if(retVal != TRANS_SUCCESS) {
-				LREP("Modbus send err: %d\r\n", retVal);
-			}
-
-			OSA_FixedMemFree((uint8_t*)p_msg);
-		}
+		App_ModbusDoRead(pApp);
+		OSA_SleepMs(pApp->sCfg.sCom.scan_dur);
 	}
 
 }
@@ -807,19 +805,45 @@ int	App_DeinitModbus(SApp *pApp){
  */
 int	App_ModbusDoRead(SApp *pApp){
 	int retVal;
+	uint8_t data[30];
+	uint16_t rlen;
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 		if(pApp->sCfg.sTag[i].input_type == TIT_MB) {
-			uint8_t data[4];
-			uint16_t rlen;
-			retVal = MBMaster_Read(pApp->sCfg.sTag[i].input_id,
-					pApp->sCfg.sTag[i].slave_reg_addr, 0x03, 1, data, &rlen);
+			retVal = MBMaster_Read(&pApp->sModbus,
+					pApp->sCfg.sTag[i].input_id,
+					pApp->sCfg.sTag[i].data_type,
+					pApp->sCfg.sTag[i].slave_reg_addr,
+					1, data, &rlen);
+
 			if(retVal != MB_SUCCESS) {
 				pApp->sCfg.sTag[i].status = TAG_STT_MB_FAILED;
 			} else {
 				pApp->sCfg.sTag[i].status = TAG_STT_OK;
-				uint32_t readVal;
-				readVal = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
-				pApp->sCfg.sTag[i].scratch_value = (float)readVal;
+
+				switch(pApp->sCfg.sTag[i].data_format) {
+				case Integer_8bits: {
+					uint8_t readValue;
+					MBMaster_Parse((const uint8_t*)data, Integer_8bits, &readValue);
+					pApp->sCfg.sTag[i].scratch_value = (float)readValue;
+				} break;
+				case Integer_16bits: {
+					uint16_t readValue;
+					MBMaster_Parse((const uint8_t*)data, Integer_16bits, &readValue);
+					pApp->sCfg.sTag[i].scratch_value = (float)readValue;
+				} break;
+				case Integer_32bits: {
+					uint32_t readValue;
+					MBMaster_Parse((const uint8_t*)data, Integer_32bits, &readValue);
+					pApp->sCfg.sTag[i].scratch_value = (float)readValue;
+				} break;
+				case Float_32bits: {
+					float readValue;
+					MBMaster_Parse((const uint8_t*)data, Float_32bits, &readValue);
+					pApp->sCfg.sTag[i].scratch_value = (float)readValue;
+				} break;
+				default:
+					break;
+				}
 			}
 		}
 	}
@@ -852,7 +876,7 @@ int	App_InitDI(SApp *pApp) {
 int App_InitDO(SApp *pApp) {
 
 	for(int i = 0; i < DIGITAL_OUTPUT_NUM_CHANNEL; i++) {
-		pApp->sCfg.sDO.Node[i].port = DigitalOutputPin[i].pinName;
+		pApp->sCfg.sDO[i].port = DigitalOutputPin[i].pinName;
 	}
 	return 0;
 }
@@ -939,7 +963,7 @@ int App_UpdateTagContent(SApp *pApp) {
 			}
 
 			break;
-		case CT_TERMP_PRESS:
+		case CT_TEMP_PRESS:
 			/*
 			 * Ft = (273 + T(m))/(273+ T(std))
 	         * Fp = P(std)/P(m)
@@ -1132,8 +1156,8 @@ void App_SetFTPCallback(SApp *pApp) {
  */
 void App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic) {
 	for(int i = 0; i < DIGITAL_OUTPUT_NUM_CHANNEL; i++) {
-		if(Str_Cmp((CPU_CHAR*)pApp->sCfg.sDO.Node[i].name, name) == 0) {
-			GPIO_DRV_WritePinOutput(pApp->sCfg.sDO.Node[i].port, logic);
+		if(Str_Cmp((CPU_CHAR*)pApp->sCfg.sDO[i].name, name) == 0) {
+			GPIO_DRV_WritePinOutput(pApp->sCfg.sDO[i].port, logic);
 		}
 	}
 }

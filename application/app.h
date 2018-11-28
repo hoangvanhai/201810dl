@@ -29,11 +29,11 @@
 #include <gpio_pins.h>
 #include <Transceiver.h>
 #include <definition.h>
-#include <master.h>
+#include <master-rtu.h>
 #include <rtc_comm.h>
 
 #include <lwip/netif.h>
-#include <task_filesystem.h>
+#include <filesystem.h>
 /************************** Constant Definitions *****************************/
 #define CONFIG_FILE_PATH		"/conf/config.dat"
 #define	CFG_SET						0x80

@@ -184,6 +184,7 @@ int Modbus_Send(SModbus *pModbus, uint8_t* pData, uint16_t u16Size)
 	ASSERT_NONVOID(Modbus_IsSendReady(pModbus), MB_ERR_BUSY);
 
 	int i = 0;
+	// copy data
 	for(; i < u16Size; i++) {
 		pModbus->pSendBuff[i] = pData[i];
 	}

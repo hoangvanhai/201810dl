@@ -461,7 +461,7 @@ void control(int32_t argc, char**argv) {
 		}
 	} else if(strcmp(argv[1], "ui") == 0) {
 		uint8_t data[100];
-		uint32_t time;
+		//uint32_t time;
 		for(int i = 0; i < 100; i++) {
 			App_SendUI(pAppObj, data, 100, false);
 			OSA_SleepMs(100);
