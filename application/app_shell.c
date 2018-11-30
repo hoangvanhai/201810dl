@@ -453,18 +453,21 @@ void control(int32_t argc, char**argv) {
 	} else if(strcmp(argv[1], "pc") == 0) {
 		uint8_t data[100];
 		uint32_t time;
-		for(int i = 0; i < 100; i++) {
-			App_SendPC(pAppObj, data, 100, false);
-			time = BOARD_GenerateRandom(20, 200);
-			LREP("sleep = %d\r\n", time);
-			OSA_SleepMs(time);
+		//for(int i = 0; i < 100; i++)
+		{
+			//App_SendPC(pAppObj, 100, data, 30, true);
+			Trans_Send(&pAppObj->sTransPc, 100, data, 0xA0);
+//			time = BOARD_GenerateRandom(20, 200);
+//			LREP("sleep = %d\r\n", time);
+//			OSA_SleepMs(time);
 		}
 	} else if(strcmp(argv[1], "ui") == 0) {
 		uint8_t data[100];
 		//uint32_t time;
-		for(int i = 0; i < 100; i++) {
+		//for(int i = 0; i < 100; i++)
+		{
 			App_SendUI(pAppObj, data, 100, false);
-			OSA_SleepMs(100);
+			//OSA_SleepMs(100);
 		}
 	}
 }

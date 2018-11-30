@@ -119,10 +119,11 @@ uint8_t		*g_ucMemStorage512[OS_MEM_PARTITION_512_TOTAL_NUM_BLOCK][514];
 //				data structure that has some big data elements(int, long, ...). This problem is
 //				introduced by the Stack Pointer MUST point to even address, not odd address.
 // ---------------------------------------------------------------------------------------------------
-uint8_t* OSA_FixedMemMalloc(uint32_t uiSize)
+uint8_t* OSA_FixedMemMalloc(uint32_t reqSise)
 {
 	uint8_t* 	pucAllocMem = NULL;
 	OS_ERR		ucError		= OS_ERR_NONE;
+	uint32_t 	uiSize = reqSise;
 
 	// Check the required allocated size to allocate at the most proper partition
 #if OS_MEM_PARTITION_8_TOTAL_NUM_BLOCK > 0
@@ -217,6 +218,7 @@ uint8_t* OSA_FixedMemMalloc(uint32_t uiSize)
 
 	if (pucAllocMem != NULL) {
 		HELPER_TRACE_MALLOC_STATUS();
+		LREP("req size = %d uiSize = %d\r\n", reqSise, uiSize);
 		// Save the ID of partition at the first & second bytes - two additional bytes (unused by the user)
 		pucAllocMem[0]	= (uiSize >> 8) & 0xFF;
 		pucAllocMem[1]	= (uiSize) & 0xFF;
@@ -240,10 +242,10 @@ void OSA_FixedMemFree(uint8_t* pucAllocMem)
 	// The real allocated memory start at two locations before the first element of pucAllocMem
 	uint8_t*	pucCompleteAllocMem = pucAllocMem - 2;
 	// Get the partition ID which stored at the two first bytes
-	uint16_t	puiPartitionID		= 	((pucCompleteAllocMem[0] << 8) & 0xFF00) |
-										pucCompleteAllocMem[1];
+	uint16_t	puiPartitionID	= ((pucCompleteAllocMem[0] << 8) & 0xFF00) |
+									pucCompleteAllocMem[1];
 
-	//LREP("free id = %d loc of complete = 0x%x\r\n", puiPartitionID, pucCompleteAllocMem);
+	LREP("free id = %d loc of complete = 0x%x\r\n", puiPartitionID, pucCompleteAllocMem);
 	// Check the partition ID of the freed required memory to free it up to the original partition
 	switch(puiPartitionID)
 	{

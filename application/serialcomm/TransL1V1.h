@@ -17,7 +17,6 @@ extern "C" {
 #if (TRANSL1_VER == TRANSL1_V1)
 
 /************************** Constant Definitions *****************************/
-//#define DEBUG_TRANSL1
 
 #define SIZE_FIFO_RECV		512
 

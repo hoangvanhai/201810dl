@@ -34,10 +34,10 @@
 
 
 /************************** Function Prototypes ******************************/
-static void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type);
-static void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type);
-static void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type);
-static void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type);
+void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type);
+void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type);
+void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type);
+void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type);
 /************************** Variable Definitions *****************************/
 SApp sApp;
 SApp *pAppObj = &sApp;
@@ -82,6 +82,11 @@ void App_Init(SApp *pApp) {
 	App_InitDI(pApp);
 	App_InitDO(pApp);
 	App_InitAI(pApp);
+
+    LREP("sizeof(SCommon) %d\r\n", 		sizeof(SCommon));
+    LREP("sizeof(STag) %d\r\n", 		sizeof(STag));
+    LREP("sizeof(SInputPort) %d\r\n", 	sizeof(SInputPort));
+    LREP("sizeof(SCtrlPort) %d\r\n",	sizeof(SCtrlPort));
 }
 
 /*****************************************************************************/
@@ -217,6 +222,9 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	pHandle->sCom.log_dur 	= 1;	//5;
 	pHandle->sCom.modbus_brate = 9600;
 
+	pHandle->sCom.ftp_enable1 = FALSE;
+	pHandle->sCom.ftp_enable2 = FALSE;
+
 	IP4_ADDR(&pHandle->sCom.dev_ip, 192,168,1,2);
 	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 192,168,1,12);
 	pHandle->sCom.server_ftp_port1 = 21;
@@ -286,9 +294,9 @@ int App_DefaultTag(STag *pHandle, uint8_t tagIdx) {
  *  @return Void.
  *  @note
  */
-int App_SetConfig(SApp *pApp, uint8_t *pData) {
+int App_SetConfig(SApp *pApp, const uint8_t *pData) {
 	switch(pData[0]) {
-	case CFG_COMMON | CFG_SET:
+	case LOGGER_SET | LOGGER_COMMON:
 		if(pData[1] == sizeof(SCommon)) {
 			memcpy(&pApp->sCfg.sCom, &pData[2], sizeof(SCommon));
 		} else {
@@ -296,26 +304,54 @@ int App_SetConfig(SApp *pApp, uint8_t *pData) {
 		}
 		break;
 
-	case CFG_TAG | CFG_SET: {
+	case LOGGER_SET | LOGGER_TAG: {
 			uint8_t idx;
-			if(pData[1] != (sizeof(STag) + 1)) {
+			if(pData[1] == (sizeof(STag) + 1)) {
 				idx = pData[2];
 				memcpy(&pApp->sCfg.sTag[idx], &pData[3], sizeof(STag));
 			} else {
+				LREP("recv tag len = %d\r\n", pData[1]);
 				ASSERT_NONVOID(FALSE, -2);
 			}
 		}
-
 		break;
 
-	case CFG_COM_TAG | CFG_SET:
+	case LOGGER_SET | LOGGER_DI:{
+			uint8_t idx;
+			if(pData[1] == (sizeof(SInputPort) + 1)) {
+				idx = pData[2];
+				memcpy(&pApp->sCfg.sDI[idx], &pData[3], sizeof(SInputPort));
+
+			} else {
+				LREP("recv di len = %d\r\n", pData[1]);
+				ASSERT_NONVOID(FALSE, -3);
+			}
+		}
+		break;
+
+	case LOGGER_SET | LOGGER_DO:{
+			uint8_t idx;
+			if(pData[1] == (sizeof(SCtrlPort) + 1)) {
+				idx = pData[2];
+				memcpy(&pApp->sCfg.sDO[idx], &pData[3], sizeof(SCtrlPort));
+			} else {
+				LREP("recv do len = %d\r\n", pData[1]);
+				ASSERT_NONVOID(FALSE, -4);
+			}
+		}
+	break;
+
+	case LOGGER_SET | LOGGER_WRITE_DONE:
+		App_SaveConfig(pApp, CONFIG_FILE_PATH);
+	break;
 
 	default:
-		ASSERT_NONVOID(FALSE, -3);
+		ASSERT_NONVOID(FALSE, -5);
 		break;
 	}
 
-	return 0;
+	return App_SendPC(pApp, LOGGER_SET | LOGGER_WRITE_SUCCESS, NULL, 0, true);
+
 }
 /*****************************************************************************/
 /** @brief
@@ -328,32 +364,32 @@ int App_SetConfig(SApp *pApp, uint8_t *pData) {
 
 int App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type) {
 
-	switch(cfg) {
-	case CFG_COMMON | CFG_GET:
-	if(type == CFG_CONN_SERIAL) {
-		uint8_t *sendData = OSA_FixedMemMalloc(sizeof(SCommon) + 2);
-		sendData[0] = CFG_COMMON | CFG_GET;
-		sendData[1] = sizeof(SCommon);
-		memcpy(&sendData[2], &pApp->sCfg.sCom, sizeof(SCommon));
-		App_SendPC(pApp, sendData, sizeof(SCommon) + 2, true);
-		OSA_FixedMemFree(sendData);
-	}
-	break;
-
-	case CFG_TAG | CFG_GET:
-	if(type == CFG_CONN_SERIAL) {
-		uint8_t *sendData = OSA_FixedMemMalloc(sizeof(STag) + 2);
-		sendData[0] = CFG_TAG | CFG_GET;
-		sendData[1] = sizeof(STag);
-		memcpy(&sendData[2], &pApp->sCfg.sTag[idx], sizeof(STag));
-		App_SendPC(pApp, sendData, sizeof(STag) + 2, true);
-		OSA_FixedMemFree(sendData);
-	}
-	break;
-
-	default:
-		break;
-	}
+//	switch(cfg) {
+//	case CFG_COMMON | CFG_GET:
+//	if(type == CFG_CONN_SERIAL) {
+//		uint8_t *sendData = OSA_FixedMemMalloc(sizeof(SCommon) + 2);
+//		sendData[0] = CFG_COMMON | CFG_GET;
+//		sendData[1] = sizeof(SCommon);
+//		memcpy(&sendData[2], &pApp->sCfg.sCom, sizeof(SCommon));
+//		App_SendPC(pApp, sendData, sizeof(SCommon) + 2, true);
+//		OSA_FixedMemFree(sendData);
+//	}
+//	break;
+//
+//	case CFG_TAG | CFG_GET:
+//	if(type == CFG_CONN_SERIAL) {
+//		uint8_t *sendData = OSA_FixedMemMalloc(sizeof(STag) + 2);
+//		sendData[0] = CFG_TAG | CFG_GET;
+//		sendData[1] = sizeof(STag);
+//		memcpy(&sendData[2], &pApp->sCfg.sTag[idx], sizeof(STag));
+//		App_SendPC(pApp, sendData, sizeof(STag) + 2, true);
+//		OSA_FixedMemFree(sendData);
+//	}
+//	break;
+//
+//	default:
+//		break;
+//	}
 
 	return 0;
 }
@@ -448,7 +484,7 @@ void App_TaskPeriodic(task_param_t parg) {
 					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_hour,
 					pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec); */
 			//LREP(".");
-			GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
+			//GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
 
 		}
 
@@ -463,8 +499,11 @@ void App_TaskPeriodic(task_param_t parg) {
 
 
 		if((logged == false) && (pApp->sDateTime.tm_min % log_min == 0)) {
-			LREP("generate log file\r\n");
-			ASSERT(App_GenerateLogFile(pApp) == FR_OK);
+			if(pApp->sCfg.sCom.ftp_enable1 ||
+					pApp->sCfg.sCom.ftp_enable2) {
+				LREP("generate log file\r\n");
+				ASSERT(App_GenerateLogFile(pApp) == FR_OK);
+			}
 			last_min = pApp->sDateTime.tm_min;
 			logged = true;
 		}
@@ -557,11 +596,12 @@ void App_TaskSerialcomm(task_param_t param) {
 	Trans_Init(&pApp->sTransPc, BOARD_TRANSPC_UART_INSTANCE,
 			BOARD_TRANSPC_UART_BAUD, &pApp->TCB_task_serialcomm);
 
-	LREP("task serial comm init done !\r\n");
-	LREP("SFrameInfo Size: %d\r\n", sizeof(SFrameInfo));
+	LREP("task serial comm init done sizeof(STrans) = %d!\r\n", sizeof(STrans));
+	//LREP("SFrameInfo Size: %d\r\n", sizeof(SFrameInfo));
 	while(1) {
-		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
-		if(err == OS_ERR_NONE) {
+		OSTaskSemPend(10, OS_OPT_PEND_BLOCKING, &ts, &err);
+		//if(err == OS_ERR_NONE)
+		{
 			Trans_Task(&pApp->sTransPc);
 		}
 	}
@@ -589,7 +629,7 @@ void App_TaskUserInterface(task_param_t param)
 	Trans_Init(&pApp->sTransUi, BOARD_TRANSUI_UART_INSTANCE,
 			BOARD_TRANSUI_UART_BAUD, &pApp->TCB_task_ui);
 
-	LREP("task user interface init done !\r\n");
+	LREP("task user interface init done sizeof(STrans) = %d!\r\n", sizeof(STrans));
 	while(1) {
 		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
@@ -640,6 +680,7 @@ void App_TaskStartup(task_param_t arg) {
 		LREP("timer create failed\r\n");
 	}
 
+	App_OS_SetAllHooks();
 
 	while(1) {
 
@@ -699,29 +740,59 @@ void App_TaskStartup(task_param_t arg) {
  *  @return Void.
  *  @note
  */
-void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
-	static uint32_t count = 0;
-	LREP("Recv frm event: %d - ctrl = 0x%x\r\n", count++, u8Type);
+void App_CommRecvHandle(const uint8_t *data) {
+	uint8_t sendData[30];
+	switch(data[0]) {
 
-	SFrameInfo *pFrameInfo = (SFrameInfo *)MEM_BODY((SMem*)pData);
-
-	switch(u8Type & 0x3F) {
-	case FRM_DATA:
-		if(pFrameInfo->pu8Data[0] & CFG_SET) {
-			App_SetConfig(pAppObj, pFrameInfo->pu8Data);
-		} else {
-
-			//App_GetConfig(pAppObj, pFrameInfo->pu8Data, CFG_CONN_SERIAL);
-		}
+	case LOGGER_LOGIN:
+		sendData[0] = LOGGER_SUCCESS;
+		App_SendPC(pAppObj, LOGGER_LOGIN, sendData, 1, false);
 		break;
+	case LOGGER_SET | LOGGER_COMMON:
+	case LOGGER_SET | LOGGER_TAG:
+	case LOGGER_SET | LOGGER_DI:
+	case LOGGER_SET | LOGGER_DO:
+	case LOGGER_SET | LOGGER_WRITE_DONE:
+		OSA_SleepMs(100);
+		App_SetConfig(pAppObj, data);
+		break;
+	case LOGGER_SET | LOGGER_TIME:
 
+		break;
+	case LOGGER_CHANGE_PASSWD:
+
+		break;
 	default:
-		ASSERT(false);
+		LREP("unhandled msg type: 0x%02x\r\n", data[0]);
 		break;
 	}
-
-
 }
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
+	//static uint32_t count = 0;
+	SFrameInfo *pFrameInfo = (SFrameInfo *)MEM_BODY((SMem*)pData);
+	LREP("Recv frm dlen: %d\r\n", pFrameInfo->u16DLen);
+	App_SendPC(pAppObj, 0x01, pFrameInfo->pu8Data, pFrameInfo->u16DLen, true);
+	return;
+
+//	switch(u8Type & 0x3F) {
+//	case FRM_DATA:
+//		App_CommRecvHandle(pFrameInfo->pu8Data);
+//		break;
+//
+//	default:
+//		ASSERT(false);
+//		break;
+//	}
+}
+
 /*****************************************************************************/
 /** @brief
  *
@@ -731,7 +802,7 @@ void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
  *  @note
  */
 void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type) {
-	LREP("Sent done event 0x%x\r\n", u8Type);
+	//LREP("Sent done event 0x%x\r\n", u8Type);
 }
 
 /*****************************************************************************/
@@ -742,8 +813,8 @@ void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type) {
  *  @return Void.
  *  @note
  */
-static void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type) {
-
+void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type) {
+	LREP("ui recv frame event\r\n");
 }
 
 /*****************************************************************************/
@@ -754,8 +825,8 @@ static void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type) {
  *  @return Void.
  *  @note
  */
-static void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type) {
-
+void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type) {
+	LREP("ui send done event \r\n");
 }
 /*****************************************************************************/
 /** @brief
@@ -1145,8 +1216,19 @@ inline int App_SendUI(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
  *  @return Void.
  *  @note
  */
-inline int	App_SendPC(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
-	return Trans_Send(&pApp->sTransPc, len, data, ack ? 0xA0 : 0x20);
+inline int	App_SendPC(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, bool ack) {
+	bool ret = false;
+	uint8_t *sdata = OSA_FixedMemMalloc(len + 2);
+	if(sdata != NULL) {
+		sdata[0] = subctrl;
+		sdata[1] = len;
+		if(len > 0 && data != NULL)
+			memcpy(&sdata[2], data, len);
+
+		ret = Trans_Send(&pApp->sTransPc, len + 2, sdata, ack ? 0xA0 : 0x20);
+		OSA_FixedMemFree(sdata);
+	}
+	return ret;
 }
 
 /*****************************************************************************/
@@ -1209,7 +1291,7 @@ void App_DiReadAllPort(SApp *pApp) {
  */
 void App_AiReadAllPort(SApp *pApp) {
 
-	/*uint32_t randout;
+	uint32_t randout;
 	float randVal;
 	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
 		 RNGA_DRV_GetRandomData(0, &randout, sizeof(uint32_t));
@@ -1218,8 +1300,9 @@ void App_AiReadAllPort(SApp *pApp) {
 		 randVal = randout / 100.0;
 		 //LREP("rand out = %.2f\r\n", randVal);
 		 pApp->sAI.Node[i].value = randVal;
-	}*/
+	}
 
+	/*
 	uint8_t data[10];
 	uint16_t adc_value;
 	uint8_t recvLen;
@@ -1244,6 +1327,7 @@ void App_AiReadAllPort(SApp *pApp) {
 			}
 		}
 	}
+	*/
 }
 /*****************************************************************************/
 /** @brief
@@ -1323,9 +1407,10 @@ int App_GenerateLogFile(SApp *pApp) {
 			char *row = (char*)OSA_FixedMemMalloc(256);
 			UINT written;
 
-			sprintf(row, "%-12s %12s %12s %15s %12s\r\n", "Thong so", "Gia tri", "Don vi", "Thoi gian", "Trang thai");
-			retVal = f_write(&file, row, Str_Len(row), &written);
-			LREP("%s", row);
+			//sprintf(row, "%-12s %12s %12s %15s %12s\r\n",
+			//"Thong so", "Gia tri", "Don vi", "Thoi gian", "Trang thai");
+			//retVal = f_write(&file, row, Str_Len(row), &written);
+			//LREP("%s", row);
 			for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 				if(pApp->sCfg.sTag[i].report) {
 					memset(row, 0, 256);

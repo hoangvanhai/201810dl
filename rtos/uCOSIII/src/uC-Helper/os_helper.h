@@ -42,7 +42,7 @@
 #define	OS_MEM_PARTITION_32                             32      // Used
 #define	OS_MEM_PARTITION_64                             64      // Used
 #define	OS_MEM_PARTITION_128                            128		// Used
-#define	OS_MEM_PARTITION_272                            274		// Used
+#define	OS_MEM_PARTITION_272                            272		// Used
 #define	OS_MEM_PARTITION_512                            512		// Used
 
 

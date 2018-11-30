@@ -29,8 +29,9 @@ SMem *Mem_Alloc(uint16_t u16Size)
     pMem = (SMem*)OSA_FixedMemMalloc(u16Size);
     if(pMem != NULL) {
     	pMem->u8Body = (uint8_t*)pMem + sizeof(SMem);
-//    	pMem->pNext = (SMem*)pMem;
-//        pMem->u8Body = (uint8_t*)pMem + sizeof(SMem*);
+    	pMem->pNext = NULL;
+		//pMem->u8Body = (uint8_t*)pMem + sizeof(SMem*);
+    	LREP("mem maloc at %x\r\n", pMem);
     }
     return pMem;
 }
@@ -44,7 +45,7 @@ SMem *Mem_Alloc(uint16_t u16Size)
  */
 void Mem_Free(SMem *pMem)
 {
-    ASSERT_VOID(NULL != pMem);
+    LREP("mem free at %x\r\n", pMem);
     OSA_FixedMemFree((uint8_t*)pMem);
     pMem = NULL;
 }

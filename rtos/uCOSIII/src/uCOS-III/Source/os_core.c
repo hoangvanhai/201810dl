@@ -34,6 +34,7 @@
 
 #define  MICRIUM_SOURCE
 #include "os.h"
+#include <fsl_debug_console.h>
 
 #ifdef VSC_INCLUDE_SOURCE_FILE_NAMES
 const  CPU_CHAR  *os_core__c = "$Id: $";
@@ -216,6 +217,8 @@ void  OSInit (OS_ERR  *p_err)
     OS_StatTaskInit(p_err);
     if (*p_err != OS_ERR_NONE) {
         return;
+    } else {
+    	LREP("OS_StatTaskInit done \r\n");
     }
 #endif
 

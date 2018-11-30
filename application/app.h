@@ -34,15 +34,10 @@
 #include <analog.h>
 #include <lwip/netif.h>
 #include <filesystem.h>
+#include <os_app_hooks.h>
+
 /************************** Constant Definitions *****************************/
 #define CONFIG_FILE_PATH		"/conf/config.dat"
-#define	CFG_SET						0x80
-#define CFG_GET						0x00
-#define CFG_COMMON					0x01
-#define CFG_TAG						0x02
-#define CFG_COM_TAG					0x03		// indicate this is terminate frame
-												// logger should write config to sdcard
-
 
 #define APP_TASK_DEFINE(task, stackSize)                          \
     OS_TCB TCB_##task;                                            \
@@ -79,6 +74,10 @@ typedef struct SApp_ {
 	uint8_t				currFileName[256];
 
 	bool				sdhcPlugged;
+
+	SNetEthernet		sEtherObj;
+	SNetWless			sWless;
+
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
@@ -105,7 +104,7 @@ int 			App_SaveConfig(SApp *pApp, const char* cfg_path);
 int				App_GenDefaultConfig(SSysCfg *pHandle);
 int				App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx);
 int 			App_DefaultTag(STag *pHandle, uint8_t tagIdx);
-int 			App_SetConfig(SApp *pApp, uint8_t *pData);
+int 			App_SetConfig(SApp *pApp, const uint8_t *pData);
 int				App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type);
 
 /* File system */
@@ -128,9 +127,11 @@ int 			App_SetDateTime(SApp *pApp, SDateTime time);
 
 // Communication
 int 			App_SendUI(SApp *pApp, uint8_t *data, uint8_t len, bool ack);
-int				App_SendPC(SApp *pApp, uint8_t *data, uint8_t len, bool ack);
+int				App_SendPC(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, bool ack);
 void			App_SetNetPCCallback(SApp *pApp);
 void 			App_SetFTPCallback(SApp *pApp);
+
+void 			App_CommRecvHandle(const uint8_t *data);
 
 
 // Modbus

@@ -59,7 +59,7 @@ void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, voi
     TransL2S_SetL1Para((STransL2S *)&pTrans->sTransL2,
     		u32UartPort, u32BaudRate, 0, 0);
 
-    LREP("init transceiver protocol\r\n\n");
+    //LREP("init transceiver protocol\r\n\n");
 #if (TRANSL1_VER == TRANSL1_V1)
     TransL2S_Init(&pTrans->sTransL2, LOGGER_DEV_ID, TRANS_TX_PRIO, TRANS_RX_PRIO, &pTrans->hSem);
 #elif (TRANSL1_VER == TRANSL1_V2)
@@ -87,6 +87,8 @@ void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, voi
 
     /*------------------------------------------------------------------------*/
     pTrans->sFlag.Bits.bStarted = TRUE;
+
+    LREP("INIT OBJ AT: %p\r\n", pTrans);
 }
 
 /*****************************************************************************/
@@ -204,11 +206,11 @@ void Trans_SendTask(STrans *pTrans)
         else if (Queue_GetSize(&pTrans->qSendingData) > 0)
         {
             pMem = Queue_Remove(&pTrans->qSendingData, NULL);
-            LREP("get mem at: 0x%x - 0x%x\r\n", pMem, MEM_BODY(pMem));
+            //LREP("get mem at: 0x%x - 0x%x\r\n", pMem, MEM_BODY(pMem));
         }
 
         if(pMem != NULL) {
-            if(TransL2S_Send(pTransL2, LOGGER_DEST_ID, pMem) != TRANS_SUCCESS) {
+            if(TransL2S_Send(pTransL2, LOGGER_PC_ID, pMem) != TRANS_SUCCESS) {
                 ASSERT(FALSE);
             } else {
 
@@ -245,9 +247,16 @@ void Trans_Task(STrans *pTrans)
 static BOOL Trans_send(STrans *pTrans, uint8_t* pu8Data, 
                             uint16_t u16Dlen, uint8_t u8Ctrl, EPackageType bFrmType)
 {
+
+	if(!pTrans->sFlag.Bits.bStarted)
+		return FALSE;
+
+	if(u16Dlen > SFRM_MAX_DLEN) u16Dlen = SFRM_MAX_DLEN;
+
     uint16_t u16Idx = 0;
     SMem        *pMem;
     
+
     pMem =  Mem_Alloc(CALCULATE_MEM_SIZE(u16Dlen + SFRM_HDR_SIZE));
 
     if(pMem == NULL) {
@@ -255,6 +264,7 @@ static BOOL Trans_send(STrans *pTrans, uint8_t* pu8Data,
         return FALSE;
     }
     
+
     SFrameInfo *pFrameInfo = (SFrameInfo *)MEM_BODY(pMem);
 
     pFrameInfo->u8Ctrl   = (uint8_t)u8Ctrl;
@@ -277,7 +287,8 @@ static BOOL Trans_send(STrans *pTrans, uint8_t* pu8Data,
         //LREP("\r\nL3 Seq = %d",(uint32_t)pTrans->u8SeqLocal);
     }
 //
-    if(u16Dlen > 0)
+
+    if(u16Dlen > 0 && pu8Data != NULL)
     {
         for(u16Idx = 0; u16Idx < u16Dlen; u16Idx++)
         {
@@ -364,7 +375,8 @@ static uint8_t SearchSeqFrame(void* pMem, void *pSeq)
  */
 static void Trans_CheckTimeOutOfSendedFrame(STrans *pTrans)
 {
-    SMem *pMem;
+    SMem *pMem, *pTemMem;
+
     SFrameInfo *pFrameInfo;
     uint8_t u8Seq;
     SSearch sSearch;    
@@ -383,27 +395,31 @@ static void Trans_CheckTimeOutOfSendedFrame(STrans *pTrans)
             sSearch.fCriteria = SearchSeqFrame;
             sSearch.pHandle   = &u8Seq;
 
-            if(pFrameInfo->u8NumSend > 0)
+            if(--pFrameInfo->i16TimeOut == 0)
             {
-                if(--pFrameInfo->i16TimeOut == 0)
-                {
-                    //if need, can set timeout by random value
-                    pFrameInfo->i16TimeOut = TRANS_TIMEOUT_TICK;
-                    //Queue frame to sending queue
-                    pMem = Queue_Remove(&pTrans->qSentQueue,&sSearch);
-                    Queue_Push(&pTrans->qSendingData, pMem);
-                }
+				if(pFrameInfo->u8NumSend > 0)
+				{
+					//if need, can set timeout by random value
+					pFrameInfo->i16TimeOut = TRANS_TIMEOUT_TICK;
+					//Queue frame to sending queue
+					pMem = Queue_Remove(&pTrans->qSentQueue,&sSearch);
+					Queue_Push(&pTrans->qSendingData, pMem);
+					pMem = pMem->pNext;
+					LREP("W");
+				}
+				else
+				{
+					pMem = Queue_Remove(&pTrans->qSentQueue,&sSearch);
+					pTemMem = pMem->pNext;
+					LREP("DOES NOT GET ACK SEQ %d\r\n",(int)pFrameInfo->u8Seq);
+					//delete frame
+					Mem_Free(pMem);
+					pMem = pTemMem;
+				}
+            } else {
+				//move to next frame
+				pMem = pMem->pNext;
             }
-            else
-            {
-                pMem = Queue_Remove(&pTrans->qSentQueue,&sSearch);
-                LREP("DOES NOT GET ACK SEQ %d\r\n",(int)pFrameInfo->u8Seq);
-                //delete frame
-                Mem_Free(pMem);
-            }
-
-            //move to next frame
-            pMem = pMem->pNext;
         }
     }
 }
@@ -495,9 +511,11 @@ void Clb_L2SendDone(EL2Event evt, ETransStatus eStatus, SMem *pSendMem, void *pC
     if(IS_ACK_REQ(pFrame[IDX_SFRM_CTRL]))
     {
         Queue_Push(&pTrans->qSentQueue, pSendMem);
+        LREP("#");
     }
     else
     {
+    	LREP(">");
         Mem_Free(pSendMem);
     }
 
@@ -536,9 +554,8 @@ static void Clb_UpdateTimer(void *timer, void *pClbParam)
 	OS_ERR err;
     STrans *pTrans = (STrans *)pClbParam;
     pTrans->sFlag.Bits.bUpdateWaitingACKFrameState = TRUE;
-    OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_POST_NONE, &err);
+    //OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_POST_NONE, &err);
 }
-
 
 
 #ifdef __cplusplus

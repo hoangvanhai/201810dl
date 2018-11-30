@@ -7,12 +7,13 @@
 #include "mem.h"
 #include "queue.h"
 #include "app_cfg.h"
+#include "definition.h"
 
 
 /************************** Constant Definitions *****************************/
-#define TRANS_UPDATE_TIMER_RATE_MS   (1)    //10ms
+#define TRANS_UPDATE_TIMER_RATE_MS   (1)    //20ms
 
-#define TRANS_TIMEOUT_TICK           (50L)	//in mili-ten second
+#define TRANS_TIMEOUT_TICK           (10L)	//in mili-ten second
 #define TRANS_MAX_NUM_SEND           (3)
 
 #define TRANS_MAX_DLEN               (240)
@@ -63,26 +64,19 @@ typedef struct _STrans
     FClbL3Event        	fClbRecv;
     FClbL3Event        	fClbSendDone;
     FClbL3Event        	fClbError;
-
-
 }STrans;
 /***************** Macros (Inline Functions) Definitions *********************/
 
-#define  TransIBC_Init(pTransIBC, u32UartPort, u32BaudRate, pSemaphore)	\
- 		 Trans_Init(pTransIBC, u32UartPort, u32BaudRate, pSemaphore)
-#define  TransIBC_Task(pTransIBC)		Trans_Task(pTransIBC)
-
-#define  TransIBCSend(pData, len, ctrl)                   Trans_Send(&sApp.sTrans,len, pData, ctrl)
 /************************** Function Prototypes ******************************/
 
 void Trans_Init				(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, void *pSemaphore);
 
 void Trans_Task				(STrans *pTrans);
 
-BOOL Trans_Send               (STrans *pTrans, 
-                                 uint16_t u16Dlen, 
-                                 uint8_t* pu8Data,  
-                                 uint8_t u8Ctrl);
+BOOL Trans_Send             (STrans *pTrans,
+							 uint16_t u16Dlen,
+							 uint8_t* pu8Data,
+							 uint8_t u8Ctrl);
 
 
 BOOL Trans_IsSendReady        (STrans *pTrans, uint16_t u16DLen);
@@ -96,9 +90,5 @@ void Trans_RegisterClbEvent   (STrans *pTrans, EL3Event evt, FClbL3Event pFuncti
 
 BOOL Trans_IsTxReady          (STrans *pTrans, uint16_t u16DLen);
 /************************** Variable Definitions *****************************/
-
-extern STrans sTrans;
-
-
 
 #endif /* TRANS_UI_H_ */

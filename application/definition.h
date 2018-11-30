@@ -13,6 +13,9 @@
 #include <app_cfg.h>
 #include <lwip/netif.h>
 
+#define LOGGER_DEV_ID             			0x02
+#define LOGGER_PC_ID         				0x01
+#define LOGGER_UI_ID         				0x01
 
 // TAG config
 #define DIGITAL_INPUT_NUM_CHANNEL			8
@@ -97,8 +100,6 @@ enum MbDataType {
     Float_32bits
 };
 
-
-
 typedef enum ESysStatus_ {
     SYS_ERR_NONE		= 1 << 0,
     SYS_ERR_RTC			= 1 << 1,
@@ -154,11 +155,12 @@ typedef enum EDOCtrlType_ {
     CTRL_LEVEL
 }EDOCtrlType;
 
+
 typedef struct SCtrlPort_ {
     uint8_t			name[PORT_NAME_LENGTH];
     uint32_t 		port;
-    EDOActiveType 	activeType;
-    EDOCtrlType 	ctrlType;
+    uint8_t         activeType;
+    uint8_t         ctrlType;
     uint16_t		period;
     uint16_t		duty;	// percen
 }SCtrlPort;
@@ -167,7 +169,7 @@ typedef struct SCtrlPort_ {
 typedef struct SInputPort_ {
     uint8_t			name[PORT_NAME_LENGTH];
     uint32_t 		port;
-    EDOActiveType 	activeType;
+    uint8_t         activeType;
 }SInputPort;
 
 typedef enum ETagInputType_ {
@@ -192,7 +194,6 @@ typedef enum ECompType_ {
 typedef enum ETagStatus_ {
     TAG_STT_OK = 0,
     TAG_STT_MB_FAILED,
-	TAG_STT_AI_FAILED
 }ETagStatus;
 
 
@@ -209,9 +210,10 @@ typedef struct SModbusValue {
     SValueNode		Node[SYSTEM_NUM_TAG];
 }SModbusValue;
 
+
 typedef struct STag_ {
     uint16_t		id;
-    ETagStatus		status;
+    uint8_t         status;
     uint8_t			desc[TAG_DESC_LENGTH];
     uint8_t			meas_stt[TAG_MEAS_STT_LENGTH];
     uint8_t			enable;
@@ -219,13 +221,13 @@ typedef struct STag_ {
     uint8_t    		has_calib; 		//
     uint8_t    		has_error; 		//
     uint8_t    		alarm_enable; 	//
-    ETagInputType	input_type;		// ai or modbus
+    uint8_t         input_type;		// ai or modbus
     uint16_t		input_id; 		// slave address or ai index
     uint16_t		slave_reg_addr; // register addr to read value
     uint8_t         data_type;
     uint8_t         data_format;
-    EDataByteOrder  data_order;
-    ECompType		comp_type; 		// compose none/o2/temp-press
+    uint8_t         data_order;
+    uint8_t         comp_type; 		// compose none/o2/temp-press
     uint8_t    		name[TAG_NAME_LENGTH]; 		//
     uint8_t    		raw_unit[TAG_RAW_UNIT_LENGTH]; //
     uint8_t    		std_unit[TAG_STD_UNIT_LENGTH]; //

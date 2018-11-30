@@ -105,8 +105,7 @@ extern "C" {
 /*---------------------------------------------------------------------------*/
 // Address of nodes
 /*---------------------------------------------------------------------------*/
-#define LOGGER_DEV_ID             		0x02
-#define LOGGER_DEST_ID         			0x01
+
 
 #define LARGE_FRAME_SIZE				(SFRM_MAX_SIZE)
 #define LARGE_MEM_SIZE					((sizeof(SMem)) + (sizeof(SFrameInfo)) + LARGE_FRAME_SIZE)

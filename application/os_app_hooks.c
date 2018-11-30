@@ -55,7 +55,6 @@ void  App_OS_SetAllHooks (void)
 #if OS_CFG_APP_HOOKS_EN > 0u
     CPU_SR_ALLOC();
 
-
     CPU_CRITICAL_ENTER();
     OS_AppTaskCreateHookPtr = App_OS_TaskCreateHook;
     OS_AppTaskDelHookPtr    = App_OS_TaskDelHook;
@@ -213,7 +212,7 @@ void  App_OS_InitHook (void)
 
 void  App_OS_StatTaskHook (void)
 {
-
+	LREP(".");
 }
 
 
@@ -255,7 +254,7 @@ void  App_OS_TimeTickHook (void)
 {
 	static uint32_t count = 0;
 	if(count++ >= 1000) {
-		LREP("app tick hook on\r\n");
+		//LREP("app tick hook on\r\n");
 		GPIO_DRV_TogglePinOutput(kGpioLEDBLUE);
 		count = 0;
 	}
