@@ -218,7 +218,7 @@ uint8_t* OSA_FixedMemMalloc(uint32_t reqSise)
 
 	if (pucAllocMem != NULL) {
 		HELPER_TRACE_MALLOC_STATUS();
-		LREP("req size = %d uiSize = %d\r\n", reqSise, uiSize);
+		//LREP("req size = %d uiSize = %d\r\n", reqSise, uiSize);
 		// Save the ID of partition at the first & second bytes - two additional bytes (unused by the user)
 		pucAllocMem[0]	= (uiSize >> 8) & 0xFF;
 		pucAllocMem[1]	= (uiSize) & 0xFF;
@@ -245,7 +245,7 @@ void OSA_FixedMemFree(uint8_t* pucAllocMem)
 	uint16_t	puiPartitionID	= ((pucCompleteAllocMem[0] << 8) & 0xFF00) |
 									pucCompleteAllocMem[1];
 
-	LREP("free id = %d loc of complete = 0x%x\r\n", puiPartitionID, pucCompleteAllocMem);
+	//LREP("free id = %d loc of complete = 0x%x\r\n", puiPartitionID, pucCompleteAllocMem);
 	// Check the partition ID of the freed required memory to free it up to the original partition
 	switch(puiPartitionID)
 	{

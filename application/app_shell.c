@@ -248,9 +248,21 @@ void settime(int32_t argc, char **argv)
  *  @note
  */
 void print_tag(STag *pHandle) {
-	LREP("id: %d - enable %d - report %d - iid %d - ctyp %d - name %s\r\n",
-			pHandle->id, pHandle->enable, pHandle->report,
-			pHandle->input_id, pHandle->comp_type, pHandle->name);
+	LREP("id: %d - enable %d - report %d - iid %d - ctyp %d - name %s - o2comp %f - temp_comp - %f "
+			"- press_comp %f  - raw_min %f - raw_max %f - coef_a %f - coef_b %f \r\n",
+				pHandle->id,
+				pHandle->enable,
+				pHandle->report,
+				pHandle->input_id,
+				pHandle->comp_type,
+				pHandle->name,
+        		pHandle->o2_comp,
+        		pHandle->temp_comp,
+        		pHandle->press_comp,
+        		pHandle->raw_min,
+        		pHandle->raw_max,
+        		pHandle->coef_a,
+        		pHandle->coef_b);
 }
 
 void status(int32_t argc, char **argv) {
@@ -456,7 +468,7 @@ void control(int32_t argc, char**argv) {
 		//for(int i = 0; i < 100; i++)
 		{
 			//App_SendPC(pAppObj, 100, data, 30, true);
-			Trans_Send(&pAppObj->sTransPc, 100, data, 0xA0);
+			Trans_Send(&pAppObj->sTransPc, 100, data, 0x20);
 //			time = BOARD_GenerateRandom(20, 200);
 //			LREP("sleep = %d\r\n", time);
 //			OSA_SleepMs(time);

@@ -13,6 +13,7 @@
 #include <app_cfg.h>
 #include <lwip/netif.h>
 
+
 #define LOGGER_DEV_ID             			0x02
 #define LOGGER_PC_ID         				0x01
 #define LOGGER_UI_ID         				0x01
@@ -62,6 +63,12 @@
 #define LOGGER_LOGIN                        0x10
 #define LOGGER_LOGOUT                       0x11
 #define LOGGER_CHANGE_PASSWD                0x12
+
+
+#define LOGGER_STREAM_AI                    0x20
+#define LOGGER_STREAM_MB                    0x21
+#define LOGGER_CALIB_AI                     0x22
+
 
 #define MB_LSV_ADDR_IDX                     0
 #define MB_FUNC_CODE_IDX                    1
@@ -211,9 +218,10 @@ typedef struct SModbusValue {
 }SModbusValue;
 
 
+
+
 typedef struct STag_ {
     uint16_t		id;
-    uint8_t         status;
     uint8_t			desc[TAG_DESC_LENGTH];
     uint8_t			meas_stt[TAG_MEAS_STT_LENGTH];
     uint8_t			enable;
@@ -246,10 +254,28 @@ typedef struct STag_ {
     float    		coef_a;  	 //
     float    		coef_b;  	 //
     float    		alarm_value; 	//
-    float    		scratch_value; 	//
-    float    		raw_value; 		//
-    float    		std_value; 		//
+
 }STag;
+
+
+typedef struct STagNode_ {
+    uint16_t 		id;
+    uint8_t         status;
+    float    		scratch_value;
+    float    		raw_value;
+    float    		std_value;
+    uint8_t    		name[TAG_NAME_LENGTH];
+    uint8_t    		raw_unit[TAG_RAW_UNIT_LENGTH];
+    uint8_t    		std_unit[TAG_STD_UNIT_LENGTH];
+    uint8_t			meas_stt[TAG_MEAS_STT_LENGTH];
+    float    		alarm_value;
+    uint8_t    		alarm_enable;
+}STagNode;
+
+typedef struct STagValue_ {
+    STagNode 		Node[SYSTEM_NUM_TAG];
+}STagValue;
+
 
 
 typedef struct SCommon_ {

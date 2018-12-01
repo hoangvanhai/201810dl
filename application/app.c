@@ -229,7 +229,7 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 192,168,1,12);
 	pHandle->sCom.server_ftp_port1 = 21;
 	IP4_ADDR(&pHandle->sCom.server_ftp_ip2, 192,168,1,12);
-		pHandle->sCom.server_ftp_port2 = 21;
+	pHandle->sCom.server_ftp_port2 = 21;
 	IP4_ADDR(&pHandle->sCom.server_ctrl_ip, 192,168,1,22);
 	pHandle->sCom.server_ctrl_port = 1186;
 
@@ -350,7 +350,7 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData) {
 		break;
 	}
 
-	return App_SendPC(pApp, LOGGER_SET | LOGGER_WRITE_SUCCESS, NULL, 0, true);
+	return App_SendPC(pApp, LOGGER_SET | LOGGER_WRITE_SUCCESS, NULL, 0, false);
 
 }
 /*****************************************************************************/
@@ -503,6 +503,8 @@ void App_TaskPeriodic(task_param_t parg) {
 					pApp->sCfg.sCom.ftp_enable2) {
 				LREP("generate log file\r\n");
 				ASSERT(App_GenerateLogFile(pApp) == FR_OK);
+			} else {
+				LREP("disabled generate log file\r\n");
 			}
 			last_min = pApp->sDateTime.tm_min;
 			logged = true;
@@ -531,11 +533,6 @@ void App_TaskShell(task_param_t param)
 		}
 	}
 }
-
-#if 0
-
-#endif
-
 
 
 /*****************************************************************************/
@@ -596,11 +593,11 @@ void App_TaskSerialcomm(task_param_t param) {
 	Trans_Init(&pApp->sTransPc, BOARD_TRANSPC_UART_INSTANCE,
 			BOARD_TRANSPC_UART_BAUD, &pApp->TCB_task_serialcomm);
 
-	LREP("task serial comm init done sizeof(STrans) = %d!\r\n", sizeof(STrans));
+	LREP("task serial comm init done\r\n");
 	//LREP("SFrameInfo Size: %d\r\n", sizeof(SFrameInfo));
 	while(1) {
-		OSTaskSemPend(10, OS_OPT_PEND_BLOCKING, &ts, &err);
-		//if(err == OS_ERR_NONE)
+		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
+		if(err == OS_ERR_NONE)
 		{
 			Trans_Task(&pApp->sTransPc);
 		}
@@ -629,7 +626,7 @@ void App_TaskUserInterface(task_param_t param)
 	Trans_Init(&pApp->sTransUi, BOARD_TRANSUI_UART_INSTANCE,
 			BOARD_TRANSUI_UART_BAUD, &pApp->TCB_task_ui);
 
-	LREP("task user interface init done sizeof(STrans) = %d!\r\n", sizeof(STrans));
+	LREP("task user interface init done\r\n");
 	while(1) {
 		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
@@ -753,15 +750,31 @@ void App_CommRecvHandle(const uint8_t *data) {
 	case LOGGER_SET | LOGGER_DI:
 	case LOGGER_SET | LOGGER_DO:
 	case LOGGER_SET | LOGGER_WRITE_DONE:
-		OSA_SleepMs(100);
 		App_SetConfig(pAppObj, data);
 		break;
 	case LOGGER_SET | LOGGER_TIME:
 
+		memcpy((uint8_t*)&pAppObj->sDateTime, &data[2], sizeof(SDateTime));
+		 LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
+				 pAppObj->sDateTime.tm_year, pAppObj->sDateTime.tm_mon,
+				 pAppObj->sDateTime.tm_mday, pAppObj->sDateTime.tm_hour,
+				 pAppObj->sDateTime.tm_min,  pAppObj->sDateTime.tm_sec);
+		 App_SendPC(pAppObj, LOGGER_SET | LOGGER_TIME, NULL, 0, false);
 		break;
 	case LOGGER_CHANGE_PASSWD:
 
 		break;
+
+	case LOGGER_GET | LOGGER_STREAM_AI:
+		App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_AI,
+				&pAppObj->sAI, sizeof(SAnalogInput), false);
+	break;
+
+	case LOGGER_GET | LOGGER_STREAM_MB:
+		App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_MB,
+				&pAppObj->sMB, sizeof(SModbusValue), false);
+	break;
+
 	default:
 		LREP("unhandled msg type: 0x%02x\r\n", data[0]);
 		break;
@@ -778,19 +791,18 @@ void App_CommRecvHandle(const uint8_t *data) {
 void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
 	//static uint32_t count = 0;
 	SFrameInfo *pFrameInfo = (SFrameInfo *)MEM_BODY((SMem*)pData);
-	LREP("Recv frm dlen: %d\r\n", pFrameInfo->u16DLen);
-	App_SendPC(pAppObj, 0x01, pFrameInfo->pu8Data, pFrameInfo->u16DLen, true);
-	return;
+	LREP("Recv frm type %x dlen: %d\r\n",
+			pFrameInfo->pu8Data[0], pFrameInfo->u16DLen);
 
-//	switch(u8Type & 0x3F) {
-//	case FRM_DATA:
-//		App_CommRecvHandle(pFrameInfo->pu8Data);
-//		break;
-//
-//	default:
-//		ASSERT(false);
-//		break;
-//	}
+	switch(u8Type & 0x3F) {
+	case FRM_DATA:
+		App_CommRecvHandle(pFrameInfo->pu8Data);
+		break;
+
+	default:
+		ASSERT(false);
+		break;
+	}
 }
 
 /*****************************************************************************/
@@ -887,30 +899,30 @@ int	App_ModbusDoRead(SApp *pApp){
 					1, data, &rlen);
 
 			if(retVal != MB_SUCCESS) {
-				pApp->sCfg.sTag[i].status = TAG_STT_MB_FAILED;
+				pApp->sTagValue.Node[i].status = TAG_STT_MB_FAILED;
 			} else {
-				pApp->sCfg.sTag[i].status = TAG_STT_OK;
+				pApp->sTagValue.Node[i].status = TAG_STT_OK;
 
 				switch(pApp->sCfg.sTag[i].data_format) {
 				case Integer_8bits: {
 					uint8_t readValue;
 					MBMaster_Parse((const uint8_t*)data, Integer_8bits, &readValue);
-					pApp->sCfg.sTag[i].scratch_value = (float)readValue;
+					pApp->sTagValue.Node[i].scratch_value = (float)readValue;
 				} break;
 				case Integer_16bits: {
 					uint16_t readValue;
 					MBMaster_Parse((const uint8_t*)data, Integer_16bits, &readValue);
-					pApp->sCfg.sTag[i].scratch_value = (float)readValue;
+					pApp->sTagValue.Node[i].scratch_value = (float)readValue;
 				} break;
 				case Integer_32bits: {
 					uint32_t readValue;
 					MBMaster_Parse((const uint8_t*)data, Integer_32bits, &readValue);
-					pApp->sCfg.sTag[i].scratch_value = (float)readValue;
+					pApp->sTagValue.Node[i].scratch_value = (float)readValue;
 				} break;
 				case Float_32bits: {
 					float readValue;
 					MBMaster_Parse((const uint8_t*)data, Float_32bits, &readValue);
-					pApp->sCfg.sTag[i].scratch_value = (float)readValue;
+					pApp->sTagValue.Node[i].scratch_value = (float)readValue;
 				} break;
 				default:
 					break;
@@ -980,7 +992,7 @@ int App_UpdateTagContent(SApp *pApp) {
 		pApp->sCfg.sTag[i].meas_stt[0] = 0;
 		// get main value
 		if(pApp->sCfg.sTag[i].input_type == TIT_AI) {
-			pApp->sCfg.sTag[i].scratch_value =
+			pApp->sTagValue.Node[i].scratch_value =
 				App_GetAIValueByIndex(&pApp->sAI, pApp->sCfg.sTag[i].input_id);
 		}
 		/* modbus input is already read value to scratch value */
@@ -990,13 +1002,13 @@ int App_UpdateTagContent(SApp *pApp) {
 		//}
 
 		/* value = scratch * (raw_max - raw_min) / (scr_max - scr_min) */
-		pApp->sCfg.sTag[i].raw_value = pApp->sCfg.sTag[i].scratch_value *
+		pApp->sTagValue.Node[i].raw_value = pApp->sTagValue.Node[i].scratch_value *
 				(pApp->sCfg.sTag[i].raw_max - pApp->sCfg.sTag[i].raw_min) /
 				(pApp->sCfg.sTag[i].scratch_max - pApp->sCfg.sTag[i].scratch_min);
 
 		/* value = a + b * value */
-		pApp->sCfg.sTag[i].raw_value = 	pApp->sCfg.sTag[i].coef_a +
-									pApp->sCfg.sTag[i].raw_value * pApp->sCfg.sTag[i].coef_b;
+		pApp->sTagValue.Node[i].raw_value = 	pApp->sCfg.sTag[i].coef_a +
+									pApp->sTagValue.Node[i].raw_value * pApp->sCfg.sTag[i].coef_b;
 
 		// get status
 		// if has least error pin or calib pin, set status is normal
@@ -1015,7 +1027,7 @@ int App_UpdateTagContent(SApp *pApp) {
 				pApp->sCfg.sTag[i].meas_stt[1] = '1';
 				pApp->sCfg.sTag[i].meas_stt[2] = 0;
 				// force zero when error condition
-				pApp->sCfg.sTag[i].raw_value = 0;
+				pApp->sTagValue.Node[i].raw_value = 0;
 			}
 		}
 
@@ -1027,17 +1039,17 @@ int App_UpdateTagContent(SApp *pApp) {
 				pApp->sCfg.sTag[i].meas_stt[0] = '0';
 				pApp->sCfg.sTag[i].meas_stt[1] = '2';
 				pApp->sCfg.sTag[i].meas_stt[2] = 0;
-				pApp->sCfg.sTag[i].raw_value = 0;
+				pApp->sTagValue.Node[i].raw_value = 0;
 			}
 		}
 
 		// if value is out of range, set error
-		if(pApp->sCfg.sTag[i].scratch_value > pApp->sCfg.sTag[i].scratch_max ||
-				pApp->sCfg.sTag[i].scratch_value < pApp->sCfg.sTag[i].scratch_min) {
+		if(pApp->sTagValue.Node[i].scratch_value > pApp->sCfg.sTag[i].scratch_max ||
+				pApp->sTagValue.Node[i].scratch_value < pApp->sCfg.sTag[i].scratch_min) {
 			pApp->sCfg.sTag[i].meas_stt[0] = '0';
 			pApp->sCfg.sTag[i].meas_stt[1] = '2';
 			pApp->sCfg.sTag[i].meas_stt[2] = 0;
-			pApp->sCfg.sTag[i].raw_value = 0;
+			pApp->sTagValue.Node[i].raw_value = 0;
 		}
 	}
 
@@ -1050,10 +1062,10 @@ int App_UpdateTagContent(SApp *pApp) {
 			/*
 			 * Fo2 = (20.9 - O2(std)) / (20.9 - O2(m))
 			 * */
-			if((20.9 - pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_o2].raw_value) != 0 &&
+			if((20.9 - pApp->sTagValue.Node[pApp->sCfg.sTag[i].input_o2].raw_value) != 0 &&
 					(20.9 - pApp->sCfg.sTag[i].o2_comp) != 0) {
 					comp_o2 = (20.9 - pApp->sCfg.sTag[i].o2_comp) /
-							(20.9 - pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_o2].raw_value);
+							(20.9 - pApp->sTagValue.Node[pApp->sCfg.sTag[i].input_o2].raw_value);
 			} else {
 				ASSERT(FALSE);
 			}
@@ -1065,18 +1077,18 @@ int App_UpdateTagContent(SApp *pApp) {
 	         * Fp = P(std)/P(m)
 			 *
 			 * */
-			if((273 + pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_temp].raw_value) != 0 &&
+			if((273 + pApp->sTagValue.Node[pApp->sCfg.sTag[i].input_temp].raw_value) != 0 &&
 					(273 + pApp->sCfg.sTag[i].temp_comp) != 0) {
-				comp_temp = (273 + pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_temp].raw_value) /
+				comp_temp = (273 + pApp->sTagValue.Node[pApp->sCfg.sTag[i].input_temp].raw_value) /
 						(273 + pApp->sCfg.sTag[i].temp_comp);
 			} else {
 				ASSERT(FALSE);
 			}
 
-			if(pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_press].raw_value != 0 &&
-					pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_press].raw_value != 0) {
+			if(pApp->sTagValue.Node[pApp->sCfg.sTag[i].input_press].raw_value != 0 &&
+					pApp->sTagValue.Node[pApp->sCfg.sTag[i].input_press].raw_value != 0) {
 				comp_press = pApp->sCfg.sTag[i].press_comp /
-					pApp->sCfg.sTag[pApp->sCfg.sTag[i].input_press].raw_value;
+					pApp->sTagValue.Node[pApp->sCfg.sTag[i].input_press].raw_value;
 			} else {
 				ASSERT(FALSE);
 			}
@@ -1092,7 +1104,7 @@ int App_UpdateTagContent(SApp *pApp) {
 
 		}
 
-		pApp->sCfg.sTag[i].std_value = pApp->sCfg.sTag[i].raw_value *
+		pApp->sTagValue.Node[i].std_value = pApp->sTagValue.Node[i].raw_value *
 										comp_o2 * comp_temp * comp_press;
 
 		//LREP("%s - %.2f\r\n", pApp->sCfg.sTag[i].name,  pApp->sCfg.sTag[i].std_value);
@@ -1111,6 +1123,7 @@ int App_UpdateTagContent(SApp *pApp) {
  *  @note
  */
 double	App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index) {
+	//LREP("get out idx = %d = %.2f\r\n", index, pHandle->Node[index].value);
 	return pHandle->Node[index].value;
 }
 
@@ -1298,8 +1311,8 @@ void App_AiReadAllPort(SApp *pApp) {
 		 randout = abs(randout);
 		 randout = randout % 100000;
 		 randVal = randout / 100.0;
-		 //LREP("rand out = %.2f\r\n", randVal);
 		 pApp->sAI.Node[i].value = randVal;
+		 //LREP("rand out = %.2f\r\n", pApp->sAI.Node[i].value);
 	}
 
 	/*
@@ -1416,7 +1429,7 @@ int App_GenerateLogFile(SApp *pApp) {
 					memset(row, 0, 256);
 					sprintf(row, "%-12s %12.2f %12s %15s %12s\r\n",
 							pApp->sCfg.sTag[i].name,
-							pApp->sCfg.sTag[i].std_value,
+							pApp->sTagValue.Node[i].std_value,
 							pApp->sCfg.sTag[i].std_unit,
 							time,
 							pApp->sCfg.sTag[i].meas_stt);

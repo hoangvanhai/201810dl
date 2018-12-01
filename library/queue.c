@@ -22,8 +22,7 @@ typedef enum _SMode
 
 #if 	(APP_PLATFORM == APP_RTOS)
 
-//	extern  OS_MUTEX* hMemMutex;
-//	static  INT8U err;
+	//OS_MUTEX* hMemMutex;
 	#define ENTER_CRITICAL()		//OSMutexPend(hMemMutex,0, &err);
 	#define EXIT_CRITICAL() 		//OSMutexPost(hMemMutex);
 	
@@ -74,6 +73,7 @@ void Queue_Append(SQueue *q, SMem *buf)
     	ASSERT(buf != NULL);
         if (q->u8Size == 0)
         {
+        	LREP("add first queue loc = %x\r\n", q);
             q->pHead = buf;
         }
         else
@@ -86,7 +86,7 @@ void Queue_Append(SQueue *q, SMem *buf)
 
         q->u8Size++;
 
-#ifdef DEBUG
+#if 1
         if (q->pHead == NULL)
         {
             ASSERT("Corrupted queue: Null pointer has been queued" == 0);
@@ -120,6 +120,7 @@ static SMem *Queue_Read_Or_Remove(SQueue *q, SMode mode, SSearch *search)
    
     if (q->u8Size != 0)
     {
+    	LREP("pop queue loc = %x\r\n", q);
         pBufCurrent  = q->pHead;
         pBufPrevious = q->pHead;
   

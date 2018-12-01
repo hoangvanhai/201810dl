@@ -52,6 +52,11 @@ void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, voi
     Queue_Init(&pTrans->qSendingCMD);
     Queue_Init(&pTrans->qSentQueue);
 
+    LREP("trans port %d \r\nqSendingData %x \r\nqSendingCMD %x \r\nqSentQueue %x\r\n",
+				u32UartPort, &pTrans->qSendingData,
+				&pTrans->qSendingCMD, &pTrans->qSentQueue);
+
+
     /*-----------------------------------------------------------------------
      * Init Trans Layer 2
      *-----------------------------------------------------------------------*/
@@ -87,8 +92,6 @@ void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, voi
 
     /*------------------------------------------------------------------------*/
     pTrans->sFlag.Bits.bStarted = TRUE;
-
-    LREP("INIT OBJ AT: %p\r\n", pTrans);
 }
 
 /*****************************************************************************/
@@ -212,8 +215,6 @@ void Trans_SendTask(STrans *pTrans)
         if(pMem != NULL) {
             if(TransL2S_Send(pTransL2, LOGGER_PC_ID, pMem) != TRANS_SUCCESS) {
                 ASSERT(FALSE);
-            } else {
-
             }
         }
     }
@@ -312,8 +313,8 @@ static BOOL Trans_send(STrans *pTrans, uint8_t* pu8Data,
 
     //Signal to run Trans task
     
-    OS_ERR err;
-    OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_NONE, &err);
+    //OS_ERR err;
+    //OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_NONE, &err);
 
     return TRUE;
 }
@@ -405,7 +406,6 @@ static void Trans_CheckTimeOutOfSendedFrame(STrans *pTrans)
 					pMem = Queue_Remove(&pTrans->qSentQueue,&sSearch);
 					Queue_Push(&pTrans->qSendingData, pMem);
 					pMem = pMem->pNext;
-					LREP("W");
 				}
 				else
 				{
@@ -554,7 +554,7 @@ static void Clb_UpdateTimer(void *timer, void *pClbParam)
 	OS_ERR err;
     STrans *pTrans = (STrans *)pClbParam;
     pTrans->sFlag.Bits.bUpdateWaitingACKFrameState = TRUE;
-    //OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_POST_NONE, &err);
+    OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_POST_NONE, &err);
 }
 
 

@@ -56,6 +56,7 @@ typedef struct SApp_ {
 	SDigitalInputLog	sDI;
 	SAnalogInput		sAI;
 	SModbusValue		sMB;
+	STagValue			sTagValue;
 
 	APP_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
 	APP_TASK_DEFINE(task_ui, 			TASK_UI_STACK_SIZE);
@@ -75,8 +76,7 @@ typedef struct SApp_ {
 
 	bool				sdhcPlugged;
 
-	SNetEthernet		sEtherObj;
-	SNetWless			sWless;
+
 
 }SApp;
 

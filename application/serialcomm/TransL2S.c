@@ -701,6 +701,7 @@ static BOOL ProcessRecvData(STransL2S *pTransL2)
                 // ... comes back and search again.
                 TransL1_RecvFF_RewindHead(pTransL1);
                 TransL1_RecvFF_EnProtect(pTransL1, FALSE);
+                //TransL1_RecvFF_Reset(pTransL1);
                 L2DBG_INC(nRecvErrCRCH);
                 ASSERT(FALSE);
                 continue;

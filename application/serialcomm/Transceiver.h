@@ -13,7 +13,7 @@
 /************************** Constant Definitions *****************************/
 #define TRANS_UPDATE_TIMER_RATE_MS   (1)    //20ms
 
-#define TRANS_TIMEOUT_TICK           (10L)	//in mili-ten second
+#define TRANS_TIMEOUT_TICK           (50L)	//in mili-ten second
 #define TRANS_MAX_NUM_SEND           (3)
 
 #define TRANS_MAX_DLEN               (240)

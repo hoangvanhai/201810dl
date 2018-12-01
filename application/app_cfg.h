@@ -30,17 +30,17 @@
 // task prio
 #define TASK_SHELL_PRIO         		6U
 #define TASK_MODBUS_PRIO          		4U
-#define TASK_UI_PRIO         			5U
 #define TASK_SERIALCOMM_PRIO			7U
 #define TASK_PERIODIC_PRIO				8U
 #define TASK_STARTUP_PRIO				9U
+#define TASK_UI_PRIO         			10U
 
 // task size
 #define TASK_STARTUP_STACK_SIZE   		2048U
 #define TASK_SHELL_STACK_SIZE   		2048U
 #define TASK_MODBUS_STACK_SIZE    		2048U
-#define TASK_UI_STACK_SIZE   			4096U
-#define TASK_SERIAL_COMM_STACK_SIZE		4096U
+#define TASK_UI_STACK_SIZE   			2048U
+#define TASK_SERIAL_COMM_STACK_SIZE		2048U
 #define TASK_PERIODIC_STACK_SIZE		4096U
 
 
