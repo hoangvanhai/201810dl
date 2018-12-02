@@ -150,7 +150,7 @@ void			App_AiReadAllPort(SApp *pApp);
 void			App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic);
 
 double			App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index);
-double			App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr);
+double			App_GetMBValueByIndex(SModbusValue *pHandle, uint16_t index);
 bool			App_GetDILevelByIndex(SDigitalInputLog *pHandle, uint16_t index);
 
 int 			App_GenerateLogFile(SApp *pApp);

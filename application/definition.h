@@ -134,51 +134,6 @@ typedef enum ECfgConnType_ {
     CFG_CONN_NET
 }ECfgConnType;
 
-typedef struct SMsg_ {
-    uint16_t	id;
-    uint8_t		*pData;
-}SMsg;
-
-
-typedef struct SLNode_ {
-    uint32_t 	id;
-    bool		lev;
-}SLogicNode;
-
-
-typedef struct SVNode_ {
-    uint32_t 	id;
-    float 		value;
-}SValueNode;
-
-typedef enum EDOActiveType_ {
-    ACTIVE_HIGH = 0,
-    ACTIVE_LOW
-}EDOActiveType;
-
-
-typedef enum EDOCtrlType_ {
-    CTRL_PULSE = 0,
-    CTRL_LEVEL
-}EDOCtrlType;
-
-
-typedef struct SCtrlPort_ {
-    uint8_t			name[PORT_NAME_LENGTH];
-    uint32_t 		port;
-    uint8_t         activeType;
-    uint8_t         ctrlType;
-    uint16_t		period;
-    uint16_t		duty;	// percen
-}SCtrlPort;
-
-
-typedef struct SInputPort_ {
-    uint8_t			name[PORT_NAME_LENGTH];
-    uint32_t 		port;
-    uint8_t         activeType;
-}SInputPort;
-
 typedef enum ETagInputType_ {
     TIT_AI = 0,
     TIT_MB,
@@ -201,9 +156,52 @@ typedef enum ECompType_ {
 typedef enum ETagStatus_ {
     TAG_STT_OK = 0,
     TAG_STT_MB_FAILED,
+	TAG_STT_AI_FAILED,
 }ETagStatus;
 
+typedef enum EDOActiveType_ {
+    ACTIVE_HIGH = 0,
+    ACTIVE_LOW
+}EDOActiveType;
 
+
+typedef enum EDOCtrlType_ {
+    CTRL_PULSE = 0,
+    CTRL_LEVEL
+}EDOCtrlType;
+
+typedef struct SMsg_ {
+    uint16_t		id;
+    uint8_t			*pData;
+}SMsg;
+
+
+typedef struct SLNode_ {
+    uint32_t 		id;
+    bool			lev;
+}SLogicNode;
+
+
+typedef struct SVNode_ {
+	uint8_t 		status;
+    uint32_t 		id;
+    float 			value;
+}SValueNode;
+
+typedef struct SCtrlPort_ {
+    uint8_t			name[PORT_NAME_LENGTH];
+    uint32_t 		port;
+    uint8_t         activeType;
+    uint8_t         ctrlType;
+    uint16_t		period;
+    uint16_t		duty;	// percen
+}SCtrlPort;
+
+typedef struct SInputPort_ {
+    uint8_t			name[PORT_NAME_LENGTH];
+    uint32_t 		port;
+    uint8_t         activeType;
+}SInputPort;
 
 typedef struct SDigitalInputLog_ {
     SLogicNode		Node[DIGITAL_INPUT_NUM_CHANNEL];
@@ -216,8 +214,6 @@ typedef struct SAnalogInput_ {
 typedef struct SModbusValue {
     SValueNode		Node[SYSTEM_NUM_TAG];
 }SModbusValue;
-
-
 
 
 typedef struct STag_ {
@@ -305,11 +301,19 @@ typedef struct SCommon_ {
 }SCommon;
 
 
+typedef struct SAccount_ {
+	uint8_t 		username[SYS_CFG_USER_LENGTH];
+	uint8_t			password[SYS_CFG_PASSWD_LENGTH];
+	uint8_t			rootname[SYS_CFG_USER_LENGTH];
+	uint8_t			rootpass[SYS_CFG_PASSWD_LENGTH];
+}SAccount;
+
 typedef struct SSysCfg_ {
     STag				sTag[SYSTEM_NUM_TAG];
     SCommon				sCom;
     SCtrlPort           sDO[DIGITAL_OUTPUT_NUM_CHANNEL];
     SInputPort          sDI[DIGITAL_INPUT_NUM_CHANNEL];
+    SAccount			sAccount;
 }SSysCfg;
 
 

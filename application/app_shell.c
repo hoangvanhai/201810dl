@@ -248,8 +248,8 @@ void settime(int32_t argc, char **argv)
  *  @note
  */
 void print_tag(STag *pHandle) {
-	LREP("id: %d - enable %d - report %d - iid %d - ctyp %d - name %s - o2comp %f - temp_comp - %f "
-			"- press_comp %f  - raw_min %f - raw_max %f - coef_a %f - coef_b %f \r\n",
+	LREP("id: %d - en %d - report %d - iid %d - ctyp %d - name %s - o2c %f - temp_c %f "
+			"- press_c %f  - rmin %f - rmax %f - coef_a %f - coef_b %f \r\n",
 				pHandle->id,
 				pHandle->enable,
 				pHandle->report,
@@ -265,6 +265,25 @@ void print_tag(STag *pHandle) {
         		pHandle->coef_b);
 }
 
+void print_sys(SSysCfg *pHandle) {
+	LREP("noruser: %s norpw: %s rootuser: %s rootpw: %s\r\n",
+			pHandle->sAccount.username,
+			pHandle->sAccount.password,
+			pHandle->sAccount.rootname,
+			pHandle->sAccount.rootpass);
+
+	LREP("en1: %d user1: %s pw1: %s en2: %d user2: %s pw2: %s"
+			"ctrluser: %s ctrlpw: %s\r\n",
+			pHandle->sCom.ftp_enable1,
+			pHandle->sCom.ftp_usrname1,
+			pHandle->sCom.ftp_passwd1,
+			pHandle->sCom.ftp_enable2,
+			pHandle->sCom.ftp_usrname2,
+			pHandle->sCom.ftp_passwd2,
+			pHandle->sCom.ctrl_usrname,
+			pHandle->sCom.ctrl_passwd);
+}
+
 void status(int32_t argc, char **argv) {
 	if(strcmp(argv[1], "time") == 0) {
 		LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n\r\n",
@@ -276,6 +295,7 @@ void status(int32_t argc, char **argv) {
 					pAppObj->sDateTime.tm_sec);
 	} else if(strcmp(argv[1], "conf") == 0) {
 		//LREP("sizeof name = %d\r\n", sizeof(pAppObj->sCfg.sTag[0].name));
+		print_sys(&pAppObj->sCfg);
 		for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 			print_tag(&pAppObj->sCfg.sTag[i]);
 		}
@@ -462,9 +482,16 @@ void save_tag(int32_t argc, char**argv) {
 void control(int32_t argc, char**argv) {
 	if(strcmp(argv[1], "save") == 0) {
 		App_SaveConfig(pAppObj, CONFIG_FILE_PATH);
+	} else if(strcmp(argv[1], "reset") == 0) {
+		int retVal = f_unlink(CONFIG_FILE_PATH);
+		if(retVal == FR_OK) {
+			LREP("remove file success\r\n");
+		} else {
+			LREP("remove file failed err = %d\r\n", retVal);
+		}
 	} else if(strcmp(argv[1], "pc") == 0) {
 		uint8_t data[100];
-		uint32_t time;
+		//uint32_t time;
 		//for(int i = 0; i < 100; i++)
 		{
 			//App_SendPC(pAppObj, 100, data, 30, true);

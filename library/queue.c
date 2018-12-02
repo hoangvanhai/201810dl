@@ -73,7 +73,7 @@ void Queue_Append(SQueue *q, SMem *buf)
     	ASSERT(buf != NULL);
         if (q->u8Size == 0)
         {
-        	LREP("add first queue loc = %x\r\n", q);
+        	//LREP("add first queue loc = %x\r\n", q);
             q->pHead = buf;
         }
         else
@@ -120,7 +120,7 @@ static SMem *Queue_Read_Or_Remove(SQueue *q, SMode mode, SSearch *search)
    
     if (q->u8Size != 0)
     {
-    	LREP("pop queue loc = %x\r\n", q);
+    	//LREP("pop queue loc = %x\r\n", q);
         pBufCurrent  = q->pHead;
         pBufPrevious = q->pHead;
   

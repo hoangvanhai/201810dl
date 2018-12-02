@@ -134,19 +134,19 @@ int App_CreateAppTask(SApp *pApp) {
         return -1;
     }
 
-    result = OSA_TaskCreate(App_TaskUserInterface,
-                    (uint8_t *)"ui",
-                    TASK_UI_STACK_SIZE,
-                    pApp->task_ui_stack,
-                    TASK_UI_PRIO,
-                    (task_param_t)pApp,
-                    false,
-                    &pApp->task_ui_task_handler);
-    if (result != kStatus_OSA_Success)
-    {
-        LREP("Failed to create user interface task\r\n\r\n");
-        return -1;
-    }
+//    result = OSA_TaskCreate(App_TaskUserInterface,
+//                    (uint8_t *)"ui",
+//                    TASK_UI_STACK_SIZE,
+//                    pApp->task_ui_stack,
+//                    TASK_UI_PRIO,
+//                    (task_param_t)pApp,
+//                    false,
+//                    &pApp->task_ui_task_handler);
+//    if (result != kStatus_OSA_Success)
+//    {
+//        LREP("Failed to create user interface task\r\n\r\n");
+//        return -1;
+//    }
 
 
 //    //  create app tasks

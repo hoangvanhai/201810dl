@@ -203,20 +203,24 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 
 	memset(pHandle, 0, sizeof(SSysCfg));
 
-	pHandle->sCom.coso[0] = 'C';
-	pHandle->sCom.coso[1] = 'O';
-	pHandle->sCom.coso[2] = 'S';
-	pHandle->sCom.coso[3] = 'O';
+	Str_Copy((CPU_CHAR*)pHandle->sCom.coso, "COSO");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.tinh, "TINH");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.tram, "TRAM");
 
-	pHandle->sCom.tinh[0] = 'T';
-	pHandle->sCom.tinh[1] = 'I';
-	pHandle->sCom.tinh[2] = 'N';
-	pHandle->sCom.tinh[3] = 'H';
+	Str_Copy((CPU_CHAR*)pHandle->sAccount.username, "admin");
+	Str_Copy((CPU_CHAR*)pHandle->sAccount.password, "admin");
 
-	pHandle->sCom.tram[0] = 'T';
-	pHandle->sCom.tram[1] = 'R';
-	pHandle->sCom.tram[2] = 'A';
-	pHandle->sCom.tram[3] = 'M';
+	Str_Copy((CPU_CHAR*)pHandle->sAccount.rootname, "root");
+	Str_Copy((CPU_CHAR*)pHandle->sAccount.rootpass, "123456a@");
+
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname1, "ftpuser1");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd1, "ftppasswd1");
+
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname2, "ftpuser2");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd2, "ftppasswd2");
+
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ctrl_usrname, "ctrluser");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ctrl_passwd, "ctrlpasswd");
 
 	pHandle->sCom.scan_dur 	= 1;
 	pHandle->sCom.log_dur 	= 1;	//5;
@@ -741,9 +745,27 @@ void App_CommRecvHandle(const uint8_t *data) {
 	uint8_t sendData[30];
 	switch(data[0]) {
 
-	case LOGGER_LOGIN:
-		sendData[0] = LOGGER_SUCCESS;
+	case LOGGER_LOGIN: {
+		bool normal = (Str_Cmp_N((CPU_CHAR*)pAppObj->sCfg.sAccount.username,
+					(CPU_CHAR*)&data[2], SYS_CFG_USER_LENGTH) == 0) &&
+					(Str_Cmp_N((CPU_CHAR*)pAppObj->sCfg.sAccount.password,
+					(CPU_CHAR*)&data[SYS_CFG_USER_LENGTH + 2], SYS_CFG_PASSWD_LENGTH) == 0);
+
+		bool root = (Str_Cmp_N((CPU_CHAR*)pAppObj->sCfg.sAccount.rootname,
+					(CPU_CHAR*)&data[2], SYS_CFG_USER_LENGTH) == 0) &&
+					(Str_Cmp_N((CPU_CHAR*)pAppObj->sCfg.sAccount.rootpass,
+					(CPU_CHAR*)&data[SYS_CFG_USER_LENGTH + 2], SYS_CFG_PASSWD_LENGTH) == 0);
+
+		if(normal || root) {
+			sendData[0] = LOGGER_SUCCESS;
+			LREP("login as %s user\r\n", root ? "root" : "normal");
+		} else {
+			sendData[0] = LOGGER_ERROR;
+			LREP("invalid username %s password %s\r\n", &data[2], &data[2 + SYS_CFG_PASSWD_LENGTH]);
+		}
+
 		App_SendPC(pAppObj, LOGGER_LOGIN, sendData, 1, false);
+	}
 		break;
 	case LOGGER_SET | LOGGER_COMMON:
 	case LOGGER_SET | LOGGER_TAG:
@@ -767,12 +789,12 @@ void App_CommRecvHandle(const uint8_t *data) {
 
 	case LOGGER_GET | LOGGER_STREAM_AI:
 		App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_AI,
-				&pAppObj->sAI, sizeof(SAnalogInput), false);
+				(uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput), false);
 	break;
 
 	case LOGGER_GET | LOGGER_STREAM_MB:
 		App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_MB,
-				&pAppObj->sMB, sizeof(SModbusValue), false);
+				(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue), false);
 	break;
 
 	default:
@@ -798,6 +820,7 @@ void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
 	case FRM_DATA:
 		App_CommRecvHandle(pFrameInfo->pu8Data);
 		break;
+
 
 	default:
 		ASSERT(false);
@@ -892,6 +915,7 @@ int	App_ModbusDoRead(SApp *pApp){
 	uint16_t rlen;
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 		if(pApp->sCfg.sTag[i].input_type == TIT_MB) {
+
 			retVal = MBMaster_Read(&pApp->sModbus,
 					pApp->sCfg.sTag[i].input_id,
 					pApp->sCfg.sTag[i].data_type,
@@ -899,30 +923,30 @@ int	App_ModbusDoRead(SApp *pApp){
 					1, data, &rlen);
 
 			if(retVal != MB_SUCCESS) {
-				pApp->sTagValue.Node[i].status = TAG_STT_MB_FAILED;
+				pApp->sMB.Node[i].status = TAG_STT_MB_FAILED;
 			} else {
-				pApp->sTagValue.Node[i].status = TAG_STT_OK;
+				pApp->sMB.Node[i].status = TAG_STT_OK;
 
 				switch(pApp->sCfg.sTag[i].data_format) {
 				case Integer_8bits: {
 					uint8_t readValue;
 					MBMaster_Parse((const uint8_t*)data, Integer_8bits, &readValue);
-					pApp->sTagValue.Node[i].scratch_value = (float)readValue;
+					pApp->sMB.Node[i].value = (float)readValue;
 				} break;
 				case Integer_16bits: {
 					uint16_t readValue;
 					MBMaster_Parse((const uint8_t*)data, Integer_16bits, &readValue);
-					pApp->sTagValue.Node[i].scratch_value = (float)readValue;
+					pApp->sMB.Node[i].value = (float)readValue;
 				} break;
 				case Integer_32bits: {
 					uint32_t readValue;
 					MBMaster_Parse((const uint8_t*)data, Integer_32bits, &readValue);
-					pApp->sTagValue.Node[i].scratch_value = (float)readValue;
+					pApp->sMB.Node[i].value = (float)readValue;
 				} break;
 				case Float_32bits: {
 					float readValue;
 					MBMaster_Parse((const uint8_t*)data, Float_32bits, &readValue);
-					pApp->sTagValue.Node[i].scratch_value = (float)readValue;
+					pApp->sMB.Node[i].value = (float)readValue;
 				} break;
 				default:
 					break;
@@ -994,12 +1018,10 @@ int App_UpdateTagContent(SApp *pApp) {
 		if(pApp->sCfg.sTag[i].input_type == TIT_AI) {
 			pApp->sTagValue.Node[i].scratch_value =
 				App_GetAIValueByIndex(&pApp->sAI, pApp->sCfg.sTag[i].input_id);
+		} else {
+			pApp->sTagValue.Node[i].scratch_value =
+					App_GetMBValueByIndex(&pApp->sMB, pApp->sCfg.sTag[i].input_id);
 		}
-		/* modbus input is already read value to scratch value */
-		//else {
-		//	pApp->sCfg.sTag[i].scratch_value =
-		//			App_GetMBValueByAddress(&pApp->sMB, pApp->sCfg.sTag[i].input_id);
-		//}
 
 		/* value = scratch * (raw_max - raw_min) / (scr_max - scr_min) */
 		pApp->sTagValue.Node[i].raw_value = pApp->sTagValue.Node[i].scratch_value *
@@ -1135,13 +1157,14 @@ double	App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index) {
  *  @return Void.
  *  @note
  */
-double App_GetMBValueByAddress(SModbusValue *pHandle, uint16_t addr) {
-	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
-		if(pHandle->Node[i].id == addr) {
-			return pHandle->Node[i].value;
-		}
-	}
-	return 0xFFFFFFFF;
+double App_GetMBValueByIndex(SModbusValue *pHandle, uint16_t index) {
+//	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+//		if(pHandle->Node[i].id == addr) {
+//			return pHandle->Node[i].value;
+//		}
+//	}
+//	return 0xFFFFFFFF;
+	return pHandle->Node[index].value;
 }
 /*****************************************************************************/
 /** @brief
