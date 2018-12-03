@@ -1241,8 +1241,19 @@ inline int App_SetDateTime(SApp *pApp, SDateTime time) {
  *  @return Void.
  *  @note
  */
-inline int App_SendUI(SApp *pApp, uint8_t *data, uint8_t len, bool ack) {
-	return Trans_Send(&pApp->sTransUi, len, data, ack ? 0xA0 : 0x20);
+inline int App_SendUI(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, bool ack) {
+	bool ret = false;
+	uint8_t *sdata = OSA_FixedMemMalloc(len + 2);
+	if(sdata != NULL) {
+		sdata[0] = subctrl;
+		sdata[1] = len;
+		if(len > 0 && data != NULL)
+			memcpy(&sdata[2], data, len);
+
+		ret = Trans_Send(&pApp->sTransUi, len + 2, sdata, ack ? 0xA0 : 0x20);
+		OSA_FixedMemFree(sdata);
+	}
+	return ret;
 }
 /*****************************************************************************/
 /** @brief

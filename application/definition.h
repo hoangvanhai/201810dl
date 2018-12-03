@@ -69,7 +69,14 @@
 #define LOGGER_STREAM_MB                    0x21
 #define LOGGER_CALIB_AI                     0x22
 
+/* ui definition */
+#define UI_UPDATE_SYSTEM_STATUS				0x01
+#define UI_UPDATE_TAG_VALUE					0x02
+#define UI_UPDATE_DI_VALUE				    0x03
+#define UI_UPDATE_DO_VALUE					0x04
 
+
+/* modbus definition */
 #define MB_LSV_ADDR_IDX                     0
 #define MB_FUNC_CODE_IDX                    1
 #define MB_DATA_ADDR_IDX                    2
@@ -78,6 +85,8 @@
 
 #define MB_DATA_COUNT_IDX                   2
 #define MB_DATA_RESP_IDX                    3
+
+
 
 
 enum MbFunctionCode {

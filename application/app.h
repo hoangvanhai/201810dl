@@ -49,6 +49,7 @@ typedef struct SApp_ {
 	ESysStatus			eStatus;
 	ECtrlCode			eCtrlCode;
 	STrans				sTransPc;
+	bool				sdhcPlugged;
 	STrans				sTransUi;
 	SModbus				sModbus;
 	SAnalogReader		sAnalogReader;
@@ -74,7 +75,7 @@ typedef struct SApp_ {
 	uint8_t				currPath[256];
 	uint8_t				currFileName[256];
 
-	bool				sdhcPlugged;
+
 
 
 
@@ -126,7 +127,7 @@ SDateTime		App_GetDateTime(SApp *pApp);
 int 			App_SetDateTime(SApp *pApp, SDateTime time);
 
 // Communication
-int 			App_SendUI(SApp *pApp, uint8_t *data, uint8_t len, bool ack);
+int 			App_SendUI(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, bool ack);
 int				App_SendPC(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, bool ack);
 void			App_SetNetPCCallback(SApp *pApp);
 void 			App_SetFTPCallback(SApp *pApp);

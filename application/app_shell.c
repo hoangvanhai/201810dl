@@ -74,7 +74,7 @@ const shell_command_t cmd_table[] =
 	{"status", 	1u, 1u, status, 		"show system status", "<type>"},
 	{"tag", 	1u, 1u, save_tag, 		"save tag cfg", "<tag>"},
 	{"ctrl", 	1u, 1u, control, 		"control", "<param>"},
-	{"ls", 		0u, 0u, list, 			"list all item in current wd", ""},
+	{"ls", 		1u, 1u, list, 			"list all item in current wd", ""},
 	{"mkdir", 	1u, 1u, mkdir, 			"make directory", "<dir>"},
 	{"rmdir", 	1u, 1u, rmdir, 			"remove directory", "<dir>"},
 	{"create", 	1u, 1u, create_file, 	"create file", "<file name>"},
@@ -315,7 +315,8 @@ void status(int32_t argc, char **argv) {
 
 void list(int32_t argc, char **argv) {
 	//LREP("list all: \r\n");
-	int retVal = show_content((char*)pAppObj->currPath);
+	//int retVal = show_content((char*)pAppObj->currPath);
+	int retVal = show_content(argv[1]);
 	if(retVal != FR_OK) {
 		LREP("list failed err = %d\r\n", retVal);
 	} else {
@@ -491,22 +492,18 @@ void control(int32_t argc, char**argv) {
 		}
 	} else if(strcmp(argv[1], "pc") == 0) {
 		uint8_t data[100];
-		//uint32_t time;
-		//for(int i = 0; i < 100; i++)
+		for(int i = 0; i < 100; i++)
 		{
-			//App_SendPC(pAppObj, 100, data, 30, true);
-			Trans_Send(&pAppObj->sTransPc, 100, data, 0x20);
-//			time = BOARD_GenerateRandom(20, 200);
-//			LREP("sleep = %d\r\n", time);
-//			OSA_SleepMs(time);
+			App_SendPC(pAppObj, 100, data, 100, false);
+			OSA_SleepMs(100);
 		}
 	} else if(strcmp(argv[1], "ui") == 0) {
 		uint8_t data[100];
 		//uint32_t time;
-		//for(int i = 0; i < 100; i++)
+		for(int i = 0; i < 100; i++)
 		{
-			App_SendUI(pAppObj, data, 100, false);
-			//OSA_SleepMs(100);
+			App_SendUI(pAppObj, 100, data, 100, false);
+			OSA_SleepMs(100);
 		}
 	}
 }

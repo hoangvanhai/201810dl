@@ -54,7 +54,7 @@
 #define BOARD_SIM_UART_BAUD					115200
 /* debug */
 #define BOARD_DEBUG_UART_INSTANCE   		1
-#define BOARD_DEBUG_UART_BAUD       		115200
+#define BOARD_DEBUG_UART_BAUD       		921600	//115200
 /* communication */
 #define BOARD_TRANSPC_UART_INSTANCE   		2
 #define BOARD_TRANSPC_UART_BAUD       		115200
