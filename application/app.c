@@ -38,6 +38,17 @@ void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type);
 void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type);
 void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type);
 void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type);
+void Clb_NetTcpClientConnEvent(Network_ConnEvent event,
+		Network_Interface interface);
+void Clb_NetTcpClientRecvData(const uint8_t* data, int length);
+void Clb_NetTcpClientSentData(const uint8_t* data, int length);
+void Clb_NetTcpClientError(const uint8_t* data, int length);
+void Clb_NetTcpServerConnEvent(Network_ConnEvent event,
+		Network_Interface interface);
+void Clb_NetTcpServerRecvData(const uint8_t* data, int length);
+void Clb_NetTcpServerSentData(const uint8_t* data, int length);
+void Clb_NetTcpServerError(const uint8_t* data, int length);
+
 /************************** Variable Definitions *****************************/
 SApp sApp;
 SApp *pAppObj = &sApp;
@@ -52,9 +63,8 @@ extern const shell_command_t cmd_table[];
  */
 void App_Init(SApp *pApp) {
 
-	pApp->eStatus = SYS_ERR_NONE;
-
 	int err;
+	pApp->eStatus = SYS_ERR_NONE;
 	memset(pApp->currPath, 0, 256);
 
 	err = App_InitFS(pApp);
@@ -226,7 +236,7 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	pHandle->sCom.log_dur 	= 1;	//5;
 	pHandle->sCom.modbus_brate = 9600;
 
-	pHandle->sCom.ftp_enable1 = FALSE;
+	pHandle->sCom.ftp_enable1 = TRUE;
 	pHandle->sCom.ftp_enable2 = FALSE;
 
 	IP4_ADDR(&pHandle->sCom.dev_ip, 192,168,1,2);
@@ -239,6 +249,11 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 		App_DefaultTag(&pHandle->sTag[i], i);
+	}
+
+	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
+		pHandle->sAiCalib.calib[i].offset = 0;
+		pHandle->sAiCalib.calib[i].value = 1;
 	}
 
 	return 0;
@@ -267,7 +282,7 @@ int	App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx) {
 int App_DefaultTag(STag *pHandle, uint8_t tagIdx) {
 
 	pHandle->id = tagIdx;
-	pHandle->input_id = tagIdx;
+	pHandle->input_id = 1;	//tagIdx;
 	pHandle->input_id = MIN(pHandle->input_id, SYSTEM_NUM_TAG - 1);
 	pHandle->pin_calib = MIN(pHandle->pin_calib, DIGITAL_INPUT_NUM_CHANNEL - 1);
 	pHandle->pin_error = MIN(pHandle->pin_error, DIGITAL_INPUT_NUM_CHANNEL - 1);
@@ -276,9 +291,13 @@ int App_DefaultTag(STag *pHandle, uint8_t tagIdx) {
 	pHandle->has_error = false;
 	pHandle->has_calib = false;
 	pHandle->alarm_enable = false;
-	pHandle->input_type = TIT_AI;
+	pHandle->data_type = Read_Holding_Register;
+	pHandle->data_format = Integer_16bits;
+	pHandle->input_type = TIT_MB;
+	pHandle->slave_reg_addr = tagIdx;
+	pHandle->slave_reg_addr = MIN(pHandle->slave_reg_addr, 9);
 	pHandle->raw_min = 0;
-	pHandle->raw_max = 100;
+	pHandle->raw_max = 1000;
 	pHandle->scratch_min = 0;
 	pHandle->scratch_max = 1000;
 	pHandle->coef_a = 0;
@@ -494,7 +513,7 @@ void App_TaskPeriodic(task_param_t parg) {
 
 
 		App_DiReadAllPort(pApp);
-		App_AiReadAllPort(pApp);
+		//App_AiReadAllPort(pApp);
 		App_UpdateTagContent(pApp);
 
         if(pApp->sDateTime.tm_min != last_min && logged) {
@@ -570,9 +589,8 @@ void App_TaskModbus(task_param_t param)
 //
 //			OSA_FixedMemFree((uint8_t*)p_msg);
 //		}
-
 		App_ModbusDoRead(pApp);
-		OSA_SleepMs(pApp->sCfg.sCom.scan_dur);
+		OSA_SleepMs(pApp->sCfg.sCom.scan_dur * 1000);
 	}
 
 }
@@ -656,6 +674,8 @@ void App_TaskStartup(task_param_t arg) {
 
 	App_Init(pApp);
 
+	App_CreateAppEvent(pApp);
+
 	App_CreateAppTask(pApp);
 
 	OSTmrCreate(&pApp->hCtrlTimer,
@@ -727,6 +747,7 @@ void App_TaskStartup(task_param_t arg) {
 			//LEP("Feed dog \r\n");
 			/* Feed dog to prevent WDG reset */
 			WDOG_DRV_Refresh();
+			App_AiReadAllPort(pApp);
 		}
 
 
@@ -761,7 +782,8 @@ void App_CommRecvHandle(const uint8_t *data) {
 			LREP("login as %s user\r\n", root ? "root" : "normal");
 		} else {
 			sendData[0] = LOGGER_ERROR;
-			LREP("invalid username %s password %s\r\n", &data[2], &data[2 + SYS_CFG_PASSWD_LENGTH]);
+			LREP("invalid username %s password %s\r\n",
+					&data[2], &data[2 + SYS_CFG_PASSWD_LENGTH]);
 		}
 
 		App_SendPC(pAppObj, LOGGER_LOGIN, sendData, 1, false);
@@ -795,6 +817,10 @@ void App_CommRecvHandle(const uint8_t *data) {
 	case LOGGER_GET | LOGGER_STREAM_MB:
 		App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_MB,
 				(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue), false);
+	break;
+
+	case LOGGER_SET | LOGGER_CALIB_AI:
+
 	break;
 
 	default:
@@ -915,7 +941,6 @@ int	App_ModbusDoRead(SApp *pApp){
 	uint16_t rlen;
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 		if(pApp->sCfg.sTag[i].input_type == TIT_MB) {
-
 			retVal = MBMaster_Read(&pApp->sModbus,
 					pApp->sCfg.sTag[i].input_id,
 					pApp->sCfg.sTag[i].data_type,
@@ -924,6 +949,7 @@ int	App_ModbusDoRead(SApp *pApp){
 
 			if(retVal != MB_SUCCESS) {
 				pApp->sMB.Node[i].status = TAG_STT_MB_FAILED;
+				LREP("MBT ");
 			} else {
 				pApp->sMB.Node[i].status = TAG_STT_OK;
 
@@ -936,6 +962,7 @@ int	App_ModbusDoRead(SApp *pApp){
 				case Integer_16bits: {
 					uint16_t readValue;
 					MBMaster_Parse((const uint8_t*)data, Integer_16bits, &readValue);
+					//LREP("uint16_t value: %x\r\n", readValue);
 					pApp->sMB.Node[i].value = (float)readValue;
 				} break;
 				case Integer_32bits: {
@@ -1017,10 +1044,10 @@ int App_UpdateTagContent(SApp *pApp) {
 		// get main value
 		if(pApp->sCfg.sTag[i].input_type == TIT_AI) {
 			pApp->sTagValue.Node[i].scratch_value =
-				App_GetAIValueByIndex(&pApp->sAI, pApp->sCfg.sTag[i].input_id);
+				App_GetAIValueByIndex(&pApp->sAI, pApp->sCfg.sTag[i].id);
 		} else {
 			pApp->sTagValue.Node[i].scratch_value =
-					App_GetMBValueByIndex(&pApp->sMB, pApp->sCfg.sTag[i].input_id);
+				App_GetMBValueByIndex(&pApp->sMB, pApp->sCfg.sTag[i].id);
 		}
 
 		/* value = scratch * (raw_max - raw_min) / (scr_max - scr_min) */
@@ -1338,6 +1365,39 @@ void App_DiReadAllPort(SApp *pApp) {
  */
 void App_AiReadAllPort(SApp *pApp) {
 
+#if 1
+	uint8_t data[10];
+	uint16_t adc_value, adc_value2;
+	uint8_t recvLen;
+	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
+		Analog_RecvFF_Reset(&pApp->sAnalogReader);
+		Analog_SelectChannel(&pApp->sAnalogReader, i);
+		OSA_SleepMs(1500); // wait enough for slave mcu wakup and send data
+		recvLen = Analog_RecvData(&pApp->sAnalogReader, data, 10);
+		if(recvLen > 0) {
+			uint8_t crc8 = crc_8((const uint8_t*)data, recvLen - 1);
+			if(crc8 == data[recvLen-1])
+			{
+				if(data[0] == 0x55) {
+					adc_value = data[1] << 8 | data[2];
+					adc_value2 = data[3] << 8 | data[4];
+					pApp->sAI.Node[i].value = adc_value;
+					LREP("value1: %d - value2: %d\r\n", adc_value, adc_value2);
+					pApp->sAI.Node[i].status = TAG_STT_OK;
+				} else {
+					LREP("not recv header\r\n");
+					pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
+				}
+			} else {
+				LREP("wrong crc recv %x cal %x\r\n",data[recvLen-1], crc8);
+			}
+		} else {
+			LREP("not recv data\r\n");
+			pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
+		}
+	}
+#else
+
 	uint32_t randout;
 	float randVal;
 	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
@@ -1348,33 +1408,28 @@ void App_AiReadAllPort(SApp *pApp) {
 		 pApp->sAI.Node[i].value = randVal;
 		 //LREP("rand out = %.2f\r\n", pApp->sAI.Node[i].value);
 	}
+#endif
 
-	/*
-	uint8_t data[10];
-	uint16_t adc_value;
-	uint8_t recvLen;
-	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
-		if(pApp->sCfg.sTag[i].input_type == TIT_AI)
-			pApp->sCfg.sTag[i].status = TAG_STT_AI_FAILED;
-
-		Analog_RecvFF_Reset(&pApp->sAnalogReader);
-		Analog_SelectChannel(&pApp->sAnalogReader, i);
-		OSA_SleepMs(2000); // wait enough for slave mcu wakup and send data
-		recvLen = Analog_RecvData(&pApp->sAnalogReader, data, 10);
-		if(recvLen > 0) {
-			uint8_t crc8 = crc_8((const uint8_t*)data, recvLen - 1);
-			if(crc8 == data[recvLen-1]) {
-				if(data[0] == 0xAA) {
-					adc_value = data[1] << 8 | data[2];
-					pApp->sAI.Node[i].value = (float)adc_value;
-
-					if(pApp->sCfg.sTag[i].input_type == TIT_AI)
-						pApp->sCfg.sTag[i].status = TAG_STT_OK;
-				}
-			}
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+bool App_CheckNameExisted(SApp *pApp, const char *name) {
+	bool retVal = false;
+	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+		if(pApp->sCfg.sTag[i].report &&
+			(Str_Cmp((CPU_CHAR*)pApp->sCfg.sTag[i].name,
+					(CPU_CHAR*)name) == 0)) {
+			retVal = true;
 		}
 	}
-	*/
+
+	return retVal;
 }
 /*****************************************************************************/
 /** @brief
@@ -1501,6 +1556,123 @@ int App_GenerateLogFile(SApp *pApp) {
  *  @return Void.
  *  @note
  */
+int App_GenerateLogFileByName(SApp *pApp, const char *name) {
+	int retVal = FR_OK;
+
+	if(App_IsSysStatus(pApp, SYS_ERR_SDCARD_1))
+		return -1;
+
+	if(!App_CheckNameExisted(pApp, name))
+		return -2;
+
+	FIL file;
+	/* get file name time*/
+	char *filename = (char*)OSA_FixedMemMalloc(64);
+	char *time = (char*)OSA_FixedMemMalloc(64);
+	char *year = (char*)OSA_FixedMemMalloc(16);
+	char *mon = (char*)OSA_FixedMemMalloc(32);
+	char *day = (char*)OSA_FixedMemMalloc(32);
+
+	sprintf(year, "%04d", pApp->sDateTime.tm_year);
+	sprintf(mon, "%04d/%02d", pApp->sDateTime.tm_year,
+			pApp->sDateTime.tm_mon);
+	sprintf(day, "%04d/%02d/%02d", pApp->sDateTime.tm_year,
+			pApp->sDateTime.tm_mon, pApp->sDateTime.tm_mday);
+
+	sprintf(time, "%04d%02d%02d%02d%02d%02d", pApp->sDateTime.tm_year,
+			pApp->sDateTime.tm_mon, pApp->sDateTime.tm_mday,
+			pApp->sDateTime.tm_hour, pApp->sDateTime.tm_min,
+			pApp->sDateTime.tm_sec);
+
+	if(!check_obj_existed(year)) {
+		retVal = f_mkdir(year);
+		if(retVal == FR_OK) {
+			LREP("mkdir %s err = %d\r\n", year, retVal);
+		} else {
+			LREP("mkdir %s successful !\r\n", year);
+		}
+	}
+
+	if(!check_obj_existed(mon)) {
+		retVal = f_mkdir(mon);
+		if(retVal == FR_OK) {
+			LREP("mkdir %s err = %d\r\n", mon, retVal);
+		} else {
+			LREP("mkdir %s successful !\r\n", mon);
+		}
+	}
+
+	if(!check_obj_existed(day)) {
+		retVal = f_mkdir(day);
+		if(retVal == FR_OK) {
+			LREP("mkdir %s err = %d\r\n", day, retVal);
+		} else {
+			LREP("mkdir %s successful !\r\n", day);
+		}
+	}
+
+
+	if(retVal == FR_OK) {
+		sprintf((char*)filename, "/%s_%s_%s_%s.txt", pApp->sCfg.sCom.tinh,
+				pApp->sCfg.sCom.coso, pApp->sCfg.sCom.tram, time);
+
+		memset(pApp->currFileName, 0, 256);
+		Str_Cat((char*)pApp->currFileName, day);
+		Str_Cat((char*)pApp->currFileName, filename);
+
+		LREP("create file: %s\r\n", pApp->currFileName);
+
+		retVal = f_open(&file, (char*)pApp->currFileName, FA_OPEN_ALWAYS | FA_WRITE);
+
+		if(retVal == FR_OK) {
+			char *row = (char*)OSA_FixedMemMalloc(256);
+			UINT written;
+			uint8_t rowCount = 0;
+			for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+				if(pApp->sCfg.sTag[i].report &&
+						(Str_Cmp(pApp->sCfg.sTag[i].name, name) == 0)) {
+					memset(row, 0, 256);
+					sprintf(row, "%-12s %12.2f %12s %15s %12s\r\n",
+							pApp->sCfg.sTag[i].name,
+							pApp->sTagValue.Node[i].std_value,
+							pApp->sCfg.sTag[i].std_unit,
+							time,
+							pApp->sCfg.sTag[i].meas_stt);
+
+					LREP("%s", row);
+
+					retVal = f_write(&file, row, Str_Len(row), &written);
+					if(retVal != FR_OK || written <= 0)
+						break;
+					rowCount++;
+				}
+			}
+			OSA_FixedMemFree((uint8_t*)row);
+
+			if(retVal == FR_OK && rowCount > 0) {
+				// TODO: send file name to Net module
+			}
+		}
+
+		f_close(&file);
+	}
+
+	OSA_FixedMemFree((uint8_t*)filename);
+	OSA_FixedMemFree((uint8_t*)time);
+	OSA_FixedMemFree((uint8_t*)year);
+	OSA_FixedMemFree((uint8_t*)mon);
+	OSA_FixedMemFree((uint8_t*)day);
+
+	return retVal;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int	App_GenerateFakeTime(SApp *pApp) {
 	pApp->sDateTime.tm_sec++;
 
@@ -1557,7 +1729,114 @@ void sdhc_card_detection(void)
  *  @return Void.
  *  @note
  */
+void Clb_NetTcpClientConnEvent(Network_ConnEvent event,
+		Network_Interface interface) {
+	switch(event) {
+	case NetConn_Disconnected:
 
+	break;
+	case NetConn_Connected:
+
+	break;
+	case NetConn_Network_Down:
+
+	break;
+
+	default:
+	break;
+	}
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_NetTcpClientRecvData(const uint8_t* data, int length) {
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_NetTcpClientSentData(const uint8_t* data, int length) {
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_NetTcpClientError(const uint8_t* data, int length) {
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_NetTcpServerConnEvent(Network_ConnEvent event,
+		Network_Interface interface) {
+	switch(event) {
+	case NetConn_Disconnected:
+
+	break;
+	case NetConn_Connected:
+
+	break;
+	case NetConn_Network_Down:
+
+	break;
+
+	default:
+	break;
+	}
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_NetTcpServerRecvData(const uint8_t* data, int length) {
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_NetTcpServerSentData(const uint8_t* data, int length) {
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_NetTcpServerError(const uint8_t* data, int length) {
+
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -1594,11 +1873,4 @@ void sdhc_card_detection(void)
  *  @note
  */
 
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
+

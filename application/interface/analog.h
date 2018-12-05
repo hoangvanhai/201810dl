@@ -38,7 +38,6 @@ typedef struct _SAnalogReader
 	uint32_t   			uartInstance;
 	void*   			uartBase;
 	uint32_t			u32BaudRate;
-	uint8_t				pSendBuff[30];			// Buffer waiting to be sent
 	SFIFO				sRecvFIFO;			// Receving FIFO
 	uint8_t 			arrRecvFIFO[30];
 } SAnalogReader;
@@ -56,7 +55,7 @@ int 		Analog_SelectChannel	(SAnalogReader *pAr, uint8_t channel);
 int  		Analog_RecvData			(SAnalogReader *pAr, uint8_t* pData, uint16_t nSize);
 int	 		Analog_GetRecvCount		(SAnalogReader *pAr);
 void 		Analog_RecvFF_EnProtect	(SAnalogReader *pAr, BOOL bEn);
-uint8_t   	Analog_RecvFF_Pop		(SAnalogReader *pArs);
+uint8_t   	Analog_RecvFF_Pop		(SAnalogReader *pAr);
 void 		Analog_RecvFF_Reset		(SAnalogReader *pAr);
 
 /************************** Variable Definitions *****************************/

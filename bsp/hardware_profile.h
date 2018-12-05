@@ -50,20 +50,6 @@
 #define XTAL0_PINMUX 						kPortPinDisabled
 
 
-#define BOARD_SIM_UART_INSTANCE				0
-#define BOARD_SIM_UART_BAUD					115200
-/* debug */
-#define BOARD_DEBUG_UART_INSTANCE   		1
-#define BOARD_DEBUG_UART_BAUD       		921600	//115200
-/* communication */
-#define BOARD_TRANSPC_UART_INSTANCE   		2
-#define BOARD_TRANSPC_UART_BAUD       		115200
-#define BOARD_TRANSUI_UART_INSTANCE   		3
-#define BOARD_TRANSUI_UART_BAUD       		115200
-#define BOARD_MODBUS_UART_INSTANCE   		4
-#define BOARD_MODBUS_UART_BAUD       		115200
-#define BOARD_ANALOG_UART_INSTANCE			5
-#define BOARD_ANALOG_UART_BAUD				9600
 
 
 
@@ -86,5 +72,24 @@
 #define BOARD_CMP_CHANNEL               	0
 /* The SW name for CMP example */
 #define BOARD_I2C_RTC_INSTANCE				1
+
+
+
+#if BOARD_USE_VERSION == BOARD_FRDM_K64F
+#define BOARD_ANALOG_UART_INSTANCE			0
+#define BOARD_ANALOG_UART_BAUD				9600
+/* debug */
+#define BOARD_DEBUG_UART_INSTANCE   		1
+#define BOARD_DEBUG_UART_BAUD       		921600	//115200
+/* communication */
+#define BOARD_TRANSPC_UART_INSTANCE   		2
+#define BOARD_TRANSPC_UART_BAUD       		115200
+#define BOARD_TRANSUI_UART_INSTANCE   		3
+#define BOARD_TRANSUI_UART_BAUD       		115200
+#define BOARD_MODBUS_UART_INSTANCE   		4
+#define BOARD_MODBUS_UART_BAUD       		115200
+#define BOARD_SIM_UART_INSTANCE				5
+#define BOARD_SIM_UART_BAUD					115200
+#endif
 
 #endif /* APPLICATION_HW_PROFILE_H_ */

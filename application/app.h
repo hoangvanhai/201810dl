@@ -46,12 +46,12 @@
 
 /**************************** Type Definitions *******************************/
 typedef struct SApp_ {
-	ESysStatus			eStatus;
-	ECtrlCode			eCtrlCode;
 	STrans				sTransPc;
 	bool				sdhcPlugged;
 	STrans				sTransUi;
+	ESysStatus			eStatus;
 	SModbus				sModbus;
+	ECtrlCode			eCtrlCode;
 	SAnalogReader		sAnalogReader;
 	SDateTime			sDateTime;
 	SDigitalInputLog	sDI;
@@ -76,6 +76,7 @@ typedef struct SApp_ {
 	uint8_t				currFileName[256];
 
 
+	OS_MUTEX			mCtrl;
 
 
 
@@ -114,6 +115,7 @@ int				App_InitFS(SApp *pApp);
 /* task body */
 void			App_InitTaskHandle(SApp *pApp);
 int				App_CreateAppTask(SApp *pApp);
+int				App_CreateAppEvent(SApp *pApp);
 void 			App_TaskShell(task_param_t );
 void 			App_TaskUserInterface(task_param_t );
 void 			App_TaskModbus(task_param_t );
@@ -153,8 +155,10 @@ void			App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic);
 double			App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index);
 double			App_GetMBValueByIndex(SModbusValue *pHandle, uint16_t index);
 bool			App_GetDILevelByIndex(SDigitalInputLog *pHandle, uint16_t index);
+bool			App_CheckNameExisted(SApp *pApp, const char *name);
 
 int 			App_GenerateLogFile(SApp *pApp);
+int 			App_GenerateLogFileByName(SApp *pApp, const char *name);
 int				App_GenerateFakeTime(SApp *pApp);
 
 /* Callback section */

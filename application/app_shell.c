@@ -59,6 +59,7 @@ void chdir(int32_t argc, char **argv);
 void cwd(int32_t argc, char **argv);
 void cat_file(int32_t argc, char **argv);
 void stat(int32_t argc, char **argv);
+void modbus(int32_t argc, char **argv);
 
 void my_shell_init(void);
 
@@ -83,6 +84,7 @@ const shell_command_t cmd_table[] =
 	{"cd", 		1u, 1u, chdir, 			"change work directory", "<dir>"},
 	{"pwd", 	0u, 0u, cwd, 			"print work directory", ""},
 	{"stat", 	1u, 1u, stat, 			"check file status", "<file name>"},
+	{"mb", 		1u, 1u, modbus, 		"read mobus", "<reg addr>"},
 	{0, 0u, 0u, 0, 0, 0}
 };
 
@@ -455,6 +457,36 @@ void cat_file(int32_t argc, char **argv) {
  */
 void stat(int32_t argc, char **argv) {
 	obj_stat(argv[1]);
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void modbus(int32_t argc, char **argv) {
+
+	int regAddr = atoi(argv[1]);
+	uint16_t rlen = 0;
+	uint8_t data[20];
+	int retVal = MBMaster_Read(&pAppObj->sModbus,
+			1,
+			3,
+			regAddr,
+			1, data, &rlen);
+
+	if(retVal != MB_SUCCESS) {
+		LREP("read err = %d\r\n", retVal);
+	} else {
+		LREP("recv frame: ");
+		for(int i = 0; i < rlen; i++) {
+			LREP("%x ", data[i]);
+		}
+		LREP("\r\n");
+	}
 }
 /*****************************************************************************/
 /** @brief

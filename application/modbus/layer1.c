@@ -63,7 +63,6 @@ void Modbus_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxP
 
 	UART_DRV_InstallRxCallback(uartInstance, modbus_rx_handle, &rx_char, NULL, true);
 	UART_DRV_InstallTxCallback(uartInstance, modbus_tx_handle, &tx_char, NULL);
-
 	pThisL1->uartBase = base;
 }
 
@@ -160,6 +159,7 @@ uint8_t	Modbus_SendAndRecv		(SModbus *pModbus, uint8_t *psData,
 		if(recvCount > 0) {
 			*rSize = Modbus_Recv(pModbus, prData, recvCount);
 			if(*rSize <= 0) {
+				LREP("fifo error \r\n");
 				retVal = MB_ERR_FIFO;
 			}
 		} else {
@@ -187,6 +187,7 @@ int Modbus_Send(SModbus *pModbus, uint8_t* pData, uint16_t u16Size)
 	// copy data
 	for(; i < u16Size; i++) {
 		pModbus->pSendBuff[i] = pData[i];
+		//LREP("%x ", pData[i]);
 	}
 
 	pModbus->u16SendSize = u16Size;
@@ -318,7 +319,6 @@ static void modbus_rx_handle(uint32_t instance, void * uartState) {
 	uart_state_t *state = (uart_state_t*)uartState;
 
 	//LREP("%02x ", state->rxBuff[0]);
-	debug_putchar(state->rxBuff[0]);
 	if(FIFO_Push(&pThisL1->sRecvFIFO, state->rxBuff[0]) == FALSE) {
 		LREP("push fifo error \r\n");
 	}
@@ -333,11 +333,13 @@ static void modbus_rx_handle(uint32_t instance, void * uartState) {
  */
 static void modbus_tx_handle(uint32_t instance, void * uartState) {
 	uart_state_t *state = (uart_state_t*)uartState;
+
 	if(state->txSize > 0) {
+		//LREP("%x ", *state->txBuff);
 		state->txBuff++;
 		state->txSize--;
 		if(state->txSize == 0) {
-			LREP("tx done ! ____________________\r\n");
+			//LREP("uart instance = %d\r\n", instance);
 			Modbus_SetSending(pThisL1, FALSE);
 			RS485_RX(pThisL1);
 		}

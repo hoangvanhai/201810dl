@@ -13,6 +13,22 @@
 #include <app_cfg.h>
 #include <lwip/netif.h>
 
+typedef enum Network_Interface_ {
+	Interface_Ethernet,
+	Interface_Wireless,
+	Interface_All
+}Network_Interface;
+typedef enum Network_ConnEvent_ {
+	NetConn_Disconnected = 0,
+	NetConn_Connected,
+	NetConn_Network_Down
+}Network_ConnEvent;
+typedef enum Network_DataEvent_ {
+	NetData_Received = 0,
+	NetData_SendDone,
+	NetData_Error
+}Network_DataEvent;
+
 
 #define LOGGER_DEV_ID             			0x02
 #define LOGGER_PC_ID         				0x01
@@ -68,6 +84,29 @@
 #define LOGGER_STREAM_AI                    0x20
 #define LOGGER_STREAM_MB                    0x21
 #define LOGGER_CALIB_AI                     0x22
+
+
+
+
+// Control server difinition
+#define SER_GET_INPUT_ALL           	0x0001
+#define SER_GET_INPUT_GROUP         	0x0002
+#define SER_GET_INPUT_CHAN          	0x0003
+#define SER_SET_SAMPLE_START        	0x0011
+#define LOG_REQ_CALIB_START         	0x0021
+#define SER_SET_CALIB_START         	0x0022
+#define LOGGER_LOGGING_IN           	0x0100
+#define SER_LOGGING_STATUS          	0x0101
+#define LOGGER_LOGGING_OUT          	0x0102
+
+
+#define GET_MSG_TYPE(data)          ((data)[0] << 8 | (data)[1])
+
+enum ControlMsg {
+	Control_Get_Input_All = 0,
+	Control_Get_Input_Channel,
+	Control_Set_Sample,
+};
 
 /* ui definition */
 #define UI_UPDATE_SYSTEM_STATUS				0x01
@@ -179,10 +218,10 @@ typedef enum EDOCtrlType_ {
     CTRL_LEVEL
 }EDOCtrlType;
 
-typedef struct SMsg_ {
+typedef struct SCtrlMsg_ {
     uint16_t		id;
     uint8_t			*pData;
-}SMsg;
+}SCtrlMsg;
 
 
 typedef struct SLNode_ {
@@ -196,6 +235,11 @@ typedef struct SVNode_ {
     uint32_t 		id;
     float 			value;
 }SValueNode;
+
+typedef struct SCalibNode_ {
+	uint16_t		offset;
+	float			value;
+}SCalibNode;
 
 typedef struct SCtrlPort_ {
     uint8_t			name[PORT_NAME_LENGTH];
@@ -219,6 +263,10 @@ typedef struct SDigitalInputLog_ {
 typedef struct SAnalogInput_ {
     SValueNode		Node[ANALOG_INPUT_NUM_CHANNEL];
 }SAnalogInput;
+
+typedef struct SAnalogCalib_ {
+	SCalibNode		calib[ANALOG_INPUT_NUM_CHANNEL];
+}SAnalogCalib;
 
 typedef struct SModbusValue {
     SValueNode		Node[SYSTEM_NUM_TAG];
@@ -323,6 +371,7 @@ typedef struct SSysCfg_ {
     SCtrlPort           sDO[DIGITAL_OUTPUT_NUM_CHANNEL];
     SInputPort          sDI[DIGITAL_INPUT_NUM_CHANNEL];
     SAccount			sAccount;
+    SAnalogCalib		sAiCalib;
 }SSysCfg;
 
 

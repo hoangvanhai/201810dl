@@ -48,7 +48,7 @@ uint16_t MBMaster_Read(SModbus *pModbus, uint8_t slv_adrr, uint8_t fc, uint16_t 
 						uint16_t *len) {
 	uint8_t retVal;
 	uint8_t sendBuff[8];
-	uint16_t rlen;
+	uint16_t rlen = 0;
 	if(pModbus == NULL)
 		return MB_ERR_INVALID_PTR;
 

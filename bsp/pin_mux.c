@@ -345,10 +345,10 @@ void configure_uart_pins(uint32_t instance)
 {
   switch(instance) {
   case UART0_IDX:                      /* UART5 */
-	  /* Affects PORTD_PCR2 register */
-//	  PORT_HAL_SetMuxMode(PORTD,2u,kPortMuxAlt3);
-	  /* Affects PORTD_PCR3 register */
-//	  PORT_HAL_SetMuxMode(PORTD,3u,kPortMuxAlt3);
+	  /* Affects PORTD_PCR6 register */
+	  PORT_HAL_SetMuxMode(PORTD,6u,kPortMuxAlt3);
+	  /* Affects PORTD_PCR7 register */
+	  PORT_HAL_SetMuxMode(PORTD,7u,kPortMuxAlt3);
 	  break;
     case UART1_IDX:                      /* UART1 */
       /* Affects PORTC_PCR3 register */

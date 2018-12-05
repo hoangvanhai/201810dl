@@ -36,7 +36,7 @@ void Analog_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxP
 					.bitCountPerChar = kUart8BitsPerChar,
 				};
 
-	configure_uart_pins(BOARD_MODBUS_UART_INSTANCE);
+	configure_uart_pins(BOARD_ANALOG_UART_INSTANCE);
 
 	UART_DRV_Init(uartInstance, &analog_uart_state, &modbus_uart_cfg);
 
@@ -108,6 +108,9 @@ int Analog_RecvData(SAnalogReader *pAr, uint8_t* pData, uint16_t u16Size)
  */
 int Analog_SelectChannel (SAnalogReader *pAr, uint8_t channel) {
 
+	GPIO_DRV_SetPinOutput(TriggerAnalog);
+	OSA_SleepMs(10);
+	GPIO_DRV_ClearPinOutput(TriggerAnalog);
 	return 0;
 }
 
@@ -189,8 +192,7 @@ void Analog_RecvFF_Reset (SAnalogReader *pAr) {
 static void analog_rx_handle(uint32_t instance, void * uartState) {
 	uart_state_t *state = (uart_state_t*)uartState;
 
-//	LREP("%02x ", state->rxBuff[0]);
-	debug_putchar(state->rxBuff[0]);
+	//LREP("%02x ", state->rxBuff[0]);
 	if(FIFO_Push(&pThisAr->sRecvFIFO, state->rxBuff[0]) == FALSE) {
 		LREP("push fifo error \r\n");
 	}

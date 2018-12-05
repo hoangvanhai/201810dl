@@ -296,6 +296,18 @@ const gpio_input_pin_user_config_t DigitalInputPin[] = {
 };
 
 
+const gpio_output_pin_user_config_t triggerAnalogPin[] = {
+	{
+		.pinName = TriggerAnalog,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = GPIO_PINS_OUT_OF_RANGE,
+	}
+};
 
 
 /* END gpio_pins. */

@@ -12,12 +12,12 @@
 
 typedef struct _SFIFO {
 	//BYTE 			arrBuff[SIZE_FIFO_RECV];
-	uint8_t		*arrBuff;
+	uint8_t			*arrBuff;
 	uint16_t 		u16MaxSize;
 	uint16_t		u16Size;
 	uint16_t		u16Head;
 	uint16_t		u16Tail;
-	BOOL		bEnProtect;
+	BOOL			bEnProtect;
 	uint16_t		u16ProtectPtr;
 } SFIFO;
 

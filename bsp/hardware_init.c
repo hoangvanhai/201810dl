@@ -70,9 +70,11 @@ void hardware_init(void) {
 //    GPIO_DRV_Init(DigitalInputPin, NULL);
 //    GPIO_DRV_Init(NULL, DigitalOutputPin);
 
+    GPIO_DRV_Init(NULL, triggerAnalogPin);
+
     BOARD_EnableAllFault();
 
-    BOARD_CreateWDG();
+    //BOARD_CreateWDG();
 }
 
 /*!

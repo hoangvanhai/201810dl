@@ -33,7 +33,7 @@
 /************************** Constant Definitions *****************************/
 
 
-#define MB_DELAY_MS				100
+#define MB_DELAY_MS				200
 
 
 /**************************** Type Definitions *******************************/

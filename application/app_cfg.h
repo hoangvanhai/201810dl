@@ -51,6 +51,14 @@
 #define TRANSL1_V2							2
 #define TRANSL1_VER							TRANSL1_V1
 
+
+#define BOARD_FRDM_K64F						0
+#define BOARD_VERSION_1						1
+#define BOARD_VERSION_2						2
+
+
+#define BOARD_USE_VERSION					BOARD_FRDM_K64F
+
 /**************************** Type Definitions *******************************/
 
 #endif /* APPLICATION_APP_CFG_H_ */
