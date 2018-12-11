@@ -313,8 +313,8 @@ static BOOL Trans_send(STrans *pTrans, uint8_t* pu8Data,
 
     //Signal to run Trans task
     
-    //OS_ERR err;
-    //OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_NONE, &err);
+    OS_ERR err;
+    OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_NONE, &err);
 
     return TRUE;
 }

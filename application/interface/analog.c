@@ -54,13 +54,13 @@ void Analog_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxP
  *  @return Void.
  *  @note
  */
-uint8_t  Analog_Init(SAnalogReader *pAr, uint32_t uartInstance,
+uint8_t  Analog_Init(SAnalogReader *pAR, uint32_t uartInstance,
 		uint32_t u32BaudRate, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio)
 {
-	pThisAr = pAr;
-	FIFO_Create(&pAr->sRecvFIFO, pAr->arrRecvFIFO, 30);
-	pAr->uartInstance	 	= uartInstance;
-	pAr->u32BaudRate 		= u32BaudRate;
+	pThisAr = pAR;
+	FIFO_Create(&pAR->sRecvFIFO, pAR->arrRecvFIFO, 30);
+	pAR->uartInstance	 	= uartInstance;
+	pAR->u32BaudRate 		= u32BaudRate;
 	LREP("init uart port analog: %d\r\n", uartInstance);
 	Analog_Uart_Init(uartInstance, u32BaudRate, u8TxIntPrio, u8RxIntPrio);
 	return AR_SUCCESS;
@@ -75,15 +75,15 @@ uint8_t  Analog_Init(SAnalogReader *pAr, uint32_t uartInstance,
  *  @return actual number of received bytes
  *  @note
  */
-int Analog_RecvData(SAnalogReader *pAr, uint8_t* pData, uint16_t u16Size)
+int Analog_RecvData(SAnalogReader *pAR, uint8_t* pData, uint16_t u16Size)
 {
 	uint16_t 	u16Idx;
 	SFIFO 		*pFF;
 	uint8_t  	u8Data;
 	
-	ASSERT_NONVOID(pAr != 0, 0);
+	ASSERT_NONVOID(pAR != 0, 0);
 
-	pFF = &pAr->sRecvFIFO;
+	pFF = &pAR->sRecvFIFO;
 
 
 	if(u16Size > FIFO_GetCount(pFF)) {
@@ -106,7 +106,7 @@ int Analog_RecvData(SAnalogReader *pAr, uint8_t* pData, uint16_t u16Size)
  *  @return actual number of received bytes
  *  @note
  */
-int Analog_SelectChannel (SAnalogReader *pAr, uint8_t channel) {
+int Analog_SelectChannel (SAnalogReader *pAR, uint8_t channel) {
 
 	GPIO_DRV_SetPinOutput(TriggerAnalog);
 	OSA_SleepMs(10);
@@ -122,11 +122,11 @@ int Analog_SelectChannel (SAnalogReader *pAr, uint8_t channel) {
  *  @return actual number of received bytes
  *  @note
  */
-void Analog_RecvFF_EnProtect(SAnalogReader *pAr, BOOL bEn)
+void Analog_RecvFF_EnProtect(SAnalogReader *pAR, BOOL bEn)
 {
-	ASSERT_VOID(pAr != 0);
-	if(bEn) FIFO_EnableProtect(&pAr->sRecvFIFO);
-	else    FIFO_DisableProtect(&pAr->sRecvFIFO);
+	ASSERT_VOID(pAR != 0);
+	if(bEn) FIFO_EnableProtect(&pAR->sRecvFIFO);
+	else    FIFO_DisableProtect(&pAR->sRecvFIFO);
 
 }
 /*****************************************************************************/
@@ -136,10 +136,10 @@ void Analog_RecvFF_EnProtect(SAnalogReader *pAr, BOOL bEn)
  *  @return Void.
  *  @note
  */
-void Analog_RecvFF_RewindHead(SAnalogReader *pAr)
+void Analog_RecvFF_RewindHead(SAnalogReader *pAR)
 {
-	ASSERT_VOID(pAr != 0);
-	FIFO_RewindHead(&pAr->sRecvFIFO);
+	ASSERT_VOID(pAR != 0);
+	FIFO_RewindHead(&pAR->sRecvFIFO);
 }
 /*****************************************************************************/
 /** @brief 	Modbus_RecvFF_Pop
@@ -148,12 +148,12 @@ void Analog_RecvFF_RewindHead(SAnalogReader *pAr)
  *  @return value.
  *  @note
  */
-BYTE Analog_RecvFF_Pop(SAnalogReader *pAr)
+BYTE Analog_RecvFF_Pop(SAnalogReader *pAR)
 {
 	BYTE b;
 
-	ASSERT_NONVOID(pAr != 0, 0xFF);
-	FIFO_Pop(&pAr->sRecvFIFO, &b);
+	ASSERT_NONVOID(pAR != 0, 0xFF);
+	FIFO_Pop(&pAR->sRecvFIFO, &b);
 
 	return b;
 }
@@ -165,10 +165,10 @@ BYTE Analog_RecvFF_Pop(SAnalogReader *pAr)
  *  @return size of FIFO.
  *  @note
  */
-int Analog_GetRecvCount(SAnalogReader *pAr)
+int Analog_GetRecvCount(SAnalogReader *pAR)
 {
-	ASSERT_NONVOID(pAr != 0, 0);
-	return FIFO_GetCount(&pAr->sRecvFIFO );
+	ASSERT_NONVOID(pAR != 0, 0);
+	return FIFO_GetCount(&pAR->sRecvFIFO );
 }
 /*****************************************************************************/
 /** @brief 	Modbus_GetRecvCount
@@ -177,8 +177,8 @@ int Analog_GetRecvCount(SAnalogReader *pAr)
  *  @return size of FIFO.
  *  @note
  */
-void Analog_RecvFF_Reset (SAnalogReader *pAr) {
-	FIFO_Reset(&pAr->sRecvFIFO);
+void Analog_RecvFF_Reset (SAnalogReader *pAR) {
+	FIFO_Reset(&pAR->sRecvFIFO);
 }
 
 /*****************************************************************************/

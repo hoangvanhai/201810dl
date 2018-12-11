@@ -21,21 +21,25 @@
 
 int ff_cre_syncobj (	/* 1:Function succeeded, 0:Could not create due to any error */
 	BYTE vol,			/* Corresponding logical drive being processed */
-	_SYNC_t *sobj		/* Pointer to return the created sync object */
+	FF_SYNC_t *sobj		/* Pointer to return the created sync object */
 )
 {
 	int ret;
+	OS_ERR err;
 //	static _SYNC_t sem[_VOLUMES];	/* FreeRTOS */
 
 
-	*sobj = CreateMutex(NULL, FALSE, NULL);		/* Win32 */
-	ret = (*sobj != INVALID_HANDLE_VALUE);
+//	*sobj = CreateMutex(NULL, FALSE, NULL);		/* Win32 */
+//	ret = (*sobj != INVALID_HANDLE_VALUE);
 
 //	*sobj = SyncObjects[vol];		/* uITRON (give a static created sync object) */
 //	ret = 1;						/* The initial value of the semaphore must be 1. */
 
 //	*sobj = OSMutexCreate(0, &err);	/* uC/OS-II */
 //	ret = (err == OS_NO_ERR);
+
+	OSMutexCreate(sobj, "fs", &err);	/* uC/OS-II */
+	ret = (err == OS_ERR_NONE);
 
 //  if (!sem[vol])					/* FreeRTOS */
 //		sem[vol] = xSemaphoreCreateMutex();
@@ -56,18 +60,18 @@ int ff_cre_syncobj (	/* 1:Function succeeded, 0:Could not create due to any erro
 */
 
 int ff_del_syncobj (	/* 1:Function succeeded, 0:Could not delete due to any error */
-	_SYNC_t sobj		/* Sync object tied to the logical drive to be deleted */
+		FF_SYNC_t sobj		/* Sync object tied to the logical drive to be deleted */
 )
 {
 	int ret;
+	OS_ERR err;
 
-
-	ret = CloseHandle(sobj);	/* Win32 */
+//	ret = CloseHandle(sobj);	/* Win32 */
 
 //	ret = 1;					/* uITRON (nothing to do) */
 
-//	OSMutexDel(sobj, OS_DEL_ALWAYS, &err);	/* uC/OS-II */
-//	ret = (err == OS_NO_ERR);
+	OSMutexDel(&sobj, OS_OPT_DEL_ALWAYS, &err);	/* uC/OS-II */
+	ret = (err == OS_ERR_NONE);
 
 //	ret = 1;					/* FreeRTOS (nothing to do) */
 
@@ -84,17 +88,21 @@ int ff_del_syncobj (	/* 1:Function succeeded, 0:Could not delete due to any erro
 */
 
 int ff_req_grant (	/* TRUE:Got a grant to access the volume, FALSE:Could not get a grant */
-	_SYNC_t sobj	/* Sync object to wait */
+		FF_SYNC_t sobj	/* Sync object to wait */
 )
 {
 	int ret;
-
-	ret = (WaitForSingleObject(sobj, _FS_TIMEOUT) == WAIT_OBJECT_0);	/* Win32 */
+	OS_ERR err;
+	CPU_TS ts;
+//	ret = (WaitForSingleObject(sobj, _FS_TIMEOUT) == WAIT_OBJECT_0);	/* Win32 */
 
 //	ret = (wai_sem(sobj) == E_OK);				/* uITRON */
 
-//	OSMutexPend(sobj, _FS_TIMEOUT, &err));		/* uC/OS-II */
+//	OSMutexPend(sobj, _FS_TIMEOUT, &err);		/* uC/OS-II */
 //	ret = (err == OS_NO_ERR);
+
+	OSMutexPend(&sobj, FF_FS_TIMEOUT, OS_OPT_NONE, &ts, &err);		/* uC/OS-III */
+	ret = (err == OS_ERR_NONE);
 
 //	ret = (xSemaphoreTake(sobj, _FS_TIMEOUT) == pdTRUE);	/* FreeRTOS */
 
@@ -110,14 +118,17 @@ int ff_req_grant (	/* TRUE:Got a grant to access the volume, FALSE:Could not get
 */
 
 void ff_rel_grant (
-	_SYNC_t sobj	/* Sync object to be signaled */
+		FF_SYNC_t sobj	/* Sync object to be signaled */
 )
 {
-	ReleaseMutex(sobj);		/* Win32 */
+	OS_ERR err;
+//	ReleaseMutex(sobj);		/* Win32 */
 
 //	sig_sem(sobj);			/* uITRON */
 
 //	OSMutexPost(sobj);		/* uC/OS-II */
+
+	OSMutexPost(&sobj, OS_OPT_NONE, &err);		/* uC/OS-III */
 
 //	xSemaphoreGive(sobj);	/* FreeRTOS */
 }

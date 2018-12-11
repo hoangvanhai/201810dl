@@ -135,6 +135,8 @@ void			App_SetNetPCCallback(SApp *pApp);
 void 			App_SetFTPCallback(SApp *pApp);
 
 void 			App_CommRecvHandle(const uint8_t *data);
+void			App_CommCalibAi(SApp *pApp, const uint8_t *data);
+void			App_CommCalibCurrPwr(SApp *pApp, const uint8_t *data);
 
 
 // Modbus

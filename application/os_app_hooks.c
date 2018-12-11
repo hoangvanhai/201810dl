@@ -36,7 +36,7 @@
 #include "os.h"
 #include <os_app_hooks.h>
 #include "board.h"
-#include <fsl_debug_console.h>
+
 
 /*
 ************************************************************************************************************************
@@ -212,7 +212,9 @@ void  App_OS_InitHook (void)
 
 void  App_OS_StatTaskHook (void)
 {
-	LREP(".");
+	//LREP("cpu usage: %.2f\r\n", (float)OSStatTaskCPUUsage / (float)OSStatTaskCPUUsageMax);
+	//LREP("cpu usage: %.2f\r\n", 100 * (float)OSStatTaskCtr / (float)OSStatTaskCtrMax);
+	//LREP("cpu usage: %.2f %\r\n", OSStatTaskCPUUsage / (float)10000);
 }
 
 
@@ -258,4 +260,5 @@ void  App_OS_TimeTickHook (void)
 		GPIO_DRV_TogglePinOutput(kGpioLEDBLUE);
 		count = 0;
 	}
+	WDOG_DRV_Refresh();
 }

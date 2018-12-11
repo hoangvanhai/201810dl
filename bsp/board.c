@@ -35,6 +35,7 @@
 #include "pin_mux.h"
 #include "fsl_wdog_driver.h"
 #include "fsl_rnga_driver.h"
+#include "fsl_rcm_hal.h"
 
 /* Configuration for enter VLPR mode. Core clock = 4MHz. */
 const clock_manager_user_config_t g_defaultClockConfigVlpr =
@@ -368,6 +369,47 @@ int BOARD_GenerateRandom(int min, int max) {
 	return ((randout % (max - min + 1)) + min);
 }
 
+
+void BOARD_CheckResetCause(void) {
+
+	uint32_t resetCause = RCM_HAL_GetSrcStatus(RCM, kRcmSrcAll);
+	if(resetCause & kRcmWakeup) {
+		LREP("kRcmWakeup\r\n");
+	}
+	if(resetCause & kRcmLowVoltDetect) {
+		LREP("kRcmLowVoltDetect\r\n");
+	}
+	if(resetCause & kRcmLossOfClk) {
+		LREP("kRcmLossOfClk\r\n");
+	}
+	if(resetCause & kRcmLossOfLock) {
+		LREP("kRcmLossOfLock\r\n");
+	}
+	if(resetCause & kRcmWatchDog) {
+		LREP("kRcmWatchDog\r\n");
+	}
+	if(resetCause & kRcmExternalPin) {
+		LREP("kRcmExternalPin\r\n");
+	}
+	if(resetCause & kRcmPowerOn) {
+		LREP("kRcmPowerOn\r\n");
+	}
+	if(resetCause & kRcmJtag) {
+		LREP("kRcmJtag\r\n");
+	}
+	if(resetCause & kRcmCoreLockup) {
+		LREP("kRcmCoreLockup\r\n");
+	}
+	if(resetCause & kRcmSoftware) {
+		LREP("kRcmSoftware\r\n");
+	}
+	if(resetCause & kRcmEzport) {
+		LREP("kRcmEzport\r\n");
+	}
+	if(resetCause & kRcmStopModeAckErr) {
+		LREP("kRcmStopModeAckErr\r\n");
+	}
+}
 /*******************************************************************************
  * EOF
  ******************************************************************************/

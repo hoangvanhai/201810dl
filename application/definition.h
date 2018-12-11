@@ -84,6 +84,7 @@ typedef enum Network_DataEvent_ {
 #define LOGGER_STREAM_AI                    0x20
 #define LOGGER_STREAM_MB                    0x21
 #define LOGGER_CALIB_AI                     0x22
+#define LOGGER_CALIB_CURR_PWR               0x23
 
 
 
@@ -230,15 +231,27 @@ typedef struct SLNode_ {
 }SLogicNode;
 
 
-typedef struct SVNode_ {
+typedef struct SVMBNode_ {
 	uint8_t 		status;
-    uint32_t 		id;
+	uint8_t			data_format;
+	uint8_t			data_type;
+    uint8_t 		address;
+    uint16_t		reg_address;
     float 			value;
-}SValueNode;
+}SMBValueNode;
+
+typedef struct SVAINode_ {
+	uint8_t 		status;
+    uint8_t 		id;
+    float 			value;
+}SAiValueNode;
 
 typedef struct SCalibNode_ {
-	uint16_t		offset;
-	float			value;
+	float			offset;
+	float			coefficient;
+	float			x1;
+	float			x2;
+	float			raw;
 }SCalibNode;
 
 typedef struct SCtrlPort_ {
@@ -261,7 +274,7 @@ typedef struct SDigitalInputLog_ {
 }SDigitalInputLog;
 
 typedef struct SAnalogInput_ {
-    SValueNode		Node[ANALOG_INPUT_NUM_CHANNEL];
+	SAiValueNode	Node[ANALOG_INPUT_NUM_CHANNEL];
 }SAnalogInput;
 
 typedef struct SAnalogCalib_ {
@@ -269,7 +282,7 @@ typedef struct SAnalogCalib_ {
 }SAnalogCalib;
 
 typedef struct SModbusValue {
-    SValueNode		Node[SYSTEM_NUM_TAG];
+	SMBValueNode		Node[SYSTEM_NUM_TAG];
 }SModbusValue;
 
 
@@ -333,6 +346,8 @@ typedef struct STagValue_ {
 
 typedef struct SCommon_ {
     ip_addr_t		dev_ip;
+    ip_addr_t       dev_netmask;
+    uint8_t         dev_dhcp;
     uint8_t         ftp_enable1;
     uint8_t         ftp_enable2;
     ip_addr_t		server_ftp_ip1;

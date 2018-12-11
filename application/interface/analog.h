@@ -49,14 +49,14 @@ typedef struct _SAnalogReader
 /************************** Function Prototypes ******************************/
 
 void 		Analog_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxPrio, uint8_t u8RxPrio);
-uint8_t  	Analog_Init(SAnalogReader *pAr,  uint32_t uartInstance,
+uint8_t  	Analog_Init(SAnalogReader *pAR,  uint32_t uartInstance,
 							uint32_t u32BaudRate, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio);
-int 		Analog_SelectChannel	(SAnalogReader *pAr, uint8_t channel);
-int  		Analog_RecvData			(SAnalogReader *pAr, uint8_t* pData, uint16_t nSize);
-int	 		Analog_GetRecvCount		(SAnalogReader *pAr);
-void 		Analog_RecvFF_EnProtect	(SAnalogReader *pAr, BOOL bEn);
-uint8_t   	Analog_RecvFF_Pop		(SAnalogReader *pAr);
-void 		Analog_RecvFF_Reset		(SAnalogReader *pAr);
+int 		Analog_SelectChannel	(SAnalogReader *pAR, uint8_t channel);
+int  		Analog_RecvData			(SAnalogReader *pAR, uint8_t* pData, uint16_t nSize);
+int	 		Analog_GetRecvCount		(SAnalogReader *pAR);
+void 		Analog_RecvFF_EnProtect	(SAnalogReader *pAR, BOOL bEn);
+uint8_t   	Analog_RecvFF_Pop		(SAnalogReader *pAR);
+void 		Analog_RecvFF_Reset		(SAnalogReader *pAR);
 
 /************************** Variable Definitions *****************************/
 

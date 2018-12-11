@@ -70,7 +70,10 @@ int main(void)
 
     LREP("chip id = 0x%x\r\n", 		SIM_UIDL_UID(SIM_BASE_PTR));
     LREP("OS Tick rate = %d\r\n", 	OSCfg_TickRate_Hz);
-    LREP("size of tag = %d\r\n", sizeof(STag));
+
+
+    BOARD_CheckResetCause();
+
 
     OSA_Init();
 

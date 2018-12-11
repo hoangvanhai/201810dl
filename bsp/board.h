@@ -35,6 +35,7 @@
 #include "pin_mux.h"
 #include "gpio_pins.h"
 #include <fsl_debug_console.h>
+#include <fsl_wdog_driver.h>
 #include <hardware_profile.h>
 
 /* The usb use native port  */
@@ -69,6 +70,7 @@ void BOARD_EnableAllFault(void);
 int BOARD_GetFaultType(void);
 void BOARD_CreateWDG(void);
 int BOARD_GenerateRandom(int min, int max);
+void BOARD_CheckResetCause(void);
 
 #if defined(__cplusplus)
 }
