@@ -54,7 +54,7 @@ void Modbus_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxP
 					.bitCountPerChar = kUart8BitsPerChar,
 				};
 
-	configure_uart_pins(BOARD_MODBUS_UART_INSTANCE);
+	configure_uart_pins(uartInstance);
 
 	UART_Type * g_Base[UART_INSTANCE_COUNT] = UART_BASE_PTRS;
 	UART_Type * base = g_Base[uartInstance];
@@ -181,7 +181,7 @@ int Modbus_Send(SModbus *pModbus, uint8_t* pData, uint16_t u16Size)
 
 	ASSERT_NONVOID(pModbus != 0, MB_ERR_INVALID_PTR);
 	ASSERT_NONVOID(u16Size <= SIZE_FIFO_SEND, MB_ERR_INVALID_DATA);
-	ASSERT_NONVOID(Modbus_IsSendReady(pModbus), MB_ERR_BUSY);
+	//ASSERT_NONVOID(Modbus_IsSendReady(pModbus), MB_ERR_BUSY);
 
 	int i = 0;
 	// copy data
@@ -321,6 +321,7 @@ static void modbus_rx_handle(uint32_t instance, void * uartState) {
 	//LREP("%02x ", state->rxBuff[0]);
 	if(FIFO_Push(&pThisL1->sRecvFIFO, state->rxBuff[0]) == FALSE) {
 		LREP("push fifo error \r\n");
+		//FIFO_Reset(&pThisL1->sRecvFIFO);
 	}
 }
 

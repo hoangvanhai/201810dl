@@ -198,10 +198,10 @@ int App_CreateAppTask(SApp *pApp) {
  */
 int App_CreateAppEvent(SApp *pApp) {
 	OS_ERR err;
-	OSMutexCreate(&pApp->mCtrl, "ctrl mtx", &err);
-	if(err != OS_ERR_NONE) {
-		LREP("create control mutex failed\r\n");
-	}
+//	OSMutexCreate(&pApp->mCtrl, "ctrl mtx", &err);
+//	if(err != OS_ERR_NONE) {
+//		LREP("create control mutex failed\r\n");
+//	}
 
 	return err;
 }

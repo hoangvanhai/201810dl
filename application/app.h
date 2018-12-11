@@ -58,28 +58,19 @@ typedef struct SApp_ {
 	SAnalogInput		sAI;
 	SModbusValue		sMB;
 	STagValue			sTagValue;
-
 	APP_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
 	APP_TASK_DEFINE(task_ui, 			TASK_UI_STACK_SIZE);
 	APP_TASK_DEFINE(task_modbus, 		TASK_MODBUS_STACK_SIZE);
 	APP_TASK_DEFINE(task_serialcomm,	TASK_SERIAL_COMM_STACK_SIZE);
 	APP_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
 	APP_TASK_DEFINE(task_startup,		TASK_STARTUP_STACK_SIZE);
-
-	SSysCfg				sCfg;
 	OS_TMR 				hCtrlTimer;
-
 	FATFS				sFS0;
 	FATFS				sFS1;
-
 	uint8_t				currPath[256];
 	uint8_t				currFileName[256];
-
-
-	OS_MUTEX			mCtrl;
-
-
-
+	SSysCfg				sCfg;
+	uint32_t			counter;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/

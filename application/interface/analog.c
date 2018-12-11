@@ -195,6 +195,7 @@ static void analog_rx_handle(uint32_t instance, void * uartState) {
 	//LREP("%02x ", state->rxBuff[0]);
 	if(FIFO_Push(&pThisAr->sRecvFIFO, state->rxBuff[0]) == FALSE) {
 		LREP("push fifo error \r\n");
+		//FIFO_Reset(&pThisAr->sRecvFIFO);
 	}
 }
 

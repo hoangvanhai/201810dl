@@ -60,7 +60,7 @@ int ff_cre_syncobj (	/* 1:Function succeeded, 0:Could not create due to any erro
 */
 
 int ff_del_syncobj (	/* 1:Function succeeded, 0:Could not delete due to any error */
-		FF_SYNC_t sobj		/* Sync object tied to the logical drive to be deleted */
+		FF_SYNC_t *sobj		/* Sync object tied to the logical drive to be deleted */
 )
 {
 	int ret;
@@ -70,7 +70,7 @@ int ff_del_syncobj (	/* 1:Function succeeded, 0:Could not delete due to any erro
 
 //	ret = 1;					/* uITRON (nothing to do) */
 
-	OSMutexDel(&sobj, OS_OPT_DEL_ALWAYS, &err);	/* uC/OS-II */
+	OSMutexDel(sobj, OS_OPT_DEL_ALWAYS, &err);	/* uC/OS-II */
 	ret = (err == OS_ERR_NONE);
 
 //	ret = 1;					/* FreeRTOS (nothing to do) */
@@ -88,7 +88,7 @@ int ff_del_syncobj (	/* 1:Function succeeded, 0:Could not delete due to any erro
 */
 
 int ff_req_grant (	/* TRUE:Got a grant to access the volume, FALSE:Could not get a grant */
-		FF_SYNC_t sobj	/* Sync object to wait */
+		FF_SYNC_t *sobj	/* Sync object to wait */
 )
 {
 	int ret;
@@ -101,7 +101,7 @@ int ff_req_grant (	/* TRUE:Got a grant to access the volume, FALSE:Could not get
 //	OSMutexPend(sobj, _FS_TIMEOUT, &err);		/* uC/OS-II */
 //	ret = (err == OS_NO_ERR);
 
-	OSMutexPend(&sobj, FF_FS_TIMEOUT, OS_OPT_NONE, &ts, &err);		/* uC/OS-III */
+	OSMutexPend(sobj, FF_FS_TIMEOUT, OS_OPT_NONE, &ts, &err);		/* uC/OS-III */
 	ret = (err == OS_ERR_NONE);
 
 //	ret = (xSemaphoreTake(sobj, _FS_TIMEOUT) == pdTRUE);	/* FreeRTOS */
@@ -118,7 +118,7 @@ int ff_req_grant (	/* TRUE:Got a grant to access the volume, FALSE:Could not get
 */
 
 void ff_rel_grant (
-		FF_SYNC_t sobj	/* Sync object to be signaled */
+		FF_SYNC_t *sobj	/* Sync object to be signaled */
 )
 {
 	OS_ERR err;
@@ -128,7 +128,7 @@ void ff_rel_grant (
 
 //	OSMutexPost(sobj);		/* uC/OS-II */
 
-	OSMutexPost(&sobj, OS_OPT_NONE, &err);		/* uC/OS-III */
+	OSMutexPost(sobj, OS_OPT_NONE, &err);		/* uC/OS-III */
 
 //	xSemaphoreGive(sobj);	/* FreeRTOS */
 }

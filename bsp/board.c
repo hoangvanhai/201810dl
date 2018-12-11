@@ -343,7 +343,7 @@ void BOARD_CreateWDG(void) {
     const wdog_config_t wdogConfig =
     {
         .wdogEnable             = true,// Watchdog mode
-        .timeoutValue          	= 2048U,// Watchdog overflow time is about 2s
+        .timeoutValue          	= 4096U,// Watchdog overflow time is about 4s
         .winEnable             	= false, //Disable window function
         .windowValue           	= 0,    // Watchdog window value
         .prescaler   			= kWdogClkPrescalerDivide1, // Watchdog clock prescaler

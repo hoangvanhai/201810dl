@@ -260,5 +260,5 @@ void  App_OS_TimeTickHook (void)
 		GPIO_DRV_TogglePinOutput(kGpioLEDBLUE);
 		count = 0;
 	}
-	WDOG_DRV_Refresh();
+//	WDOG_DRV_Refresh();
 }

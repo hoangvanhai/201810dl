@@ -250,8 +250,8 @@ void settime(int32_t argc, char **argv)
  *  @note
  */
 void print_tag(STag *pHandle) {
-	LREP("id: %d - en %d - report %d - iid %d - ctyp %d - name %s - o2c %f - temp_c %f "
-			"- press_c %f  - rmin %f - rmax %f - coef_a %f - coef_b %f \r\n",
+	LREP("id: %d - en %d - report %d - iid %d - ctyp %d - name %s - o2c %.2f - temp_c %.2f "
+			"- press_c %.2f  - rmin %.2f - rmax %.2f - coef_a %.2f - coef_b %.2f \r\n",
 				pHandle->id,
 				pHandle->enable,
 				pHandle->report,
@@ -265,6 +265,77 @@ void print_tag(STag *pHandle) {
         		pHandle->raw_max,
         		pHandle->coef_a,
         		pHandle->coef_b);
+}
+
+void print_tag1(STag *pHandle) {
+	LREP("id  %d "
+		"desc %s "
+		" meas_stt %s "
+		"enable %d "
+		"report %d "
+		"has_calib %d "
+		"has_error %d "
+		"alarm_enable %d "
+		"input_type %d "
+		"input_id %d "
+		"slave_reg_addr %d "
+		"data_type %d "
+		"data_format %d "
+		"data_order %d "
+		"comp_type %d\r\n",
+		pHandle->id,
+		pHandle->desc,
+		pHandle->meas_stt,
+		pHandle->enable,
+		pHandle->report,
+		pHandle->has_calib,
+		pHandle->has_error,
+		pHandle->alarm_enable,
+		pHandle->input_type,
+		pHandle->input_id,
+		pHandle->slave_reg_addr,
+		pHandle->data_type,
+		pHandle->data_format,
+		pHandle->data_order,
+		pHandle->comp_type);
+
+	LREP("name %s "
+		"raw_unit %s "
+		"std_unit %s "
+		"pin_calib %d "
+		"pin_error %d "
+		"input_o2 %d "
+		"input_temp %d "
+		"input_press %d "
+		"o2_comp %.2f "
+		"temp_comp %.2f "
+		"press_comp %.2f "
+		"raw_min %.2f "
+		"raw_max %.2f "
+		"scratch_min %.2f "
+		"scratch_max %.2f "
+		"coef_a %.2f "
+		"coef_b %.2f "
+		"alarm_value %.2f\r\n",
+		pHandle->name,
+		pHandle->raw_unit,
+		pHandle->std_unit,
+		pHandle->pin_calib,
+		pHandle->pin_error,
+		pHandle->input_o2,
+		pHandle->input_temp,
+		pHandle->input_press,
+		pHandle->o2_comp,
+		pHandle->temp_comp,
+		pHandle->press_comp,
+		pHandle->raw_min,
+		pHandle->raw_max,
+		pHandle->scratch_min,
+		pHandle->scratch_max,
+		pHandle->coef_a,
+		pHandle->coef_b,
+		pHandle->alarm_value);
+
 }
 
 void print_sys(SSysCfg *pHandle) {
@@ -284,6 +355,59 @@ void print_sys(SSysCfg *pHandle) {
 			pHandle->sCom.ftp_passwd2,
 			pHandle->sCom.ctrl_usrname,
 			pHandle->sCom.ctrl_passwd);
+}
+
+void print_comm(SCommon *pHandle) {
+	LREP("dev_ip %d "
+		"dev_netmask %d "
+		"dev_dhcp %d "
+		"ftp_enable1 %d "
+		"ftp_enable2 %d \r\n"
+		"server_ftp_ip1 %d "
+		"server_ftp_port1 %d "
+		"server_ftp_ip2 %d "
+		"server_ftp_port2 %d "
+		"server_ctrl_ip %d "
+		"server_ctrl_port %d \r\n"
+		"tinh %s "
+		"coso %s "
+		"tram %s \r\n"
+		"ftp_prefix1 %s "
+		"ftp_usrname1 %s "
+		"ftp_passwd1 %s "
+		"ftp_prefix2 %s "
+		"ftp_usrname2 %s "
+		"ftp_passwd2 %s "
+		"ctrl_usrname %s "
+		"ctrl_passwd %s \r\n"
+		"scan_dur %d "
+		"log_dur %d "
+		"modbus_brate %d\r\n",
+			pHandle->dev_ip,
+			pHandle->dev_netmask,
+			pHandle->dev_dhcp,
+			pHandle->ftp_enable1,
+			pHandle->ftp_enable2,
+			pHandle->server_ftp_ip1,
+			pHandle->server_ftp_port1,
+			pHandle->server_ftp_ip2,
+			pHandle->server_ftp_port2,
+			pHandle->server_ctrl_ip,
+			pHandle->server_ctrl_port,
+			pHandle->tinh,
+			pHandle->coso,
+			pHandle->tram,
+			pHandle->ftp_prefix1,
+			pHandle->ftp_usrname1,
+			pHandle->ftp_passwd1,
+			pHandle->ftp_prefix2,
+			pHandle->ftp_usrname2,
+			pHandle->ftp_passwd2,
+			pHandle->ctrl_usrname,
+			pHandle->ctrl_passwd,
+			pHandle->scan_dur,
+			pHandle->log_dur,
+			pHandle->modbus_brate);
 }
 
 void status(int32_t argc, char **argv) {
@@ -382,9 +506,9 @@ void rmdir(int32_t argc, char **argv) {
 void remove_file(int32_t argc, char** argv) {
 	int retVal = f_unlink(argv[1]);
 	if(retVal != FR_OK) {
-		LREP("delete file %s failed err = %d\r\n", retVal);
+		LREP("delete file %s failed err = %d\r\n", argv[1], retVal);
 	} else {
-		LREP("delete file %s successfully \r\n");
+		LREP("delete file %s successfully \r\n", argv[1]);
 	}
 }
 /*****************************************************************************/

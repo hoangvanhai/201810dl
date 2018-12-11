@@ -26,6 +26,7 @@
 #include <rtc_comm.h>
 #include <app_shell.c>
 #include <lib_str.h>
+#include <lib_mem.h>
 /************************** Constant Definitions *****************************/
 
 /**************************** Type Definitions *******************************/
@@ -98,6 +99,7 @@ void App_Init(SApp *pApp) {
     LREP("sizeof(SInputPort) %d\r\n", 	sizeof(SInputPort));
     LREP("sizeof(SCtrlPort) %d\r\n",	sizeof(SCtrlPort));
     LREP("sizeof(STagValue) %d\r\n", 	sizeof(STagNode));
+    LREP("sizeof(SSysCfg) %d\r\n", 		sizeof(SSysCfg));
 }
 
 /*****************************************************************************/
@@ -313,9 +315,9 @@ int App_DefaultTag(STag *pHandle, uint8_t tagIdx) {
 	pHandle->coef_a = 0;
 	pHandle->coef_b = 1;
 
-	Str_Copy_N((CPU_CHAR*)pHandle->name, "DEFAULT", sizeof(pHandle->name));
-	Str_Copy_N((CPU_CHAR*)pHandle->raw_unit, "RAW_UNIT", sizeof(pHandle->raw_unit));
-	Str_Copy_N((CPU_CHAR*)pHandle->std_unit, "STD_UNIT", sizeof(pHandle->std_unit));
+//	Str_Copy_N((CPU_CHAR*)pHandle->name, "DEFAULT", sizeof(pHandle->name));
+//	Str_Copy_N((CPU_CHAR*)pHandle->raw_unit, "RAW_UNIT", sizeof(pHandle->raw_unit));
+//	Str_Copy_N((CPU_CHAR*)pHandle->std_unit, "STD_UNIT", sizeof(pHandle->std_unit));
 
 	return 0;
 }
@@ -331,7 +333,12 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData) {
 	switch(pData[0]) {
 	case LOGGER_SET | LOGGER_COMMON:
 		if(pData[1] == sizeof(SCommon)) {
+			/*SCommon *comm = (SCommon*)OSA_FixedMemMalloc(sizeof(SCommon));
+			memcpy(comm, &pData[2], sizeof(SCommon));
+			print_comm(comm);
+			OSA_FixedMemFree((uint8_t*)comm);*/
 			memcpy(&pApp->sCfg.sCom, &pData[2], sizeof(SCommon));
+
 		} else {
 			ASSERT_NONVOID(FALSE, -1);
 		}
@@ -341,7 +348,23 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData) {
 			uint8_t idx;
 			if(pData[1] == (sizeof(STag) + 1)) {
 				idx = pData[2];
-				memcpy(&pApp->sCfg.sTag[idx], &pData[3], sizeof(STag));
+				LREP("set for tag %d\r\n", idx);
+				/* Note: if has some invalid in tag config content
+				 * copy from data frame to config area can cause
+				 * crash (trans fifo error) */
+				if(idx <= SYSTEM_NUM_TAG - 1) {
+
+					/*STag *tag = (STag*)OSA_FixedMemMalloc(sizeof(STag));
+					memcpy(tag, &pData[3], sizeof(STag));
+					print_tag1(tag);
+					OSA_FixedMemFree((uint8_t*)tag);*/
+
+					memcpy(&pApp->sCfg.sTag[idx],
+							&pData[3], sizeof(STag));
+
+				} else {
+					ASSERT(FALSE);
+				}
 			} else {
 				LREP("recv tag len = %d\r\n", pData[1]);
 				ASSERT_NONVOID(FALSE, -2);
@@ -353,8 +376,12 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData) {
 			uint8_t idx;
 			if(pData[1] == (sizeof(SInputPort) + 1)) {
 				idx = pData[2];
-				memcpy(&pApp->sCfg.sDI[idx], &pData[3], sizeof(SInputPort));
-
+				LREP("set for di %d\r\n", idx);
+				if(idx <= DIGITAL_INPUT_NUM_CHANNEL - 1) {
+					memcpy(&pApp->sCfg.sDI[idx], &pData[3], sizeof(SInputPort));
+				} else {
+					ASSERT(FALSE);
+				}
 			} else {
 				LREP("recv di len = %d\r\n", pData[1]);
 				ASSERT_NONVOID(FALSE, -3);
@@ -366,7 +393,12 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData) {
 			uint8_t idx;
 			if(pData[1] == (sizeof(SCtrlPort) + 1)) {
 				idx = pData[2];
-				memcpy(&pApp->sCfg.sDO[idx], &pData[3], sizeof(SCtrlPort));
+				LREP("set for do %d\r\n", idx);
+				if(idx <= DIGITAL_OUTPUT_NUM_CHANNEL - 1) {
+					memcpy(&pApp->sCfg.sDO[idx], &pData[3], sizeof(SCtrlPort));
+				} else {
+					ASSERT(FALSE);
+				}
 			} else {
 				LREP("recv do len = %d\r\n", pData[1]);
 				ASSERT_NONVOID(FALSE, -4);
@@ -375,6 +407,7 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData) {
 	break;
 
 	case LOGGER_SET | LOGGER_WRITE_DONE:
+		LREP("write config done\r\n");
 		App_SaveConfig(pApp, CONFIG_FILE_PATH);
 	break;
 
@@ -584,23 +617,10 @@ void App_TaskModbus(task_param_t param)
 
 	while (1)
 	{
-//		p_msg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
-//		if(err == OS_ERR_NONE) {
-//			uint8_t retVal;
-//
-//			LREP("modbus get msg size = %d ts = %d\r\n", msg_size, ts);
-//
-//			retVal = Modbus_SendAndRecv(&pApp->sModbus,
-//					(uint8_t*)p_msg, 264, rx_buf, &rx_length, 100);
-//
-//			if(retVal != TRANS_SUCCESS) {
-//				LREP("Modbus send err: %d\r\n", retVal);
-//			}
-//
-//			OSA_FixedMemFree((uint8_t*)p_msg);
-//		}
 		App_ModbusDoRead(pApp);
-		OSA_SleepMs(pApp->sCfg.sCom.scan_dur * 1000);
+		WDOG_DRV_Refresh();
+		OSA_SleepMs(1000);
+		WDOG_DRV_Refresh();
 	}
 
 }
@@ -756,6 +776,18 @@ void App_TaskStartup(task_param_t arg) {
 				App_ClearCtrlCode(pApp, CTRL_INIT_MODBUS);
 			}
 
+			if(App_IsCtrlCodePending(pApp, CTRL_SEND_HEADER)) {
+				if(pApp->counter++ < SYSTEM_NUM_TAG) {
+					//App_SendPC(pApp, LOGGER_GET | LOGGER_STREAM_HEADER,
+					LREP("send header %d\r\n", pApp->counter);
+					OS_ERR err;
+					App_SetCtrlCode(pApp, CTRL_SEND_HEADER);
+					OSA_SleepMs(100);
+					OSTaskSemPost(NULL, OS_OPT_NONE, &err);
+				} else {
+					App_ClearCtrlCode(pApp, CTRL_SEND_HEADER);
+				}
+			}
 
 			//WDOG_DRV_Refresh();
 		} else {
@@ -834,6 +866,46 @@ void App_CommRecvHandle(const uint8_t *data) {
 				(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue), false);
 	break;
 
+	case LOGGER_GET | LOGGER_STREAM_VALUE: {
+
+		if(data[2] & STREAM_AI) {
+			App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_AI,
+							(uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput), false);
+		}
+
+		if(data[2] & STREAM_MB) {
+			App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_MB,
+							(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue), false);
+		}
+
+		if(data[2] & STREAM_VALUE) {
+			STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
+			if(pMem != NULL) {
+				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+					pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
+					pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
+					pMem->Node[i].meas_stt[0] = pAppObj->sTagValue.Node[i].meas_stt[0];
+					pMem->Node[i].meas_stt[1] = pAppObj->sTagValue.Node[i].meas_stt[1];
+					pMem->Node[i].meas_stt[2] = pAppObj->sTagValue.Node[i].meas_stt[2];
+				}
+				App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_VALUE,
+						(uint8_t*)pMem, sizeof(STagVArray), false);
+
+				OSA_FixedMemFree((uint8_t*)pMem);
+			}
+		}
+	}
+	break;
+
+	case LOGGER_GET | LOGGER_STREAM_HEADER: {
+		pAppObj->counter = 0;
+		OS_ERR err;
+		App_SetCtrlCode(pAppObj, CTRL_SEND_HEADER);
+		OSTaskSemPost(&pAppObj->TCB_task_startup, OS_OPT_NONE, &err);
+		ASSERT(err == OS_ERR_NONE);
+	}
+	break;
+
 	case LOGGER_SET | LOGGER_CALIB_AI:
 		App_CommCalibAi(pAppObj, data);
 	break;
@@ -868,11 +940,11 @@ void App_CommCalibAi(SApp *pApp, const uint8_t *data) {
 		if(pApp->sAI.Node[i].status == TAG_STT_OK) {
 			if(data[2] == 0) {// calib at 4mA
 				pApp->sCfg.sAiCalib.calib[i].x1 =
-					pApp->sCfg.sAiCalib.calib[i].raw;
+					pApp->sCfg.sAiCalib.calib[i].raw - 1;
 			} else {// calib at 20mA
 				isSave = true;
 				pApp->sCfg.sAiCalib.calib[i].x2 =
-					pApp->sCfg.sAiCalib.calib[i].raw;
+					pApp->sCfg.sAiCalib.calib[i].raw + 1;
 				if((pApp->sCfg.sAiCalib.calib[i].x2 -
 						pApp->sCfg.sAiCalib.calib[i].x1) != 0) {
 				pApp->sCfg.sAiCalib.calib[i].coefficient = 16 /
@@ -988,6 +1060,7 @@ int	App_InitModbus(SApp *pApp){
 
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 		if(pApp->sCfg.sTag[i].input_type == TIT_MB) {
+			pApp->sMB.Node[i].enable = pApp->sCfg.sTag[i].enable;
 			pApp->sMB.Node[i].address = pApp->sCfg.sTag[i].input_id;
 			pApp->sMB.Node[i].data_type = pApp->sCfg.sTag[i].data_type;
 			pApp->sMB.Node[i].reg_address = pApp->sCfg.sTag[i].slave_reg_addr;
@@ -1022,7 +1095,8 @@ int	App_ModbusDoRead(SApp *pApp){
 	uint8_t data[30];
 	uint16_t rlen;
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
-		if(pApp->sCfg.sTag[i].input_type == TIT_MB) {
+		if(pApp->sMB.Node[i].enable &&
+				pApp->sCfg.sTag[i].input_type == TIT_MB) {
 			retVal = MBMaster_Read(&pApp->sModbus,
 					pApp->sMB.Node[i].address,
 					pApp->sMB.Node[i].data_type,
@@ -1105,6 +1179,9 @@ int App_InitDO(SApp *pApp) {
  *  @note
  */
 int	App_InitAI(SApp *pApp) {
+	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
+		pApp->sAI.Node[i].enable = true;
+	}
 	return Analog_Init(&pApp->sAnalogReader,
 						BOARD_ANALOG_UART_INSTANCE,
 						BOARD_ANALOG_UART_BAUD, 0, 0);
@@ -1272,6 +1349,7 @@ double App_GetMBValueByIndex(SModbusValue *pHandle, uint16_t index) {
 //		}
 //	}
 //	return 0xFFFFFFFF;
+	//LREP("index %d value: %.2f\r\n", pHandle->Node[index].value);
 	return pHandle->Node[index].value;
 }
 /*****************************************************************************/
@@ -1451,35 +1529,38 @@ void App_AiReadAllPort(SApp *pApp) {
 	uint16_t adc_value, adc_value2;
 	uint8_t recvLen;
 	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
-		Analog_RecvFF_Reset(&pApp->sAnalogReader);
-		Analog_SelectChannel(&pApp->sAnalogReader, i);
-		OSA_SleepMs(1500); // wait enough for slave mcu wakup and send data
-		recvLen = Analog_RecvData(&pApp->sAnalogReader, data, 10);
-		if(recvLen > 0) {
-			uint8_t crc8 = crc_8((const uint8_t*)data, recvLen - 1);
-			if(crc8 == data[recvLen-1])
-			{
-				if(data[0] == 0x55) {
-					adc_value = data[1] << 8 | data[2];
-					adc_value2 = data[3] << 8 | data[4];
-					pApp->sCfg.sAiCalib.calib[i].raw = (float)(adc_value - adc_value2);
-					pApp->sAI.Node[i].value = pApp->sCfg.sAiCalib.calib[i].offset +
-									(pApp->sCfg.sAiCalib.calib[i].raw *
-									pApp->sCfg.sAiCalib.calib[i].coefficient);
+		if(pApp->sAI.Node[i].enable)
+		{
+			Analog_RecvFF_Reset(&pApp->sAnalogReader);
+			Analog_SelectChannel(&pApp->sAnalogReader, i);
+			OSA_SleepMs(1500); // wait enough for slave mcu wakup and send data
+			recvLen = Analog_RecvData(&pApp->sAnalogReader, data, 10);
+			if(recvLen > 0) {
+				uint8_t crc8 = crc_8((const uint8_t*)data, recvLen - 1);
+				if(crc8 == data[recvLen-1])
+				{
+					if(data[0] == 0x55) {
+						adc_value = data[1] << 8 | data[2];
+						adc_value2 = data[3] << 8 | data[4];
+						pApp->sCfg.sAiCalib.calib[i].raw = (float)(adc_value - adc_value2);
+						pApp->sAI.Node[i].value = pApp->sCfg.sAiCalib.calib[i].offset +
+										(pApp->sCfg.sAiCalib.calib[i].raw *
+										pApp->sCfg.sAiCalib.calib[i].coefficient);
 
-					LREP("value1: %d - value2: %d - diff %d\r\n", adc_value, adc_value2,
-							adc_value - adc_value2);
-					pApp->sAI.Node[i].status = TAG_STT_OK;
+						//LREP("value1: %d - value2: %d - diff %d\r\n", adc_value, adc_value2,
+						//		adc_value - adc_value2);
+						pApp->sAI.Node[i].status = TAG_STT_OK;
+					} else {
+						LREP("not recv header\r\n");
+						pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
+					}
 				} else {
-					LREP("not recv header\r\n");
-					pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
+					LREP("wrong crc recv %x cal %x\r\n",data[recvLen-1], crc8);
 				}
 			} else {
-				LREP("wrong crc recv %x cal %x\r\n",data[recvLen-1], crc8);
+				LREP("not recv data\r\n");
+				pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
 			}
-		} else {
-			LREP("not recv data\r\n");
-			pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
 		}
 	}
 #else

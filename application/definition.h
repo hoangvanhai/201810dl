@@ -61,7 +61,7 @@ typedef enum Network_DataEvent_ {
 #define LOGGER_ERROR                        1
 
 
-
+// PC config definition
 #define	LOGGER_SET                          0x80
 #define LOGGER_GET                          0x00
 
@@ -74,8 +74,6 @@ typedef enum Network_DataEvent_ {
 #define LOGGER_WRITE_SUCCESS                0x07
 #define LOGGER_WRITE_DONE                   0x08
 
-
-
 #define LOGGER_LOGIN                        0x10
 #define LOGGER_LOGOUT                       0x11
 #define LOGGER_CHANGE_PASSWD                0x12
@@ -86,8 +84,12 @@ typedef enum Network_DataEvent_ {
 #define LOGGER_CALIB_AI                     0x22
 #define LOGGER_CALIB_CURR_PWR               0x23
 
+#define LOGGER_STREAM_HEADER				0x30
+#define LOGGER_STREAM_VALUE					0x31
 
-
+#define STREAM_AI                           0x01
+#define STREAM_MB                           0x02
+#define STREAM_VALUE                        0x04
 
 // Control server difinition
 #define SER_GET_INPUT_ALL           	0x0001
@@ -176,6 +178,7 @@ typedef enum EControlCode_ {
     CTRL_INIT_SDCARD_1 = 	1 << 1,
     CTRL_INIT_SDCARD_2 = 	1 << 2,
     CTRL_INIT_MODBUS = 		1 << 3,
+	CTRL_SEND_HEADER = 		1 << 4,
 }ECtrlCode;
 
 typedef enum ECfgConnType_ {
@@ -232,6 +235,7 @@ typedef struct SLNode_ {
 
 
 typedef struct SVMBNode_ {
+	uint8_t			enable;
 	uint8_t 		status;
 	uint8_t			data_format;
 	uint8_t			data_type;
@@ -241,6 +245,7 @@ typedef struct SVMBNode_ {
 }SMBValueNode;
 
 typedef struct SVAINode_ {
+	uint8_t			enable;
 	uint8_t 		status;
     uint8_t 		id;
     float 			value;
@@ -282,7 +287,7 @@ typedef struct SAnalogCalib_ {
 }SAnalogCalib;
 
 typedef struct SModbusValue {
-	SMBValueNode		Node[SYSTEM_NUM_TAG];
+	SMBValueNode	Node[SYSTEM_NUM_TAG];
 }SModbusValue;
 
 
@@ -324,6 +329,21 @@ typedef struct STag_ {
 }STag;
 
 
+typedef struct STagHeader_ {
+	uint16_t 		id;
+	uint8_t    		name[TAG_NAME_LENGTH];
+	uint8_t    		raw_unit[TAG_RAW_UNIT_LENGTH];
+	uint8_t    		std_unit[TAG_STD_UNIT_LENGTH];
+	float    		alarm_value;
+	uint8_t    		alarm_enable;
+}STagHeader;
+
+typedef struct STagRV_ {
+	float			raw_value;
+	float			std_value;
+	uint8_t			meas_stt[TAG_MEAS_STT_LENGTH];
+}STagRV;
+
 typedef struct STagNode_ {
     uint16_t 		id;
     uint8_t         status;
@@ -342,6 +362,14 @@ typedef struct STagValue_ {
     STagNode 		Node[SYSTEM_NUM_TAG];
 }STagValue;
 
+typedef struct STagHArray_ {
+    STagHeader      Node[SYSTEM_NUM_TAG];
+}STagHArray;
+
+
+typedef struct STagVArray_ {
+    STagRV          Node[SYSTEM_NUM_TAG];
+}STagVArray;
 
 
 typedef struct SCommon_ {
@@ -381,8 +409,8 @@ typedef struct SAccount_ {
 }SAccount;
 
 typedef struct SSysCfg_ {
-    STag				sTag[SYSTEM_NUM_TAG];
     SCommon				sCom;
+    STag				sTag[SYSTEM_NUM_TAG];
     SCtrlPort           sDO[DIGITAL_OUTPUT_NUM_CHANNEL];
     SInputPort          sDI[DIGITAL_INPUT_NUM_CHANNEL];
     SAccount			sAccount;
