@@ -212,7 +212,7 @@ uint8_t* OSA_FixedMemMalloc(uint32_t reqSise)
 	}
 
 	if (ucError != OS_ERR_NONE) {
-		LREP("Allocate memory failed: %d\r\n", (long)ucError);
+		LREP("Allocate memory size %d err = %d\r\n", uiSize, (long)ucError);
 	}
 
 

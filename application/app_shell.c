@@ -421,7 +421,8 @@ void status(int32_t argc, char **argv) {
 					pAppObj->sDateTime.tm_sec);
 	} else if(strcmp(argv[1], "conf") == 0) {
 		//LREP("sizeof name = %d\r\n", sizeof(pAppObj->sCfg.sTag[0].name));
-		print_sys(&pAppObj->sCfg);
+		//print_sys(&pAppObj->sCfg);
+		print_comm(&pAppObj->sCfg.sCom);
 		for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 			print_tag(&pAppObj->sCfg.sTag[i]);
 		}

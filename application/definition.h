@@ -331,9 +331,12 @@ typedef struct STag_ {
 
 typedef struct STagHeader_ {
 	uint16_t 		id;
+	uint8_t			enable;
 	uint8_t    		name[TAG_NAME_LENGTH];
 	uint8_t    		raw_unit[TAG_RAW_UNIT_LENGTH];
 	uint8_t    		std_unit[TAG_STD_UNIT_LENGTH];
+	float			min;
+	float			max;
 	float    		alarm_value;
 	uint8_t    		alarm_enable;
 }STagHeader;

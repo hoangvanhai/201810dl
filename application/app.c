@@ -294,7 +294,7 @@ int	App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx) {
 int App_DefaultTag(STag *pHandle, uint8_t tagIdx) {
 
 	pHandle->id = tagIdx;
-	pHandle->input_id = 1;	//tagIdx;
+	pHandle->input_id = tagIdx;
 	pHandle->input_id = MIN(pHandle->input_id, SYSTEM_NUM_TAG - 1);
 	pHandle->pin_calib = MIN(pHandle->pin_calib, DIGITAL_INPUT_NUM_CHANNEL - 1);
 	pHandle->pin_error = MIN(pHandle->pin_error, DIGITAL_INPUT_NUM_CHANNEL - 1);
@@ -315,9 +315,9 @@ int App_DefaultTag(STag *pHandle, uint8_t tagIdx) {
 	pHandle->coef_a = 0;
 	pHandle->coef_b = 1;
 
-//	Str_Copy_N((CPU_CHAR*)pHandle->name, "DEFAULT", sizeof(pHandle->name));
-//	Str_Copy_N((CPU_CHAR*)pHandle->raw_unit, "RAW_UNIT", sizeof(pHandle->raw_unit));
-//	Str_Copy_N((CPU_CHAR*)pHandle->std_unit, "STD_UNIT", sizeof(pHandle->std_unit));
+	Str_Copy_N((CPU_CHAR*)pHandle->name, "NAME", sizeof(pHandle->name));
+	Str_Copy_N((CPU_CHAR*)pHandle->raw_unit, "RUNIT", sizeof(pHandle->raw_unit));
+	Str_Copy_N((CPU_CHAR*)pHandle->std_unit, "SUNIT", sizeof(pHandle->std_unit));
 
 	return 0;
 }
@@ -651,6 +651,32 @@ void App_TaskSerialcomm(task_param_t param) {
 		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
 			Trans_Task(&pApp->sTransPc);
+
+//			if(App_IsCtrlCodePending(pApp, CTRL_SEND_HEADER)) {
+//				if(pApp->counter < SYSTEM_NUM_TAG) {
+//					STagHeader *hdr = (STagHeader*)OSA_FixedMemMalloc(sizeof(STagHeader));
+//					if(hdr != NULL) {
+//						hdr->id = pApp->sTagValue.Node[pApp->counter].id;
+//						hdr->alarm_value = pApp->sTagValue.Node[pApp->counter].alarm_value;
+//						hdr->alarm_enable = pApp->sTagValue.Node[pApp->counter].alarm_enable;
+//						Str_Copy_N(hdr->name, pApp->sTagValue.Node[pApp->counter].name,
+//								sizeof(hdr->name));
+//						Str_Copy_N(hdr->raw_unit, pApp->sTagValue.Node[pApp->counter].raw_unit,
+//								sizeof(hdr->raw_unit));
+//						Str_Copy_N(hdr->std_unit, pApp->sTagValue.Node[pApp->counter].std_unit,
+//								sizeof(hdr->std_unit));
+//						App_SendPC(pApp, LOGGER_GET | LOGGER_STREAM_HEADER,
+//								(uint8_t*)hdr, sizeof(STagHeader), false);
+//
+//						LREP("send header %d\r\n", pApp->counter);
+//						App_SetCtrlCode(pApp, CTRL_SEND_HEADER);
+//						pApp->counter++;
+//					}
+//					//OSA_SleepMs(100);
+//				} else {
+//					App_ClearCtrlCode(pApp, CTRL_SEND_HEADER);
+//				}
+//			}
 		}
 	}
 }
@@ -776,18 +802,6 @@ void App_TaskStartup(task_param_t arg) {
 				App_ClearCtrlCode(pApp, CTRL_INIT_MODBUS);
 			}
 
-			if(App_IsCtrlCodePending(pApp, CTRL_SEND_HEADER)) {
-				if(pApp->counter++ < SYSTEM_NUM_TAG) {
-					//App_SendPC(pApp, LOGGER_GET | LOGGER_STREAM_HEADER,
-					LREP("send header %d\r\n", pApp->counter);
-					OS_ERR err;
-					App_SetCtrlCode(pApp, CTRL_SEND_HEADER);
-					OSA_SleepMs(100);
-					OSTaskSemPost(NULL, OS_OPT_NONE, &err);
-				} else {
-					App_ClearCtrlCode(pApp, CTRL_SEND_HEADER);
-				}
-			}
 
 			//WDOG_DRV_Refresh();
 		} else {
@@ -899,10 +913,7 @@ void App_CommRecvHandle(const uint8_t *data) {
 
 	case LOGGER_GET | LOGGER_STREAM_HEADER: {
 		pAppObj->counter = 0;
-		OS_ERR err;
 		App_SetCtrlCode(pAppObj, CTRL_SEND_HEADER);
-		OSTaskSemPost(&pAppObj->TCB_task_startup, OS_OPT_NONE, &err);
-		ASSERT(err == OS_ERR_NONE);
 	}
 	break;
 
@@ -1010,6 +1021,36 @@ void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
 
 void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type) {
 	//LREP("Sent done event 0x%x\r\n", u8Type);
+	if(App_IsCtrlCodePending(pAppObj, CTRL_SEND_HEADER)) {
+		if(pAppObj->counter < SYSTEM_NUM_TAG) {
+			uint8_t *mem = OSA_FixedMemMalloc(sizeof(STagHeader) + 1);
+			if(mem != NULL) {
+				STagHeader *hdr = (STagHeader*)((uint8_t*)mem + 1);
+				mem[0] = (uint8_t)pAppObj->counter;
+				hdr->id = pAppObj->sCfg.sTag[pAppObj->counter].id;
+				hdr->enable = pAppObj->sCfg.sTag[pAppObj->counter].enable;
+				hdr->min = pAppObj->sCfg.sTag[pAppObj->counter].raw_min;
+				hdr->max = pAppObj->sCfg.sTag[pAppObj->counter].raw_max;
+				hdr->alarm_value = pAppObj->sCfg.sTag[pAppObj->counter].alarm_value;
+				hdr->alarm_enable = pAppObj->sCfg.sTag[pAppObj->counter].alarm_enable;
+				Str_Copy_N(hdr->name, pAppObj->sCfg.sTag[pAppObj->counter].name,
+						sizeof(hdr->name));
+				Str_Copy_N(hdr->raw_unit, pAppObj->sCfg.sTag[pAppObj->counter].raw_unit,
+						sizeof(hdr->raw_unit));
+				Str_Copy_N(hdr->std_unit, pAppObj->sCfg.sTag[pAppObj->counter].std_unit,
+						sizeof(hdr->std_unit));
+				App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_HEADER,
+						(uint8_t*)mem, sizeof(STagHeader) + 1, false);
+
+				LREP("send header %d\r\n", pAppObj->counter);
+				App_SetCtrlCode(pAppObj, CTRL_SEND_HEADER);
+				pAppObj->counter++;
+				OSA_FixedMemFree(mem);
+			}
+		} else {
+			App_ClearCtrlCode(pAppObj, CTRL_SEND_HEADER);
+		}
+	}
 }
 
 /*****************************************************************************/
@@ -1105,7 +1146,7 @@ int	App_ModbusDoRead(SApp *pApp){
 
 			if(retVal != MB_SUCCESS) {
 				pApp->sMB.Node[i].status = TAG_STT_MB_FAILED;
-				//LREP("MBT ");
+				LREP("MBT ");
 			} else {
 				pApp->sMB.Node[i].status = TAG_STT_OK;
 				switch(pApp->sMB.Node[i].data_format) {
@@ -1343,13 +1384,7 @@ double	App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index) {
  *  @note
  */
 double App_GetMBValueByIndex(SModbusValue *pHandle, uint16_t index) {
-//	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
-//		if(pHandle->Node[i].id == addr) {
-//			return pHandle->Node[i].value;
-//		}
-//	}
-//	return 0xFFFFFFFF;
-	//LREP("index %d value: %.2f\r\n", pHandle->Node[index].value);
+	//LREP("index %d value: %.2f\r\n", index, pHandle->Node[index].value);
 	return pHandle->Node[index].value;
 }
 /*****************************************************************************/
@@ -1616,10 +1651,37 @@ int App_GenerateLogFile(SApp *pApp) {
 	FIL file;
 	/* get file name time*/
 	char *filename = (char*)OSA_FixedMemMalloc(64);
+	if(filename == NULL) {
+		return -1;
+	}
 	char *time = (char*)OSA_FixedMemMalloc(64);
+	if(time == NULL) {
+		OSA_FixedMemFree((uint8_t*)filename);
+		return -2;
+	}
 	char *year = (char*)OSA_FixedMemMalloc(16);
+	if(year == NULL) {
+		OSA_FixedMemFree((uint8_t*)filename);
+		OSA_FixedMemFree((uint8_t*)time);
+		return -3;
+	}
 	char *mon = (char*)OSA_FixedMemMalloc(32);
+	if(mon == NULL) {
+		OSA_FixedMemFree((uint8_t*)filename);
+		OSA_FixedMemFree((uint8_t*)time);
+		OSA_FixedMemFree((uint8_t*)year);
+		return -4;
+	}
 	char *day = (char*)OSA_FixedMemMalloc(32);
+	if(day == NULL) {
+		OSA_FixedMemFree((uint8_t*)filename);
+		OSA_FixedMemFree((uint8_t*)time);
+		OSA_FixedMemFree((uint8_t*)year);
+		OSA_FixedMemFree((uint8_t*)mon);
+		return -4;
+	}
+
+
 
 	sprintf(year, "%04d", pApp->sDateTime.tm_year);
 	sprintf(mon, "%04d/%02d", pApp->sDateTime.tm_year,
@@ -1674,33 +1736,36 @@ int App_GenerateLogFile(SApp *pApp) {
 
 		if(retVal == FR_OK) {
 			char *row = (char*)OSA_FixedMemMalloc(256);
-			UINT written;
+			if(row != NULL) {
+				UINT written;
 
-			//sprintf(row, "%-12s %12s %12s %15s %12s\r\n",
-			//"Thong so", "Gia tri", "Don vi", "Thoi gian", "Trang thai");
-			//retVal = f_write(&file, row, Str_Len(row), &written);
-			//LREP("%s", row);
-			for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
-				if(pApp->sCfg.sTag[i].report) {
-					memset(row, 0, 256);
-					sprintf(row, "%-12s %12.2f %12s %15s %12s\r\n",
-							pApp->sCfg.sTag[i].name,
-							pApp->sTagValue.Node[i].std_value,
-							pApp->sCfg.sTag[i].std_unit,
-							time,
-							pApp->sCfg.sTag[i].meas_stt);
+				//sprintf(row, "%-12s %12s %12s %15s %12s\r\n",
+				//"Thong so", "Gia tri", "Don vi", "Thoi gian", "Trang thai");
+				//retVal = f_write(&file, row, Str_Len(row), &written);
+				//LREP("%s", row);
+				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+					if(pApp->sCfg.sTag[i].report) {
+						memset(row, 0, 256);
+						sprintf(row, "%-12s %12.2f %12s %15s %12s\r\n",
+								pApp->sCfg.sTag[i].name,
+								pApp->sTagValue.Node[i].std_value,
+								pApp->sCfg.sTag[i].std_unit,
+								time,
+								pApp->sCfg.sTag[i].meas_stt);
 
-					LREP("%s", row);
+						LREP("%s", row);
 
-					retVal = f_write(&file, row, Str_Len(row), &written);
-					if(retVal != FR_OK || written <= 0)
-						break;
+						retVal = f_write(&file, row, Str_Len(row), &written);
+						if(retVal != FR_OK || written <= 0)
+							break;
+					}
 				}
-			}
-			OSA_FixedMemFree((uint8_t*)row);
 
-			if(retVal == FR_OK) {
-				// TODO: send file name to Net module
+				OSA_FixedMemFree((uint8_t*)row);
+
+				if(retVal == FR_OK) {
+					// TODO: send file name to Net module
+				}
 			}
 		}
 
@@ -1735,10 +1800,35 @@ int App_GenerateLogFileByName(SApp *pApp, const char *name) {
 	FIL file;
 	/* get file name time*/
 	char *filename = (char*)OSA_FixedMemMalloc(64);
+	if(filename == NULL) {
+		return -1;
+	}
 	char *time = (char*)OSA_FixedMemMalloc(64);
+	if(time == NULL) {
+		OSA_FixedMemFree((uint8_t*)filename);
+		return -2;
+	}
 	char *year = (char*)OSA_FixedMemMalloc(16);
+	if(year == NULL) {
+		OSA_FixedMemFree((uint8_t*)filename);
+		OSA_FixedMemFree((uint8_t*)time);
+		return -3;
+	}
 	char *mon = (char*)OSA_FixedMemMalloc(32);
+	if(mon == NULL) {
+		OSA_FixedMemFree((uint8_t*)filename);
+		OSA_FixedMemFree((uint8_t*)time);
+		OSA_FixedMemFree((uint8_t*)year);
+		return -4;
+	}
 	char *day = (char*)OSA_FixedMemMalloc(32);
+	if(day == NULL) {
+		OSA_FixedMemFree((uint8_t*)filename);
+		OSA_FixedMemFree((uint8_t*)time);
+		OSA_FixedMemFree((uint8_t*)year);
+		OSA_FixedMemFree((uint8_t*)mon);
+		return -4;
+	}
 
 	sprintf(year, "%04d", pApp->sDateTime.tm_year);
 	sprintf(mon, "%04d/%02d", pApp->sDateTime.tm_year,
@@ -1793,31 +1883,33 @@ int App_GenerateLogFileByName(SApp *pApp, const char *name) {
 
 		if(retVal == FR_OK) {
 			char *row = (char*)OSA_FixedMemMalloc(256);
-			UINT written;
-			uint8_t rowCount = 0;
-			for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
-				if(pApp->sCfg.sTag[i].report &&
-						(Str_Cmp((CPU_CHAR*)pApp->sCfg.sTag[i].name, name) == 0)) {
-					memset(row, 0, 256);
-					sprintf(row, "%-12s %12.2f %12s %15s %12s\r\n",
-							pApp->sCfg.sTag[i].name,
-							pApp->sTagValue.Node[i].std_value,
-							pApp->sCfg.sTag[i].std_unit,
-							time,
-							pApp->sCfg.sTag[i].meas_stt);
+			if(row != NULL) {
+				UINT written;
+				uint8_t rowCount = 0;
+				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+					if(pApp->sCfg.sTag[i].report &&
+							(Str_Cmp((CPU_CHAR*)pApp->sCfg.sTag[i].name, name) == 0)) {
+						memset(row, 0, 256);
+						sprintf(row, "%-12s %12.2f %12s %15s %12s\r\n",
+								pApp->sCfg.sTag[i].name,
+								pApp->sTagValue.Node[i].std_value,
+								pApp->sCfg.sTag[i].std_unit,
+								time,
+								pApp->sCfg.sTag[i].meas_stt);
 
-					LREP("%s", row);
+						LREP("%s", row);
 
-					retVal = f_write(&file, row, Str_Len(row), &written);
-					if(retVal != FR_OK || written <= 0)
-						break;
-					rowCount++;
+						retVal = f_write(&file, row, Str_Len(row), &written);
+						if(retVal != FR_OK || written <= 0)
+							break;
+						rowCount++;
+					}
 				}
-			}
-			OSA_FixedMemFree((uint8_t*)row);
+				OSA_FixedMemFree((uint8_t*)row);
 
-			if(retVal == FR_OK && rowCount > 0) {
-				// TODO: send file name to Net module
+				if(retVal == FR_OK && rowCount > 0) {
+					// TODO: send file name to Net module
+				}
 			}
 		}
 
