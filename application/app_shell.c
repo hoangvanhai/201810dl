@@ -270,7 +270,6 @@ void print_tag(STag *pHandle) {
 void print_tag1(STag *pHandle) {
 	LREP("id  %d "
 		"desc %s "
-		" meas_stt %s "
 		"enable %d "
 		"report %d "
 		"has_calib %d "
@@ -285,7 +284,6 @@ void print_tag1(STag *pHandle) {
 		"comp_type %d\r\n",
 		pHandle->id,
 		pHandle->desc,
-		pHandle->meas_stt,
 		pHandle->enable,
 		pHandle->report,
 		pHandle->has_calib,

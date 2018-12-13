@@ -1238,66 +1238,80 @@ int	App_InitAI(SApp *pApp) {
  */
 int App_UpdateTagContent(SApp *pApp) {
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+		uint8_t status = 0;
 		// clear status first
-		pApp->sCfg.sTag[i].meas_stt[0] = 0;
+		pApp->sTagValue.Node[i].meas_stt[0] = 0;
 		// get main value
 		if(pApp->sCfg.sTag[i].input_type == TIT_AI) {
 			pApp->sTagValue.Node[i].scratch_value =
 				App_GetAIValueByIndex(&pApp->sAI, pApp->sCfg.sTag[i].id);
+			status = pApp->sAI.Node[i].status;
+
 		} else {
 			pApp->sTagValue.Node[i].scratch_value =
 				App_GetMBValueByIndex(&pApp->sMB, pApp->sCfg.sTag[i].id);
+			status = pApp->sMB.Node[i].status;
 		}
 
 		/* value = scratch * (raw_max - raw_min) / (scr_max - scr_min) */
-		pApp->sTagValue.Node[i].raw_value = pApp->sTagValue.Node[i].scratch_value *
+		pApp->sTagValue.Node[i].raw_value =
+				(pApp->sTagValue.Node[i].scratch_value -  pApp->sCfg.sTag[i].scratch_min ) *
 				(pApp->sCfg.sTag[i].raw_max - pApp->sCfg.sTag[i].raw_min) /
-				(pApp->sCfg.sTag[i].scratch_max - pApp->sCfg.sTag[i].scratch_min);
+				(pApp->sCfg.sTag[i].scratch_max - pApp->sCfg.sTag[i].scratch_min) +
+				pApp->sCfg.sTag[i].raw_min;
 
 		/* value = a + b * value */
 		pApp->sTagValue.Node[i].raw_value = 	pApp->sCfg.sTag[i].coef_a +
 									pApp->sTagValue.Node[i].raw_value * pApp->sCfg.sTag[i].coef_b;
 
-		// get status
-		// if has least error pin or calib pin, set status is normal
-		if(pApp->sCfg.sTag[i].has_calib || pApp->sCfg.sTag[i].has_error) {
-			pApp->sCfg.sTag[i].meas_stt[0] = '0';
-			pApp->sCfg.sTag[i].meas_stt[1] = '0';
-			pApp->sCfg.sTag[i].meas_stt[2] = 0;
-		}
+		if(status == TAG_STT_OK) {
+			// get status
+			// if has least error pin or calib pin, set status is normal
+			if(pApp->sCfg.sTag[i].has_calib || pApp->sCfg.sTag[i].has_error) {
+				pApp->sTagValue.Node[i].meas_stt[0] = '0';
+				pApp->sTagValue.Node[i].meas_stt[1] = '0';
+				pApp->sTagValue.Node[i].meas_stt[2] = 0;
+			}
 
-		// check calib signal on digital input
-		if(pApp->sCfg.sTag[i].has_calib) {
-			bool  calib =
-			App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_calib);
-			if(calib) {
-				pApp->sCfg.sTag[i].meas_stt[0] = '0';
-				pApp->sCfg.sTag[i].meas_stt[1] = '1';
-				pApp->sCfg.sTag[i].meas_stt[2] = 0;
-				// force zero when error condition
+			// check calib signal on digital input
+			if(pApp->sCfg.sTag[i].has_calib) {
+				bool  calib =
+				App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_calib);
+				if(calib) {
+					pApp->sTagValue.Node[i].meas_stt[0] = '0';
+					pApp->sTagValue.Node[i].meas_stt[1] = '1';
+					pApp->sTagValue.Node[i].meas_stt[2] = 0;
+					// force zero when error condition
+					pApp->sTagValue.Node[i].raw_value = 0;
+				}
+			}
+
+			// check error signal in digital input
+			if(pApp->sCfg.sTag[i].has_error) {
+				bool error =
+				App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_error);
+				if(error) {
+					pApp->sTagValue.Node[i].meas_stt[0] = '0';
+					pApp->sTagValue.Node[i].meas_stt[1] = '2';
+					pApp->sTagValue.Node[i].meas_stt[2] = 0;
+					pApp->sTagValue.Node[i].raw_value = 0;
+				}
+			}
+
+			// if value is out of range, set error
+			if(pApp->sTagValue.Node[i].scratch_value > pApp->sCfg.sTag[i].scratch_max ||
+					pApp->sTagValue.Node[i].scratch_value < pApp->sCfg.sTag[i].scratch_min) {
+				pApp->sTagValue.Node[i].meas_stt[0] = '0';
+				pApp->sTagValue.Node[i].meas_stt[1] = '2';
+				pApp->sTagValue.Node[i].meas_stt[2] = 0;
 				pApp->sTagValue.Node[i].raw_value = 0;
 			}
-		}
-
-		// check error signal in digital input
-		if(pApp->sCfg.sTag[i].has_error) {
-			bool error =
-			App_GetDILevelByIndex(&pApp->sDI, pApp->sCfg.sTag[i].pin_error);
-			if(error) {
-				pApp->sCfg.sTag[i].meas_stt[0] = '0';
-				pApp->sCfg.sTag[i].meas_stt[1] = '2';
-				pApp->sCfg.sTag[i].meas_stt[2] = 0;
-				pApp->sTagValue.Node[i].raw_value = 0;
-			}
-		}
-
-		// if value is out of range, set error
-		if(pApp->sTagValue.Node[i].scratch_value > pApp->sCfg.sTag[i].scratch_max ||
-				pApp->sTagValue.Node[i].scratch_value < pApp->sCfg.sTag[i].scratch_min) {
-			pApp->sCfg.sTag[i].meas_stt[0] = '0';
-			pApp->sCfg.sTag[i].meas_stt[1] = '2';
-			pApp->sCfg.sTag[i].meas_stt[2] = 0;
+		} else {
+			pApp->sTagValue.Node[i].meas_stt[0] = '0';
+			pApp->sTagValue.Node[i].meas_stt[1] = '2';
+			pApp->sTagValue.Node[i].meas_stt[2] = 0;
 			pApp->sTagValue.Node[i].raw_value = 0;
+			LREP("not read type %d index %d\r\n", pApp->sCfg.sTag[i].input_type, status);
 		}
 	}
 
@@ -1751,7 +1765,7 @@ int App_GenerateLogFile(SApp *pApp) {
 								pApp->sTagValue.Node[i].std_value,
 								pApp->sCfg.sTag[i].std_unit,
 								time,
-								pApp->sCfg.sTag[i].meas_stt);
+								pApp->sTagValue.Node[i].meas_stt);
 
 						LREP("%s", row);
 
@@ -1895,7 +1909,7 @@ int App_GenerateLogFileByName(SApp *pApp, const char *name) {
 								pApp->sTagValue.Node[i].std_value,
 								pApp->sCfg.sTag[i].std_unit,
 								time,
-								pApp->sCfg.sTag[i].meas_stt);
+								pApp->sTagValue.Node[i].meas_stt);
 
 						LREP("%s", row);
 

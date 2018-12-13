@@ -294,7 +294,6 @@ typedef struct SModbusValue {
 typedef struct STag_ {
     uint16_t		id;
     uint8_t			desc[TAG_DESC_LENGTH];
-    uint8_t			meas_stt[TAG_MEAS_STT_LENGTH];
     uint8_t			enable;
     uint8_t			report;
     uint8_t    		has_calib; 		//
