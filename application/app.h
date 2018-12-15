@@ -41,14 +41,15 @@
 
 #define APP_TASK_DEFINE(task, stackSize)                          \
     OS_TCB TCB_##task;                                            \
-    task_stack_t task##_stack[(stackSize)/sizeof(task_stack_t)];  \
-    task_handler_t task##_task_handler;
+    task_handler_t task##_task_handler = &(TCB_##task)
 
 /**************************** Type Definitions *******************************/
 typedef struct SApp_ {
 	STrans				sTransPc;
+	semaphore_t			semTransPc;
 	bool				sdhcPlugged;
 	STrans				sTransUi;
+	semaphore_t			semTransUi;
 	ESysStatus			eStatus;
 	SModbus				sModbus;
 	ECtrlCode			eCtrlCode;
@@ -58,24 +59,19 @@ typedef struct SApp_ {
 	SAnalogInput		sAI;
 	SModbusValue		sMB;
 	STagValue			sTagValue;
-	APP_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
-	APP_TASK_DEFINE(task_ui, 			TASK_UI_STACK_SIZE);
-	APP_TASK_DEFINE(task_modbus, 		TASK_MODBUS_STACK_SIZE);
-	APP_TASK_DEFINE(task_serialcomm,	TASK_SERIAL_COMM_STACK_SIZE);
-	APP_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
-	APP_TASK_DEFINE(task_startup,		TASK_STARTUP_STACK_SIZE);
 	OS_TMR 				hCtrlTimer;
 	FATFS				sFS0;
 	FATFS				sFS1;
 	uint8_t				currPath[256];
 	uint8_t				currFileName[256];
 	SSysCfg				sCfg;
-	uint32_t			counter;
+	uint32_t			pcCounter;
+	uint32_t			uiCounter;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
-#define APP_TASK_INIT_HANDLER(p, task) 		(p)->task##_task_handler = &((p)->TCB_##task)
+//#define APP_TASK_INIT_HANDLER(p, task) 		(p)->task##_task_handler = &((p)->TCB_##task)
 #define App_SetSysStatus(pApp, state)    	(pApp)->eStatus |= (state)
 #define App_ClearSysStatus(pApp, state)  	(pApp)->eStatus &= ~(state)
 #define App_IsSysStatus(pApp, state)		((pApp)->eStatus & state)
@@ -160,6 +156,31 @@ void Clb_TimerControl(void *p_tmr, void *p_arg);
 /************************** Variable Definitions *****************************/
 extern SApp		sApp;
 extern SApp 	*pAppObj;
+
+extern OS_TCB TCB_task_shell;
+extern task_handler_t task_shell_task_handler;
+extern task_stack_t	task_shell_stack[TASK_SHELL_STACK_SIZE/ sizeof(task_stack_t)];
+
+extern OS_TCB TCB_task_ui;
+extern task_handler_t task_ui_task_handler;
+extern task_stack_t	task_ui_stack[TASK_UI_STACK_SIZE/ sizeof(task_stack_t)];
+
+extern OS_TCB TCB_task_modbus;
+extern task_handler_t task_modbus_task_handler;
+extern task_stack_t	task_modbus_stack[TASK_MODBUS_STACK_SIZE/ sizeof(task_stack_t)];
+
+extern OS_TCB TCB_task_serialcomm;
+extern task_handler_t task_serialcomm_task_handler;
+extern task_stack_t	task_serialcomm_stack[TASK_SERIAL_COMM_STACK_SIZE/ sizeof(task_stack_t)];
+
+extern OS_TCB TCB_task_periodic;
+extern task_handler_t task_periodic_task_handler;
+extern task_stack_t	task_periodic_stack[TASK_PERIODIC_STACK_SIZE/ sizeof(task_stack_t)];
+
+extern OS_TCB TCB_task_startup;
+extern task_handler_t task_startup_task_handler;
+extern task_stack_t	task_startup_stack[TASK_STARTUP_STACK_SIZE/ sizeof(task_stack_t)];
+
 /*****************************************************************************/
 
 

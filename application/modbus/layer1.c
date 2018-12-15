@@ -21,7 +21,8 @@
 
 
 #define Modbus_IsSendReady(pModbus)  \
-									((pModbus)->uFlag.Bits.bStarted == TRUE && (pModbus)->uFlag.Bits.bSending == FALSE)
+									((pModbus)->uFlag.Bits.bStarted == TRUE && \
+									(pModbus)->uFlag.Bits.bSending == FALSE)
 
 #define Modbus_IsSendDone(pModbus) 	(!(pModbus)->uFlag.Bits.bSending)
 
@@ -33,7 +34,7 @@ static void 		modbus_rx_handle(uint32_t instance, void * uartState);
 static void 		modbus_tx_handle(uint32_t instance, void * uartState);
 /************************** Variable Definitions *****************************/
 uart_state_t modbus_uart_state;
-static uint8_t rx_char, tx_char;
+static uint8_t mb_rx_char, mb_tx_char;
 SModbus 			*pThisL1;
 /*****************************************************************************/
 /** @brief
@@ -61,8 +62,8 @@ void Modbus_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxP
 
 	UART_DRV_Init(uartInstance, &modbus_uart_state, &modbus_uart_cfg);
 
-	UART_DRV_InstallRxCallback(uartInstance, modbus_rx_handle, &rx_char, NULL, true);
-	UART_DRV_InstallTxCallback(uartInstance, modbus_tx_handle, &tx_char, NULL);
+	UART_DRV_InstallRxCallback(uartInstance, modbus_rx_handle, &mb_rx_char, NULL, true);
+	UART_DRV_InstallTxCallback(uartInstance, modbus_tx_handle, &mb_tx_char, NULL);
 	pThisL1->uartBase = base;
 }
 
@@ -137,7 +138,7 @@ uint8_t  Modbus_Init(SModbus *pModbus, uint32_t uartInstance,
 	pModbus->uartInstance	 	= uartInstance;
 	pModbus->u32BaudRate 		= u32BaudRate;
 	// init UART
-	LREP("init uart port modbus: %d\r\n", uartInstance);
+	LREP("MOBUS PORT: %d_____\r\n", uartInstance);
 	Modbus_Uart_Init(uartInstance, u32BaudRate, u8TxIntPrio, u8RxIntPrio);
 	RS485_RX(pModbus);
 
@@ -181,7 +182,7 @@ int Modbus_Send(SModbus *pModbus, uint8_t* pData, uint16_t u16Size)
 
 	ASSERT_NONVOID(pModbus != 0, MB_ERR_INVALID_PTR);
 	ASSERT_NONVOID(u16Size <= SIZE_FIFO_SEND, MB_ERR_INVALID_DATA);
-	//ASSERT_NONVOID(Modbus_IsSendReady(pModbus), MB_ERR_BUSY);
+	ASSERT_NONVOID(Modbus_IsSendReady(pModbus), MB_ERR_BUSY);
 
 	int i = 0;
 	// copy data

@@ -52,9 +52,9 @@ void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, voi
     Queue_Init(&pTrans->qSendingCMD);
     Queue_Init(&pTrans->qSentQueue);
 
-    LREP("trans port %d \r\nqSendingData %x \r\nqSendingCMD %x \r\nqSentQueue %x\r\n",
+    /*LREP("trans port %d \r\nqSendingData %x \r\nqSendingCMD %x \r\nqSentQueue %x\r\n",
 				u32UartPort, &pTrans->qSendingData,
-				&pTrans->qSendingCMD, &pTrans->qSentQueue);
+				&pTrans->qSendingCMD, &pTrans->qSentQueue); */
 
 
     /*-----------------------------------------------------------------------
@@ -66,7 +66,7 @@ void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, voi
 
     //LREP("init transceiver protocol\r\n\n");
 #if (TRANSL1_VER == TRANSL1_V1)
-    TransL2S_Init(&pTrans->sTransL2, LOGGER_DEV_ID, TRANS_TX_PRIO, TRANS_RX_PRIO, &pTrans->hSem);
+    TransL2S_Init(&pTrans->sTransL2, LOGGER_DEV_ID, TRANS_TX_PRIO, TRANS_RX_PRIO, pTrans->hSem);
 #elif (TRANSL1_VER == TRANSL1_V2)
     TransL2S_Init(&pTrans->sTransL2, LOGGER_DEV_ID, TRANS_TX_PRIO, TRANS_RX_PRIO, pSemaphore, DMA_TX_TRANSPC);
 #endif
@@ -314,7 +314,7 @@ static BOOL Trans_send(STrans *pTrans, uint8_t* pu8Data,
     //Signal to run Trans task
     
     OS_ERR err;
-    OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_NONE, &err);
+    OSSemPost((semaphore_t*)pTrans->hSem, OS_OPT_POST_1, &err);
 
     return TRUE;
 }
@@ -554,7 +554,7 @@ static void Clb_UpdateTimer(void *timer, void *pClbParam)
 	OS_ERR err;
     STrans *pTrans = (STrans *)pClbParam;
     pTrans->sFlag.Bits.bUpdateWaitingACKFrameState = TRUE;
-    OSTaskSemPost((OS_TCB*)pTrans->hSem, OS_OPT_POST_NONE, &err);
+    OSSemPost((semaphore_t*)pTrans->hSem, OS_OPT_POST_1, &err);
 }
 
 

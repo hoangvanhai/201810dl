@@ -53,6 +53,7 @@ static int debug_putc(int ch, void* stream);
  ******************************************************************************/
 uart_state_t debug_uart_state;
 static uint8_t rx_char;
+semaphore_t debug_sem;
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -148,7 +149,7 @@ void debug_rx_handle(uint32_t instance, void * uartState) {
 	//debug_putchar(state->rxBuff[0]);
 	if(shell_push_command(state->rxBuff[0]) == true) {
 		OS_ERR err;
-		OSTaskSemPost(&pAppObj->TCB_task_shell, OS_OPT_POST_NONE, &err);
+		OSSemPost(&debug_sem, OS_OPT_POST_1, &err);
 		if(err != OS_ERR_NONE) {
 			LREP("sem post failed\r\n");
 		}

@@ -53,6 +53,20 @@ void Clb_NetTcpServerError(const uint8_t* data, int length);
 /************************** Variable Definitions *****************************/
 SApp sApp;
 SApp *pAppObj = &sApp;
+APP_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
+APP_TASK_DEFINE(task_ui, 			TASK_UI_STACK_SIZE);
+APP_TASK_DEFINE(task_modbus, 		TASK_MODBUS_STACK_SIZE);
+APP_TASK_DEFINE(task_serialcomm,	TASK_SERIAL_COMM_STACK_SIZE);
+APP_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
+APP_TASK_DEFINE(task_startup,		TASK_STARTUP_STACK_SIZE);
+
+task_stack_t	task_shell_stack[TASK_SHELL_STACK_SIZE/ sizeof(task_stack_t)];
+task_stack_t	task_ui_stack[TASK_UI_STACK_SIZE/ sizeof(task_stack_t)];
+task_stack_t	task_modbus_stack[TASK_MODBUS_STACK_SIZE/ sizeof(task_stack_t)];
+task_stack_t	task_serialcomm_stack[TASK_SERIAL_COMM_STACK_SIZE/ sizeof(task_stack_t)];
+task_stack_t	task_periodic_stack[TASK_PERIODIC_STACK_SIZE/ sizeof(task_stack_t)];
+task_stack_t	task_startup_stack[TASK_STARTUP_STACK_SIZE/ sizeof(task_stack_t)];
+
 extern const shell_command_t cmd_table[];
 /*****************************************************************************/
 /** @brief
@@ -67,6 +81,10 @@ void App_Init(SApp *pApp) {
 	int err;
 	pApp->eStatus = SYS_ERR_NONE;
 	memset(pApp->currPath, 0, 256);
+
+	OS_ERR error;
+	OSSemCreate(&debug_sem, "debug", 0, &error);
+	ASSERT(error == OS_ERR_NONE);
 
 	err = App_InitFS(pApp);
 
@@ -112,12 +130,7 @@ void App_Init(SApp *pApp) {
  */
 
 void	App_InitTaskHandle(SApp *pApp) {
-	APP_TASK_INIT_HANDLER(pApp, task_shell);
-	APP_TASK_INIT_HANDLER(pApp, task_ui);
-	APP_TASK_INIT_HANDLER(pApp, task_modbus);
-	APP_TASK_INIT_HANDLER(pApp, task_serialcomm);
-	APP_TASK_INIT_HANDLER(pApp, task_periodic);
-	APP_TASK_INIT_HANDLER(pApp, task_startup);
+
 }
 
 /*****************************************************************************/
@@ -590,10 +603,11 @@ void App_TaskPeriodic(task_param_t parg) {
 void App_TaskShell(task_param_t param)
 {
 	OS_ERR err;
+	CPU_TS	ts;
 	shell_init(cmd_table, my_shell_init);
 	LREP(SHELL_PROMPT);
 	while(1) {
-		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, 0, &err);
+		OSSemPend(&debug_sem, 1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
 			shell_task(NULL);
 		}
@@ -639,16 +653,17 @@ void App_TaskSerialcomm(task_param_t param) {
 	OS_ERR	err;
 	CPU_TS	ts;
 
+	ASSERT(OSA_SemaCreate(&pApp->semTransPc, 0) == kStatus_OSA_Success);
 	Trans_RegisterClbEvent(&pApp->sTransPc, TRANS_EVT_RECV_DATA, Clb_TransPC_RecvEvent);
 	Trans_RegisterClbEvent(&pApp->sTransPc, TRANS_EVT_SENT_DATA, Clb_TransPC_SentEvent);
 
 	Trans_Init(&pApp->sTransPc, BOARD_TRANSPC_UART_INSTANCE,
-			BOARD_TRANSPC_UART_BAUD, &pApp->TCB_task_serialcomm);
+			BOARD_TRANSPC_UART_BAUD, &pApp->semTransPc);
 
-	LREP("task serial comm init done\r\n");
+	LREP("PC PORT: %d _______\r\n", BOARD_TRANSPC_UART_INSTANCE);
 	//LREP("SFrameInfo Size: %d\r\n", sizeof(SFrameInfo));
 	while(1) {
-		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
+		OSSemPend(&pApp->semTransPc, 1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
 			Trans_Task(&pApp->sTransPc);
 
@@ -696,16 +711,25 @@ void App_TaskUserInterface(task_param_t param)
 	SApp *pApp = (SApp *)param;
 	OS_ERR	err;
 	CPU_TS	ts;
-
+	ASSERT(OSA_SemaCreate(&pApp->semTransUi, 0) == kStatus_OSA_Success);
 	Trans_RegisterClbEvent(&pApp->sTransUi, TRANS_EVT_RECV_DATA, Clb_TransUI_RecvEvent);
 	Trans_RegisterClbEvent(&pApp->sTransUi, TRANS_EVT_SENT_DATA, Clb_TransUI_SentEvent);
 
 	Trans_Init(&pApp->sTransUi, BOARD_TRANSUI_UART_INSTANCE,
-			BOARD_TRANSUI_UART_BAUD, &pApp->TCB_task_ui);
+			BOARD_TRANSUI_UART_BAUD, &pApp->semTransUi);
 
-	LREP("task user interface init done\r\n");
+	LREP("UI PORT: %d _______\r\n", BOARD_TRANSUI_UART_INSTANCE);
+
+	OSTmrStart(&pApp->hCtrlTimer, &err);
+	if (err == OS_ERR_NONE) {
+		/* Timer was created but NOT started */
+		LREP("timer started ok\r\n");
+	} else {
+		LREP("timer start failed\r\n");
+	}
+
 	while(1) {
-		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
+		OSSemPend(&pApp->semTransUi, 1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
 			Trans_Task(&pApp->sTransUi);
 		}
@@ -744,14 +768,14 @@ void App_TaskStartup(task_param_t arg) {
 
 	if (err == OS_ERR_NONE) {
 		/* Timer was created but NOT started */
-		LREP("timer created successful\r\n");
-		OSTmrStart(&pApp->hCtrlTimer, &err);
-		if (err == OS_ERR_NONE) {
-			/* Timer was created but NOT started */
-			LREP("timer started ok\r\n");
-		} else {
-			LREP("timer start failed\r\n");
-		}
+		//LREP("timer created successful\r\n");
+		//OSTmrStart(&pApp->hCtrlTimer, &err);
+		//if (err == OS_ERR_NONE) {
+		//	/* Timer was created but NOT started */
+		//	LREP("timer started ok\r\n");
+		//} else {
+		//	LREP("timer start failed\r\n");
+		//}
 	} else {
 		LREP("timer create failed\r\n");
 	}
@@ -808,7 +832,7 @@ void App_TaskStartup(task_param_t arg) {
 			//LEP("Feed dog \r\n");
 			/* Feed dog to prevent WDG reset */
 			//WDOG_DRV_Refresh();
-			App_AiReadAllPort(pApp);
+			//App_AiReadAllPort(pApp);
 		}
 
 
@@ -912,7 +936,7 @@ void App_CommRecvHandle(const uint8_t *data) {
 	break;
 
 	case LOGGER_GET | LOGGER_STREAM_HEADER: {
-		pAppObj->counter = 0;
+		pAppObj->pcCounter = 0;
 		App_SetCtrlCode(pAppObj, CTRL_SEND_HEADER);
 	}
 	break;
@@ -1022,33 +1046,37 @@ void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
 void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type) {
 	//LREP("Sent done event 0x%x\r\n", u8Type);
 	if(App_IsCtrlCodePending(pAppObj, CTRL_SEND_HEADER)) {
-		if(pAppObj->counter < SYSTEM_NUM_TAG) {
+		if(pAppObj->pcCounter < SYSTEM_NUM_TAG) {
 			uint8_t *mem = OSA_FixedMemMalloc(sizeof(STagHeader) + 1);
 			if(mem != NULL) {
 				STagHeader *hdr = (STagHeader*)((uint8_t*)mem + 1);
-				mem[0] = (uint8_t)pAppObj->counter;
-				hdr->id = pAppObj->sCfg.sTag[pAppObj->counter].id;
-				hdr->enable = pAppObj->sCfg.sTag[pAppObj->counter].enable;
-				hdr->min = pAppObj->sCfg.sTag[pAppObj->counter].raw_min;
-				hdr->max = pAppObj->sCfg.sTag[pAppObj->counter].raw_max;
-				hdr->alarm_value = pAppObj->sCfg.sTag[pAppObj->counter].alarm_value;
-				hdr->alarm_enable = pAppObj->sCfg.sTag[pAppObj->counter].alarm_enable;
-				Str_Copy_N(hdr->name, pAppObj->sCfg.sTag[pAppObj->counter].name,
+				mem[0] = (uint8_t)pAppObj->pcCounter;
+				hdr->id = pAppObj->sCfg.sTag[pAppObj->pcCounter].id;
+				hdr->enable = pAppObj->sCfg.sTag[pAppObj->pcCounter].enable;
+				hdr->min = pAppObj->sCfg.sTag[pAppObj->pcCounter].raw_min;
+				hdr->max = pAppObj->sCfg.sTag[pAppObj->pcCounter].raw_max;
+				hdr->alarm_value = pAppObj->sCfg.sTag[pAppObj->pcCounter].alarm_value;
+				hdr->alarm_enable = pAppObj->sCfg.sTag[pAppObj->pcCounter].alarm_enable;
+				Str_Copy_N((CPU_CHAR*)hdr->name,
+						(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->pcCounter].name,
 						sizeof(hdr->name));
-				Str_Copy_N(hdr->raw_unit, pAppObj->sCfg.sTag[pAppObj->counter].raw_unit,
+				Str_Copy_N((CPU_CHAR*)hdr->raw_unit,
+						(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->pcCounter].raw_unit,
 						sizeof(hdr->raw_unit));
-				Str_Copy_N(hdr->std_unit, pAppObj->sCfg.sTag[pAppObj->counter].std_unit,
+				Str_Copy_N((CPU_CHAR*)hdr->std_unit,
+						(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->pcCounter].std_unit,
 						sizeof(hdr->std_unit));
 				App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_HEADER,
 						(uint8_t*)mem, sizeof(STagHeader) + 1, false);
 
-				LREP("send header %d\r\n", pAppObj->counter);
+				LREP("send header %d\r\n", pAppObj->pcCounter);
 				App_SetCtrlCode(pAppObj, CTRL_SEND_HEADER);
-				pAppObj->counter++;
+				pAppObj->pcCounter++;
 				OSA_FixedMemFree(mem);
 			}
 		} else {
 			App_ClearCtrlCode(pAppObj, CTRL_SEND_HEADER);
+			pAppObj->pcCounter = 0;
 		}
 	}
 }
@@ -1074,7 +1102,7 @@ void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type) {
  *  @note
  */
 void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type) {
-	LREP("ui send done event \r\n");
+	//LREP("ui send done event \r\n");
 }
 /*****************************************************************************/
 /** @brief
@@ -1085,8 +1113,70 @@ void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type) {
  *  @note
  */
 void Clb_TimerControl(void *p_tmr, void *p_arg) {
-//	GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
+	static uint8_t counter = 0;
+
 	App_GenerateFakeTime(pAppObj);
+
+	if(counter % 15 == 0) {
+		pAppObj->uiCounter = 0;
+		SSystemStatus *pSys = (SSystemStatus*)OSA_FixedMemMalloc(sizeof(SSystemStatus));
+		if(pSys != NULL) {
+			memset(pSys, 0, sizeof(SSystemStatus));
+			memcpy(&pSys->time, &pAppObj->sDateTime, sizeof(SDateTime));
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
+					(uint8_t*)pSys, sizeof(SSystemStatus), false);
+			OSA_FixedMemFree((uint8_t*)pSys);
+		}
+		LREP("send system status\r\n");
+	}
+
+	if(pAppObj->uiCounter < SYSTEM_NUM_TAG) {
+		uint8_t *mem = OSA_FixedMemMalloc(sizeof(STagHeader) + 1);
+		if(mem != NULL) {
+			STagHeader *hdr = (STagHeader*)((uint8_t*)mem + 1);
+			mem[0] = (uint8_t)pAppObj->uiCounter;
+			hdr->id = pAppObj->sCfg.sTag[pAppObj->uiCounter].id;
+			hdr->enable = pAppObj->sCfg.sTag[pAppObj->uiCounter].enable;
+			hdr->min = pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_min;
+			hdr->max = pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_max;
+			hdr->alarm_value = pAppObj->sCfg.sTag[pAppObj->uiCounter].alarm_value;
+			hdr->alarm_enable = pAppObj->sCfg.sTag[pAppObj->uiCounter].alarm_enable;
+			Str_Copy_N((CPU_CHAR*)hdr->name,
+					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].name,
+					sizeof(hdr->name));
+			Str_Copy_N((CPU_CHAR*)hdr->raw_unit,
+					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_unit,
+					sizeof(hdr->raw_unit));
+			Str_Copy_N((CPU_CHAR*)hdr->std_unit,
+					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].std_unit,
+					sizeof(hdr->std_unit));
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_HEADER,
+					(uint8_t*)mem, sizeof(STagHeader) + 1, false);
+
+			LREP("send header %d\r\n", pAppObj->uiCounter);
+			OSA_FixedMemFree(mem);
+			pAppObj->uiCounter++;
+		}
+	} else {
+		STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
+		if(pMem != NULL) {
+			for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+				pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
+				pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
+				pMem->Node[i].meas_stt[0] = pAppObj->sTagValue.Node[i].meas_stt[0];
+				pMem->Node[i].meas_stt[1] = pAppObj->sTagValue.Node[i].meas_stt[1];
+				pMem->Node[i].meas_stt[2] = pAppObj->sTagValue.Node[i].meas_stt[2];
+			}
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_VALUE,
+					(uint8_t*)pMem, sizeof(STagVArray), false);
+
+			OSA_FixedMemFree((uint8_t*)pMem);
+		}
+	}
+
+	LREP("counter = %d\r\n", counter);
+	counter++;
+
 }
 
 /*****************************************************************************/
@@ -1143,6 +1233,8 @@ int	App_ModbusDoRead(SApp *pApp){
 					pApp->sMB.Node[i].data_type,
 					pApp->sMB.Node[i].reg_address,
 					1, data, &rlen);
+			//LREP("read addr: %d data %d\r\n",pApp->sMB.Node[i].address,
+			//		pApp->sMB.Node[i].reg_address);
 
 			if(retVal != MB_SUCCESS) {
 				pApp->sMB.Node[i].status = TAG_STT_MB_FAILED;
@@ -1311,7 +1403,7 @@ int App_UpdateTagContent(SApp *pApp) {
 			pApp->sTagValue.Node[i].meas_stt[1] = '2';
 			pApp->sTagValue.Node[i].meas_stt[2] = 0;
 			pApp->sTagValue.Node[i].raw_value = 0;
-			LREP("not read type %d index %d\r\n", pApp->sCfg.sTag[i].input_type, status);
+			//LREP("not read type %d index %d\r\n", pApp->sCfg.sTag[i].input_type, status);
 		}
 	}
 
@@ -1988,7 +2080,7 @@ void sdhc_card_detection(void)
     	if(App_IsSysStatus(pAppObj, SYS_ERR_SDCARD_1)) {
 			OS_ERR err;
 			App_SetCtrlCode(pAppObj, CTRL_INIT_SDCARD_1);
-			OSTaskSemPost(&pAppObj->TCB_task_startup, OS_OPT_NONE, &err);
+			OSTaskSemPost(&TCB_task_startup, OS_OPT_NONE, &err);
 			ASSERT(err == OS_ERR_NONE);
     	}
     }

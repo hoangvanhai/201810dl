@@ -153,6 +153,7 @@ int debug_scanf(const char  *fmt_ptr, ...);
  */
 int debug_getchar(void);
 
+extern semaphore_t debug_sem;
 /*@}*/
 
 #if defined(__cplusplus)

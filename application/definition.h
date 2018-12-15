@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <app_cfg.h>
 #include <lwip/netif.h>
+#include <time.h>
 
 typedef enum Network_Interface_ {
 	Interface_Ethernet,
@@ -73,6 +74,7 @@ typedef enum Network_DataEvent_ {
 #define LOGGER_MONITOR_HW                   0x06
 #define LOGGER_WRITE_SUCCESS                0x07
 #define LOGGER_WRITE_DONE                   0x08
+#define LOGGER_SYSTEM_STATUS				0x09
 
 #define LOGGER_LOGIN                        0x10
 #define LOGGER_LOGOUT                       0x11
@@ -112,10 +114,7 @@ enum ControlMsg {
 };
 
 /* ui definition */
-#define UI_UPDATE_SYSTEM_STATUS				0x01
-#define UI_UPDATE_TAG_VALUE					0x02
-#define UI_UPDATE_DI_VALUE				    0x03
-#define UI_UPDATE_DO_VALUE					0x04
+
 
 
 /* modbus definition */
@@ -221,6 +220,17 @@ typedef enum EDOCtrlType_ {
     CTRL_PULSE = 0,
     CTRL_LEVEL
 }EDOCtrlType;
+
+
+typedef struct SSystemStatus_ {
+	uint8_t		eth_stat;
+	uint8_t		sim_stat;
+	uint8_t		sdcard1_stat;
+	uint8_t		stcard2_stat;
+	struct		tm time;
+}SSystemStatus;
+
+
 
 typedef struct SCtrlMsg_ {
     uint16_t		id;

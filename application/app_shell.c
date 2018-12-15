@@ -120,7 +120,7 @@ void send_queue(int32_t argc, char**argv) {
 			if(p_msg != NULL) {
 				memset(p_msg, 0xFF, 264);
 				OS_ERR err;
-				OSTaskQPost(&pAppObj->TCB_task_modbus, p_msg, 264, OS_OPT_POST_FIFO, &err);
+				OSTaskQPost(&TCB_task_modbus, p_msg, 264, OS_OPT_POST_FIFO, &err);
 				if(err != OS_ERR_NONE) {
 					LREP("task queue post failed \r\n");
 				} else {
