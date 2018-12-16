@@ -307,7 +307,7 @@ int	App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx) {
 int App_DefaultTag(STag *pHandle, uint8_t tagIdx) {
 
 	pHandle->id = tagIdx;
-	pHandle->input_id = tagIdx;
+	pHandle->input_id = 2;	//tagIdx;
 	pHandle->input_id = MIN(pHandle->input_id, SYSTEM_NUM_TAG - 1);
 	pHandle->pin_calib = MIN(pHandle->pin_calib, DIGITAL_INPUT_NUM_CHANNEL - 1);
 	pHandle->pin_error = MIN(pHandle->pin_error, DIGITAL_INPUT_NUM_CHANNEL - 1);
@@ -1346,15 +1346,19 @@ int App_UpdateTagContent(SApp *pApp) {
 		}
 
 		/* value = scratch * (raw_max - raw_min) / (scr_max - scr_min) */
-		pApp->sTagValue.Node[i].raw_value =
+		if((pApp->sCfg.sTag[i].scratch_max - pApp->sCfg.sTag[i].scratch_min) != 0) {
+			pApp->sTagValue.Node[i].raw_value =
 				(pApp->sTagValue.Node[i].scratch_value -  pApp->sCfg.sTag[i].scratch_min ) *
 				(pApp->sCfg.sTag[i].raw_max - pApp->sCfg.sTag[i].raw_min) /
 				(pApp->sCfg.sTag[i].scratch_max - pApp->sCfg.sTag[i].scratch_min) +
 				pApp->sCfg.sTag[i].raw_min;
+		} else {
+			ASSERT(FALSE);
+		}
 
 		/* value = a + b * value */
 		pApp->sTagValue.Node[i].raw_value = 	pApp->sCfg.sTag[i].coef_a +
-									pApp->sTagValue.Node[i].raw_value * pApp->sCfg.sTag[i].coef_b;
+				pApp->sTagValue.Node[i].raw_value * pApp->sCfg.sTag[i].coef_b;
 
 		if(status == TAG_STT_OK) {
 			// get status

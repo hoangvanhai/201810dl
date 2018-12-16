@@ -46,9 +46,8 @@
 /**************************** Type Definitions *******************************/
 typedef struct SApp_ {
 	STrans				sTransPc;
-	semaphore_t			semTransPc;
-	bool				sdhcPlugged;
 	STrans				sTransUi;
+	semaphore_t			semTransPc;
 	semaphore_t			semTransUi;
 	ESysStatus			eStatus;
 	SModbus				sModbus;
@@ -67,6 +66,7 @@ typedef struct SApp_ {
 	SSysCfg				sCfg;
 	uint32_t			pcCounter;
 	uint32_t			uiCounter;
+	bool				sdhcPlugged;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/

@@ -48,13 +48,9 @@ void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, voi
 	pTrans->sFlag.u8All = 0;
     pTrans->hSem = pSemaphore;
 
-    Queue_Init(&pTrans->qSendingData);
-    Queue_Init(&pTrans->qSendingCMD);
-    Queue_Init(&pTrans->qSentQueue);
-
-    /*LREP("trans port %d \r\nqSendingData %x \r\nqSendingCMD %x \r\nqSentQueue %x\r\n",
-				u32UartPort, &pTrans->qSendingData,
-				&pTrans->qSendingCMD, &pTrans->qSentQueue); */
+    ASSERT(Queue_Init(&pTrans->qSendingData));
+    ASSERT(Queue_Init(&pTrans->qSendingCMD));
+    ASSERT(Queue_Init(&pTrans->qSentQueue));
 
 
     /*-----------------------------------------------------------------------

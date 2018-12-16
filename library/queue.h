@@ -32,11 +32,11 @@ typedef struct _SQueue
     /**
      * Number of buffers present in the current queue
      */
+    mutex_t mtx;
     uint8_t u8Size;
 } SQueue;
 /***************** Macros (Inline Functions) Definitions *********************/
 #define Search_SetParam(sSearch, fCriteria, pHandle) (sSearch.fCriteria = fCriteria; sSearch.pHandle = pHandle;)
-#define Queue_GetSize(q) ((q)->u8Size)
 #define Queue_Pop(q)    Queue_Remove(q,NULL)
 #define Queue_Peek(q)   Queue_Read(q,NULL)
 #define Queue_Push(q,b) Queue_Append(q,b)
@@ -49,7 +49,7 @@ extern "C"
 
 #endif
 
-void 	Queue_Init(SQueue *q);
+bool 	Queue_Init(SQueue *q);
 
 void 	Queue_Append(SQueue *q, SMem *buf);
 
@@ -59,13 +59,7 @@ SMem* 	Queue_Read(SQueue *q, SSearch *search);
 
 void 	Queue_Flush(SQueue *q);
 
-uint8_t Queue_GetFreeQueueSize(uint16_t u16Size);
-
-#if (TOTAL_NUMBER_OF_SMALL_MEMS > 0)
-uint8_t Queue_GetFreeSmallQueueSize(void);
-#endif
-
-uint8_t Queue_GetFreeLargeQueueSize();
+uint8_t Queue_GetSize(SQueue *q);
         
 #ifdef __cplusplus
 } /* extern "C" */

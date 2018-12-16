@@ -262,7 +262,7 @@
 /      lock control is independent of re-entrancy. */
 
 
-#define FF_FS_REENTRANT	1
+#define FF_FS_REENTRANT	0
 #define FF_FS_TIMEOUT	1000
 #define FF_SYNC_t		OS_MUTEX		//HANDLE
 /* The option FF_FS_REENTRANT switches the re-entrancy (thread safe) of the FatFs

@@ -22,10 +22,7 @@ typedef enum _SMode
 
 #if 	(APP_PLATFORM == APP_RTOS)
 
-	//OS_MUTEX* hMemMutex;
-	#define ENTER_CRITICAL()		//OSMutexPend(hMemMutex,0, &err);
-	#define EXIT_CRITICAL() 		//OSMutexPost(hMemMutex);
-	
+
 	
 #elif	(APP_PLATFORM == APP_STAND_ALONE)
 
@@ -49,11 +46,12 @@ static SMem *Queue_Read_Or_Remove(SQueue *q, SMode mode, SSearch *search);
  * @note
  */
 
-void Queue_Init(SQueue *q)
+bool Queue_Init(SQueue *q)
 {
     q->pHead = NULL;
     q->pTail = NULL;
     q->u8Size = 0;
+    return OSA_MutexCreate(&q->mtx) == kStatus_OSA_Success;
 }
 /*****************************************************************************/
 
@@ -68,7 +66,7 @@ void Queue_Init(SQueue *q)
 
 void Queue_Append(SQueue *q, SMem *buf)
 {
-    ENTER_CRITICAL();
+    if(OSA_MutexLock(&q->mtx, 100) == kStatus_OSA_Success)
     {
     	ASSERT(buf != NULL);
         if (q->u8Size == 0)
@@ -94,7 +92,7 @@ void Queue_Append(SQueue *q, SMem *buf)
 #endif
 
     }
-    EXIT_CRITICAL();
+    OSA_MutexUnlock(&q->mtx);
 
 }/* Queue_Append */
 
@@ -116,7 +114,8 @@ static SMem *Queue_Read_Or_Remove(SQueue *q, SMode mode, SSearch *search)
     SMem *pBufCurrent = NULL;
     SMem *pBufPrevious;
 
-    ENTER_CRITICAL();
+    if(OSA_MutexLock(&q->mtx, 100) != kStatus_OSA_Success)
+    	return NULL;
    
     if (q->u8Size != 0)
     {
@@ -175,7 +174,7 @@ static SMem *Queue_Read_Or_Remove(SQueue *q, SMode mode, SSearch *search)
         }
     } /* q->u8Size != 0 */
 
-    EXIT_CRITICAL();
+    OSA_MutexUnlock(&q->mtx);
 
     return (pBufCurrent);
 
@@ -211,9 +210,7 @@ SMem *Queue_Read(SQueue *q, SSearch *search)
     return (Queue_Read_Or_Remove(q, READ_MODE, search));
 }
 
-/*****************************************************************************/
-
-/**
+/*****************************************************************************
  * @brief Internal function for flushing a specific queue
  *
  * @param q Queue to be flushed
@@ -240,6 +237,21 @@ void Queue_Flush(SQueue *q)
         }
         Mem_Free(buf_to_free);
     }
+}
+
+/*****************************************************************************
+ * @brief Internal function for flushing a specific queue
+ *
+ * @param q Queue to be flushed
+ * @return Void.
+ * @note
+ */
+uint8_t Queue_GetSize(SQueue *q) {
+	uint8_t size = 0;
+	OSA_MutexLock(&q->mtx, 100);
+	size = q->u8Size;
+	OSA_MutexUnlock(&q->mtx);
+	return size;
 }
 
 /*****************************************************************************/
