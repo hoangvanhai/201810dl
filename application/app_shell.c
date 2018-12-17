@@ -36,7 +36,8 @@
 #include <includes.h>
 #include "shell.h"
 #include <app.h>
-#include <Transceiver.h>
+#include <TransUI.h>
+#include <TransPC.h>
 #include <rtc_comm.h>
 #include <lib_str.h>
 

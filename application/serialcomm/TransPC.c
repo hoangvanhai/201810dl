@@ -4,23 +4,19 @@ extern "C" {
 #endif
 /***************************** Include Files *********************************/
 #include "TransDefS.h"
-#include "Transceiver.h"
+#include "TransPC.h"
 #include "mem.h"
 #include "queue.h"
 #include "hardware_profile.h"
 #include <fsl_debug_console.h>
 
 /************************** Constant Definitions *****************************/
-typedef enum
-{
-    E_CMD_FRM   =   0,      //(CMD_ACK or CMD_NACK)
-    E_DATA_FRM  =   1       //(DATA_FRM)
-}EPackageType;
+
 /**************************** Type Definitions *******************************/
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
-#define Trans_SendCmdFrame(p,pData,Dlen,Ctrl) Trans_send(p,pData,Dlen,Ctrl,E_CMD_FRM)
+#define TransPC_SendCmdFrame(p,pData,Dlen,Ctrl) TransPC_send(p,pData,Dlen,Ctrl,E_CMD_FRM)
 
 /************************** Function Prototypes ******************************/
 
@@ -29,8 +25,8 @@ static void  Clb_L2SendDone	(EL2Event evt, ETransStatus eStatus, SMem *pMem, voi
 static void  Clb_L2Error 	(EL2Event evt, ETransStatus eStatus, SMem *pMem, void *pClbParam);
 static void  Clb_UpdateTimer        (void *timer, void *pClbParam);
 static uint8_t SearchSeqFrame         (void* pMem, void *pSeq);
-static BOOL  Trans_send           (STrans *pTrans, uint8_t* pu8Data, uint16_t u16Dlen, uint8_t u8Ctrl, EPackageType bFrmType);
-static void  Trans_CheckTimeOutOfSendedFrame(STrans *pTrans);
+static BOOL  TransPC_send           (STransPC *pTrans, uint8_t* pu8Data, uint16_t u16Dlen, uint8_t u8Ctrl, EPackageType bFrmType);
+static void  TransPC_CheckTimeOutOfSendedFrame(STransPC *pTrans);
 /************************** Variable Definitions *****************************/
 
 /*****************************************************************************/
@@ -41,7 +37,7 @@ static void  Trans_CheckTimeOutOfSendedFrame(STrans *pTrans);
  *  @return Void.
  *  @note
  */
-void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, void *pSemaphore)
+void TransPC_Init(STransPC *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, void *pSemaphore)
 {
 	OS_ERR err;
 
@@ -98,7 +94,7 @@ void Trans_Init(STrans *pTrans,  uint32_t u32UartPort, uint32_t u32BaudRate, voi
  *  @return Void.
  *  @note
  */
-void Trans_RecvTask(STrans *pTrans)
+void TransPC_RecvTask(STransPC *pTrans)
 {
     STransL2S 		*pTransL2 = &pTrans->sTransL2;
     EL2RecvAction 	eL2Action = TRANSL2_ACT_NO;
@@ -113,7 +109,7 @@ void Trans_RecvTask(STrans *pTrans)
         case TRANSL2_ACT_NO:
             break;
         case TRANSL2_RCV_ACK:
-            //LREP("\r\nTrans_L2_RCV_ACK");
+            //LREP("\r\nTransPC_L2_RCV_ACK");
             sSearch.fCriteria = SearchSeqFrame;
             sSearch.pHandle   = &pTrans->sTransL2.u8SeqCMDFrm;
             ASSERT(Queue_GetSize(&pTrans->qSentQueue) != 0);
@@ -125,7 +121,7 @@ void Trans_RecvTask(STrans *pTrans)
             }
             break;
         case TRANSL2_RCV_NACK:
-            LREP("\r\nTrans_L2_RCV_NACK");
+            LREP("\r\nTransPC_L2_RCV_NACK");
             sSearch.fCriteria = SearchSeqFrame;
             sSearch.pHandle   = &pTrans->sTransL2.u8SeqCMDFrm;
 
@@ -148,15 +144,15 @@ void Trans_RecvTask(STrans *pTrans)
             break;
 
         case TRANSL2_REQ_ACK:
-//            LREP("\r\nTrans_L2_REQ_ACK");
+//            LREP("\r\nTransPC_L2_REQ_ACK");
             //L2 get a data frame requiring ACK		->	Add CMD_ACK frame to queue
-             Trans_SendCmdFrame(pTrans, NULL, 0, CMD_ACK);
+             TransPC_SendCmdFrame(pTrans, NULL, 0, CMD_ACK);
             break;
 
         case TRANSL2_REQ_NACK:
-            LREP("\r\nTrans_L2_REQ_NACK");
+            LREP("\r\nTransPC_L2_REQ_NACK");
             //L2 get a frame but DLEN or CRCD is wrong	->	Add CMD_NACK frame to queue
-            Trans_SendCmdFrame(pTrans, NULL, 0, CMD_NACK);
+            TransPC_SendCmdFrame(pTrans, NULL, 0, CMD_NACK);
             break;
 
         default:
@@ -175,7 +171,7 @@ void Trans_RecvTask(STrans *pTrans)
  *  @return Void.
  *  @note
  */
-void Trans_SendTask(STrans *pTrans)
+void TransPC_SendTask(STransPC *pTrans)
 {
     STransL2S   *pTransL2         = &pTrans->sTransL2;
     SMem        *pMem             = NULL;
@@ -185,7 +181,7 @@ void Trans_SendTask(STrans *pTrans)
     if(pTrans->sFlag.Bits.bUpdateWaitingACKFrameState == TRUE)
     {
         pTrans->sFlag.Bits.bUpdateWaitingACKFrameState = FALSE;
-        Trans_CheckTimeOutOfSendedFrame(pTrans);
+        TransPC_CheckTimeOutOfSendedFrame(pTrans);
     }
     /*------------------------------------------------------------------------*/
 
@@ -228,10 +224,10 @@ void Trans_SendTask(STrans *pTrans)
  *  @return Void.
  *  @note
  */
-void Trans_Task(STrans *pTrans)
+void TransPC_Task(STransPC *pTrans)
 {
-	Trans_RecvTask(pTrans);
-	Trans_SendTask(pTrans);
+	TransPC_RecvTask(pTrans);
+	TransPC_SendTask(pTrans);
 }
 /*****************************************************************************/
 /** @brief
@@ -241,7 +237,7 @@ void Trans_Task(STrans *pTrans)
  *  @return Void.
  *  @note
  */
-static BOOL Trans_send(STrans *pTrans, uint8_t* pu8Data, 
+static BOOL TransPC_send(STransPC *pTrans, uint8_t* pu8Data,
                             uint16_t u16Dlen, uint8_t u8Ctrl, EPackageType bFrmType)
 {
 
@@ -322,9 +318,9 @@ static BOOL Trans_send(STrans *pTrans, uint8_t* pu8Data,
  *  @return Void.
  *  @note
  */
-BOOL Trans_Send(STrans *pTrans, uint16_t u16Dlen, uint8_t* pu8Data,  uint8_t u8Ctrl)
+BOOL TransPC_Send(STransPC *pTrans, uint16_t u16Dlen, uint8_t* pu8Data,  uint8_t u8Ctrl)
 {
-    return Trans_send(pTrans, pu8Data, u16Dlen, u8Ctrl, E_DATA_FRM);
+    return TransPC_send(pTrans, pu8Data, u16Dlen, u8Ctrl, E_DATA_FRM);
 }
 /*****************************************************************************/
 /** @brief
@@ -334,7 +330,7 @@ BOOL Trans_Send(STrans *pTrans, uint16_t u16Dlen, uint8_t* pu8Data,  uint8_t u8C
  *  @return Void.
  *  @note
  */
-BOOL Trans_IsSendReady(STrans *pTrans, uint16_t u16DLen)
+BOOL TransPC_IsSendReady(STransPC *pTrans, uint16_t u16DLen)
 {
 //    uint16_t u16Size = CALCULATE_MEM_SIZE(u16DLen + SFRM_HDR_SIZE);
     return TRUE;
@@ -370,7 +366,7 @@ static uint8_t SearchSeqFrame(void* pMem, void *pSeq)
  *  @return Void.
  *  @note
  */
-static void Trans_CheckTimeOutOfSendedFrame(STrans *pTrans)
+static void TransPC_CheckTimeOutOfSendedFrame(STransPC *pTrans)
 {
     SMem *pMem, *pTemMem;
 
@@ -429,7 +425,7 @@ static void Trans_CheckTimeOutOfSendedFrame(STrans *pTrans)
  *  @note
  */
 
-void Trans_RegisterClbEvent(STrans *pTrans, EL3Event evt, FClbL3Event pFunction)
+void TransPC_RegisterClbEvent(STransPC *pTrans, EL3Event evt, FClbL3Event pFunction)
 {
     switch(evt)
     {
@@ -457,7 +453,7 @@ void Trans_RegisterClbEvent(STrans *pTrans, EL3Event evt, FClbL3Event pFunction)
  */
 void Clb_L2RecvData(EL2Event evt, ETransStatus eStatus, SMem *pRecvMem, void *pClbParam)
 {
-    STrans *pTrans = (STrans *)pClbParam;
+    STransPC *pTrans = (STransPC *)pClbParam;
 
     ASSERT(evt == TRANSL2_EVT_RECV_DATA);
 
@@ -491,7 +487,7 @@ void Clb_L2RecvData(EL2Event evt, ETransStatus eStatus, SMem *pRecvMem, void *pC
  */
 void Clb_L2SendDone(EL2Event evt, ETransStatus eStatus, SMem *pSendMem, void *pClbParam)
 {
-    STrans   *pTrans = (STrans *)pClbParam;
+	STransPC   *pTrans = (STransPC *)pClbParam;
     SFrameInfo  *pFrameInfo = (SFrameInfo*)MEM_BODY(pSendMem);
     uint8_t 	*pFrame     = pFrameInfo->pFrame;
     
@@ -548,7 +544,7 @@ void Clb_L2Error (EL2Event evt, ETransStatus eStatus, SMem *pSendMem, void *pClb
 static void Clb_UpdateTimer(void *timer, void *pClbParam)
 {
 	OS_ERR err;
-    STrans *pTrans = (STrans *)pClbParam;
+	STransPC *pTrans = (STransPC *)pClbParam;
     pTrans->sFlag.Bits.bUpdateWaitingACKFrameState = TRUE;
     OSSemPost((semaphore_t*)pTrans->hSem, OS_OPT_POST_1, &err);
 }

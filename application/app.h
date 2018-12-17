@@ -27,7 +27,8 @@
 /***************************** Include Files *********************************/
 #include <includes.h>
 #include <gpio_pins.h>
-#include <Transceiver.h>
+#include <TransPC.h>
+#include <TransUI.h>
 #include <definition.h>
 #include <master-rtu.h>
 #include <rtc_comm.h>
@@ -49,9 +50,9 @@
 typedef struct SApp_ {
 	ESysStatus			eStatus;
 	ECtrlCode			eCtrlCode;
-	STrans				sTransPc;
+	STransPC			sTransPc;
 	semaphore_t			semTransPc;
-	STrans				sTransUi;
+	STransUI			sTransUi;
 	semaphore_t			semTransUi;
 	SModbus				sModbus;
 	SAnalogReader		sAnalogReader;

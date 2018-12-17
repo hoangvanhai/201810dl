@@ -109,7 +109,7 @@ static void Clb_L1RecvData(LPVOID pParam)
     L2DBG_INC(nL1RecvData);
        
     /*Signal to run Trans thread*/
-    OSSemPost((semaphore_t*)pTransL2->hSem, OS_OPT_POST_1, &err);
+    //OSSemPost((semaphore_t*)pTransL2->hSem, OS_OPT_POST_1, &err);
 }
 	
 /*****************************************************************************/

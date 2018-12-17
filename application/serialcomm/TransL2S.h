@@ -93,7 +93,7 @@ typedef struct _STransL2S
 
     /*Semaphore to signal Trans Task*/
 
-    void*				hSem;			//use to signal Trans thread
+    semaphore_t			*hSem;			//use to signal Trans thread
 
     /*TimeOut Timer for L1*/
     OS_TMR				hL1TimeOutTimer;

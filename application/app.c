@@ -661,10 +661,10 @@ void App_TaskSerialcomm(task_param_t param) {
 	CPU_TS	ts;
 
 	ASSERT(OSA_SemaCreate(&pApp->semTransPc, 0) == kStatus_OSA_Success);
-	Trans_RegisterClbEvent(&pApp->sTransPc, TRANS_EVT_RECV_DATA, Clb_TransPC_RecvEvent);
-	Trans_RegisterClbEvent(&pApp->sTransPc, TRANS_EVT_SENT_DATA, Clb_TransPC_SentEvent);
+	TransPC_RegisterClbEvent(&pApp->sTransPc, TRANS_EVT_RECV_DATA, Clb_TransPC_RecvEvent);
+	TransPC_RegisterClbEvent(&pApp->sTransPc, TRANS_EVT_SENT_DATA, Clb_TransPC_SentEvent);
 
-	Trans_Init(&pApp->sTransPc, BOARD_TRANSPC_UART_INSTANCE,
+	TransPC_Init(&pApp->sTransPc, BOARD_TRANSPC_UART_INSTANCE,
 			BOARD_TRANSPC_UART_BAUD, &pApp->semTransPc);
 
 	LREP("PC PORT: %d _______\r\n", BOARD_TRANSPC_UART_INSTANCE);
@@ -672,7 +672,7 @@ void App_TaskSerialcomm(task_param_t param) {
 	while(1) {
 		OSSemPend(&pApp->semTransPc, 1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
-			Trans_Task(&pApp->sTransPc);
+			TransPC_Task(&pApp->sTransPc);
 		}
 	}
 }
@@ -693,10 +693,10 @@ void App_TaskUserInterface(task_param_t param)
 	OS_ERR	err;
 	CPU_TS	ts;
 	ASSERT(OSA_SemaCreate(&pApp->semTransUi, 0) == kStatus_OSA_Success);
-	Trans_RegisterClbEvent(&pApp->sTransUi, TRANS_EVT_RECV_DATA, Clb_TransUI_RecvEvent);
-	Trans_RegisterClbEvent(&pApp->sTransUi, TRANS_EVT_SENT_DATA, Clb_TransUI_SentEvent);
+	TransUI_RegisterClbEvent(&pApp->sTransUi, TRANS_EVT_RECV_DATA, Clb_TransUI_RecvEvent);
+	TransUI_RegisterClbEvent(&pApp->sTransUi, TRANS_EVT_SENT_DATA, Clb_TransUI_SentEvent);
 
-	Trans_Init(&pApp->sTransUi, BOARD_TRANSUI_UART_INSTANCE,
+	TransUI_Init(&pApp->sTransUi, BOARD_TRANSUI_UART_INSTANCE,
 			BOARD_TRANSUI_UART_BAUD, &pApp->semTransUi);
 
 	LREP("UI PORT: %d _______\r\n", BOARD_TRANSUI_UART_INSTANCE);
@@ -712,7 +712,7 @@ void App_TaskUserInterface(task_param_t param)
 	while(1) {
 		OSSemPend(&pApp->semTransUi, 1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
-			Trans_Task(&pApp->sTransUi);
+			TransUI_Task(&pApp->sTransUi);
 		}
 	}
 }
@@ -1686,7 +1686,7 @@ inline int App_SendUI(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, b
 		if(len > 0 && data != NULL)
 			memcpy(&sdata[2], data, len);
 
-		ret = Trans_Send(&pApp->sTransUi, len + 2, sdata, ack ? 0xA0 : 0x20);
+		ret = TransUI_Send(&pApp->sTransUi, len + 2, sdata, ack ? 0xA0 : 0x20);
 		OSA_FixedMemFree(sdata);
 	}
 	return ret;
@@ -1708,7 +1708,7 @@ inline int	App_SendPC(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, b
 		if(len > 0 && data != NULL)
 			memcpy(&sdata[2], data, len);
 
-		ret = Trans_Send(&pApp->sTransPc, len + 2, sdata, ack ? 0xA0 : 0x20);
+		ret = TransPC_Send(&pApp->sTransPc, len + 2, sdata, ack ? 0xA0 : 0x20);
 		OSA_FixedMemFree(sdata);
 	}
 	return ret;

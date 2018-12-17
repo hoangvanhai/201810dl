@@ -32,8 +32,8 @@ typedef struct _SQueue
     /**
      * Number of buffers present in the current queue
      */
-    mutex_t mtx;
     uint8_t u8Size;
+    mutex_t mtx;
 } SQueue;
 /***************** Macros (Inline Functions) Definitions *********************/
 #define Search_SetParam(sSearch, fCriteria, pHandle) (sSearch.fCriteria = fCriteria; sSearch.pHandle = pHandle;)
