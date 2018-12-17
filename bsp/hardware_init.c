@@ -45,6 +45,9 @@ void hardware_init(void) {
 
   CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
 
+	CLOCK_SYS_EnableEnetClock(0);
+	CLOCK_SYS_SetEnetTimeStampSrc(0, kClockTimeSrcOsc0erClk);
+	configure_enet_pins(0);
   configure_sdhc_pins(BOARD_SDHC_INSTANCE);
   configure_i2c_pins(BOARD_I2C_RTC_INSTANCE);
 //  configure_ftm_pins(FTM0_IDX);

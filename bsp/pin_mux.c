@@ -81,39 +81,25 @@ void configure_enet_pins(uint32_t instance)
   PORT_HAL_SetMuxMode(PORTC,18u,kPortMuxAlt4);
   /* Affects PORTC_PCR19 register */
   PORT_HAL_SetMuxMode(PORTC,19u,kPortMuxAlt4);
-  /* Affects PORTA_PCR29 register */
-  PORT_HAL_SetMuxMode(PORTA,29u,kPortMuxAlt4);
-  /* Affects PORTA_PCR27 register */
-  PORT_HAL_SetMuxMode(PORTA,27u,kPortMuxAlt4);
   /* Affects PORTB_PCR1 register */
   PORT_HAL_SetMuxMode(PORTB,1u,kPortMuxAlt4);
   /* Affects PORTB_PCR0 register */
   PORT_HAL_SetMuxMode(PORTB,0u,kPortMuxAlt4);
   PORT_HAL_SetOpenDrainCmd(PORTB,0u,true);
-  /* Affects PORTA_PCR11 register */
-  PORT_HAL_SetMuxMode(PORTA,11u,kPortMuxAlt4);
+  PORT_HAL_SetPullMode(PORTB,0u,kPortPullUp);
+  PORT_HAL_SetPullCmd(PORTB,0u,true);
   /* Affects PORTA_PCR13 register */
   PORT_HAL_SetMuxMode(PORTA,13u,kPortMuxAlt4);
   /* Affects PORTA_PCR12 register */
   PORT_HAL_SetMuxMode(PORTA,12u,kPortMuxAlt4);
-  /* Affects PORTA_PCR10 register */
-  PORT_HAL_SetMuxMode(PORTA,10u,kPortMuxAlt4);
-  /* Affects PORTA_PCR9 register */
-  PORT_HAL_SetMuxMode(PORTA,9u,kPortMuxAlt4);
   /* Affects PORTA_PCR14 register */
   PORT_HAL_SetMuxMode(PORTA,14u,kPortMuxAlt4);
   /* Affects PORTA_PCR5 register */
   PORT_HAL_SetMuxMode(PORTA,5u,kPortMuxAlt4);
-  /* Affects PORTA_PCR25 register */
-  PORT_HAL_SetMuxMode(PORTA,25u,kPortMuxAlt4);
   /* Affects PORTA_PCR16 register */
   PORT_HAL_SetMuxMode(PORTA,16u,kPortMuxAlt4);
   /* Affects PORTA_PCR17 register */
   PORT_HAL_SetMuxMode(PORTA,17u,kPortMuxAlt4);
-  /* Affects PORTA_PCR24 register */
-  PORT_HAL_SetMuxMode(PORTA,24u,kPortMuxAlt4);
-  /* Affects PORTA_PCR26 register */
-  PORT_HAL_SetMuxMode(PORTA,26u,kPortMuxAlt4);
   /* Affects PORTA_PCR15 register */
   PORT_HAL_SetMuxMode(PORTA,15u,kPortMuxAlt4);
   /* Affects PORTA_PCR28 register */

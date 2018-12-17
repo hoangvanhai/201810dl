@@ -98,5 +98,6 @@ extern enet_dev_if_t enetDevIf[];
 err_t ethernetif_init(struct netif *netif);
 uint32_t ethernetif_input(void *enetPtr, enet_mac_packet_buffer_t *packetBuffer);
 void ENET_receive(task_param_t param);
+bool PHY_Get_Initialized_LinkStatus();
 
 #endif

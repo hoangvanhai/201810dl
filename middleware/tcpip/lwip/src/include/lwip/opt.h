@@ -103,7 +103,7 @@
  * already use it.
  */
 #ifndef MEM_LIBC_MALLOC
-#define MEM_LIBC_MALLOC                 0
+#define MEM_LIBC_MALLOC                 1
 #endif
 
 /**
@@ -112,7 +112,7 @@
 * speed and usage from interrupts!
 */
 #ifndef MEMP_MEM_MALLOC
-#define MEMP_MEM_MALLOC                 0
+#define MEMP_MEM_MALLOC                 1
 #endif
 
 /**
@@ -151,7 +151,7 @@
  *      memp_malloc() or memp_free() is called (useful but slow!)
  */
 #ifndef MEMP_OVERFLOW_CHECK
-#define MEMP_OVERFLOW_CHECK             0
+#define MEMP_OVERFLOW_CHECK             1
 #endif
 
 /**
@@ -159,7 +159,7 @@
  * sure that there are no cycles in the linked lists.
  */
 #ifndef MEMP_SANITY_CHECK
-#define MEMP_SANITY_CHECK               0
+#define MEMP_SANITY_CHECK               1
 #endif
 
 /**
@@ -321,7 +321,7 @@
  * (only needed if you use the sequential API, like api_lib.c)
  */
 #ifndef MEMP_NUM_NETBUF
-#define MEMP_NUM_NETBUF                 2
+#define MEMP_NUM_NETBUF                 6
 #endif
 
 /**
@@ -329,7 +329,7 @@
  * (only needed if you use the sequential API, like api_lib.c)
  */
 #ifndef MEMP_NUM_NETCONN
-#define MEMP_NUM_NETCONN                4
+#define MEMP_NUM_NETCONN                6
 #endif
 
 /**
@@ -1114,7 +1114,7 @@
  * field.
  */
 #ifndef LWIP_NETIF_HOSTNAME
-#define LWIP_NETIF_HOSTNAME             0
+#define LWIP_NETIF_HOSTNAME             1
 #endif
 
 /**
@@ -1453,7 +1453,7 @@
  * in seconds. (does not require sockets.c, and will affect tcp.c)
  */
 #ifndef LWIP_TCP_KEEPALIVE
-#define LWIP_TCP_KEEPALIVE              0
+#define LWIP_TCP_KEEPALIVE              1
 #endif
 
 /**
@@ -1527,7 +1527,7 @@
  * LINK_STATS==1: Enable link stats.
  */
 #ifndef LINK_STATS
-#define LINK_STATS                      1
+#define LINK_STATS                      0
 #endif
 
 /**
@@ -1913,7 +1913,7 @@
  * PBUF_DEBUG: Enable debugging in pbuf.c.
  */
 #ifndef PBUF_DEBUG
-#define PBUF_DEBUG                      LWIP_DBG_OFF
+#define PBUF_DEBUG                      LWIP_DBG_ON
 #endif
 
 /**

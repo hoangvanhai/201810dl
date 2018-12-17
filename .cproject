@@ -85,8 +85,11 @@
 									<listOptionValue builtIn="false" value="../bsp"/>
 									<listOptionValue builtIn="false" value="../library"/>
 									<listOptionValue builtIn="false" value="../library/shell"/>
+									<listOptionValue builtIn="false" value="../library/common"/>
 									<listOptionValue builtIn="false" value="../application"/>
 									<listOptionValue builtIn="false" value="../application/network"/>
+									<listOptionValue builtIn="false" value="../application/network/modem"/>
+									<listOptionValue builtIn="false" value="../application/network/modem/ftp_client"/>
 									<listOptionValue builtIn="false" value="../application/modbus"/>
 									<listOptionValue builtIn="false" value="../application/periodic"/>
 									<listOptionValue builtIn="false" value="../application/interface"/>

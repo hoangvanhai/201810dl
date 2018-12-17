@@ -42,7 +42,7 @@
  * critical regions during buffer allocation, deallocation and memory
  * allocation and deallocation.
  */
-#define SYS_LIGHTWEIGHT_PROT    0
+#define SYS_LIGHTWEIGHT_PROT    1
 #if USE_RTOS
 
 /**
@@ -56,8 +56,16 @@
 /**
  * LWIP_SOCKET==1: Enable Socket API (require to use sockets.c)
  */
-#define LWIP_SOCKET                     1
+#define LWIP_SOCKET             1
 
+/**
+ * LWIP_SO_RCVTIMEO==1: Enable receive timeout for sockets/netconns and
+ * SO_RCVTIMEO processing.
+ */
+#define LWIP_SO_RCVTIMEO        1 //thinhnt uncomment for getting timeout
+#define LWIP_SO_SNDTIMEO		1
+#define LWIP_NETIF_STATUS_CALLBACK 1 // thinhnt added
+#define LWIP_NETIF_LINK_CALLBACK 1 // thinhnt added
 #else
 /**
  * NO_SYS==1: Bare metal lwIP
@@ -86,8 +94,10 @@
  * MEM_SIZE: the size of the heap memory. If the application will send
  * a lot of data that needs to be copied, this should be set high.
  */
-
-#define MEM_SIZE                (12*1024)
+ //TODO
+#ifndef MEM_SIZE
+#define MEM_SIZE                (64*1024)
+#endif
 
 /* MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
    sends a lot of data out of ROM (or other static memory), this
@@ -124,7 +134,7 @@
 
 /* Controls if TCP should queue segments that arrive out of
    order. Define to 0 if your device is low on memory. */
-#define TCP_QUEUE_OOSEQ         0
+#define TCP_QUEUE_OOSEQ         1
 
 /* TCP Maximum segment size. */
 #define TCP_MSS                 (1500 - 40)	  /* TCP_MSS = (Ethernet MTU - IP header size - TCP header size) */
@@ -157,7 +167,7 @@
 
 
 /* ---------- Statistics options ---------- */
-#define LWIP_STATS 0
+#define LWIP_STATS 1
 #define LWIP_PROVIDE_ERRNO 1
 
 
@@ -209,7 +219,7 @@ Some MCU allow computing and verifying the IP, UDP, TCP and ICMP checksums by ha
    ------------------------------------
 */
 
-#define LWIP_DEBUG
+ #define LWIP_DEBUG 1
 
 #ifdef LWIP_DEBUG
 #define U8_F "c"
@@ -225,7 +235,7 @@ Some MCU allow computing and verifying the IP, UDP, TCP and ICMP checksums by ha
 
 #define TCPIP_MBOX_SIZE                 32
 #define TCPIP_THREAD_STACKSIZE	        1024
-#define TCPIP_THREAD_PRIO	             2
+#define TCPIP_THREAD_PRIO	             5
 
 /**
  * DEFAULT_RAW_RECVMBOX_SIZE: The mailbox size for the incoming packets on a

@@ -47,8 +47,8 @@ sys_assert( const char *msg )
 
 //FSL:only needed for debugging
 #ifdef LWIP_DEBUG
-    LREP(msg);
-    LREP("\n\r");
+    PRINTF(msg);
+    PRINTF("\n\r");
 #endif
 
     OSA_EnterCritical(kCriticalDisableInt);
@@ -370,7 +370,7 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
     taskHandler = (task_handler_t)OSA_MemAlloc(sizeof(OS_TCB));
     if(!taskHandler)
     {
-    	LREP("malloc task handle failed\r\n");
+    	PRINTF("OSA_MemAlloc taskHandler failed\r\n");
         return NULL;
     }
 #endif
@@ -379,22 +379,17 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
     stackMem =  (task_stack_t *)OSA_MemAlloc((size_t)stacksize);
     if(!stackMem)
     {
-    	LREP("malloc task stack failed\r\n");
+    	PRINTF("OSA_MemAlloc stackMem failed\r\n");
         return NULL;
     }
 #else
     stackMem = NULL;
 #endif
     error = OSA_TaskCreate((task_t)thread ,(uint8_t*) name,(uint16_t) stacksize, stackMem,prio,(task_param_t)arg,false,&taskHandler);
-    if(error == kStatus_OSA_Success) {
-
-    	LREP("create task successful\r\n");
+    if(error == kStatus_OSA_Success)
         return taskHandler;
-    }
-    else {
-    	LREP("create task failed\r\n");
+    else
         return (sys_thread_t)0;
-    }
 }
 
 

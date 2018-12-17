@@ -45,6 +45,15 @@
 
 #define IO_MAXLINE  20
 
+#define KNRM  "\x1B[0m"
+#define KRED  "\x1B[31m"
+#define KGRN  "\x1B[32m"
+#define KYEL  "\x1B[33m"
+#define KBLU  "\x1B[34m"
+#define KMAG  "\x1B[35m"
+#define KCYN  "\x1B[36m"
+#define KWHT  "\x1B[37m"
+
 
 /*Configuration for toolchain's printf/scanf or KSDK version printf/scanf */
 #define LREP          	debug_printf
@@ -113,6 +122,18 @@ debug_console_status_t DbgConsole_Init(
  * @return Whether de-initialization was successful or not.
  */
 debug_console_status_t DbgConsole_DeInit(void);
+
+
+
+/*!
+ * @brief   Dump data by formatted output to the standard output stream.
+ *
+ * Call this function to dump the output stream.
+ *
+ * @param   fmt_s   Format control string.
+ * @return  void
+ */
+void debug_dump(const void* data, int len, const char* fmt_s, ...);
 
 /*!
  * @brief   Prints formatted output to the standard output stream.
