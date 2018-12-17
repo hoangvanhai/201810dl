@@ -330,7 +330,8 @@ static void tcp_server_thread(void *arg)
 		sprintf(tmpStr,"Client Thread %d\r\n", tcp_arg[i].idx);
 		PRINTF(tmpStr);
 		threadID = lwtcp_create_thread(taskHandler[i], stackMem[i],
-				tmpStr, tcp_connected_client_thread, &tcp_arg[i], client_connected_stack_size, TASK_CLIENT_CONNECTED_PRIO);
+				tmpStr, tcp_connected_client_thread, &tcp_arg[i],
+				client_connected_stack_size, TASK_CLIENT_CONNECTED_PRIO);
     }
 	/* Do something with ‘p_arg’ */
 	/* Task initialization */
@@ -407,7 +408,8 @@ lwtcp_result_t Network_LWTCPServer_Start(int portno) {
 	sys_thread_t threadID;
 	server_port = portno;
 //	lwtcp_result_t ret;
-	threadID = sys_thread_new("tcp_server_thread", tcp_server_thread, NULL, TASK_NETWORK_TCPSERVER_SIZE, TASK_NETWORK_TCPSERVER_PRIO);
+	threadID = sys_thread_new("tcp_server_thread", tcp_server_thread, NULL,
+			TASK_NETWORK_TCPSERVER_SIZE, TASK_NETWORK_TCPSERVER_PRIO);
 	if (threadID == NULL) {
 		NET_DEBUG_TCP("Server thread Created failed, ID = %d\r\n", threadID);
 		return LWTCP_RESULT_ERR_UNKNOWN;
