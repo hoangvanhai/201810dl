@@ -39,16 +39,17 @@ void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type);
 void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type);
 void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type);
 void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type);
-void Clb_NetTcpClientConnEvent(Network_ConnEvent event,
-		Network_Interface interface);
-void Clb_NetTcpClientRecvData(const uint8_t* data, int length);
-void Clb_NetTcpClientSentData(const uint8_t* data, int length);
-void Clb_NetTcpClientError(const uint8_t* data, int length);
-void Clb_NetTcpServerConnEvent(Network_ConnEvent event,
-		Network_Interface interface);
-void Clb_NetTcpServerRecvData(const uint8_t* data, int length);
-void Clb_NetTcpServerSentData(const uint8_t* data, int length);
-void Clb_NetTcpServerError(const uint8_t* data, int length);
+
+
+void Clb_NetStatus(Network_ConnEvent event, Network_Interface interface);
+
+void Clb_NetTcpClientReceivedData(const char* data, int length);
+void Clb_NetTcpClientSentData(const char* data, int length);
+void Clb_NetTcpClientError(const char* data, int length);
+
+void Clb_NetTcpServerReceivedData(const char* data, int length);
+void Clb_NetTcpServerSendDone(const char* data, int length);
+void Clb_NetTcpServerError(const char* data, int length);
 
 /************************** Variable Definitions *****************************/
 SApp sApp;
@@ -553,6 +554,8 @@ void App_TaskPeriodic(task_param_t parg) {
 	pApp->sDateTime.tm_year = 2018;
 
 	LREP("log min = %d\r\n", log_min);
+
+	App_InitNetworkModule(pApp);
 
 	while(1) {
 		OSA_SleepMs(1000);
@@ -2005,7 +2008,21 @@ int App_GenerateLogFileByName(SApp *pApp, const char *name) {
 				OSA_FixedMemFree((uint8_t*)row);
 
 				if(retVal == FR_OK && rowCount > 0) {
-					// TODO: send file name to Net module
+					retVal = f_close(&file);
+					if(retVal == FR_OK){
+						// TODO: send file name to Net module
+						uint8_t* dirPath = OSA_FixedMemMalloc(128);
+						if(dirPath)
+						{
+							sprintf(dirPath, "/%s", day);
+							memset(filename, 0, sizeof(filename));
+							sprintf((char*)filename, "%s_%s_%s_%s.txt", pApp->sCfg.sCom.tinh,
+									pApp->sCfg.sCom.coso, pApp->sCfg.sCom.tram, time);
+							NET_DEBUG("Send file %s/%s\r\n", dirPath, filename);
+							Net_FTPClientSendFile(dirPath, filename);
+							OSA_FixedMemFree(dirPath);
+						}
+					}
 				}
 			}
 		}
@@ -2078,6 +2095,17 @@ void sdhc_card_detection(void)
 }
 
 /*****************************************************************************/
+
+#define FTP_SERVER_IP 	"27.118.20.209"
+#define FTP_SERVER_PORT 	21
+#define FTP_USER_NAME "ftpuser1"
+#define FTP_PASSWORD "zxcvbnm@12"
+
+//#define TCP_SERVER_IP 	"10.2.82.61"
+//#define TCP_SERVER_IP 	"192.168.1.116"
+#define TCP_SERVER_PORT 	1987
+#define TCP_CLIENT_SERVER_IP 	"192.168.0.103"
+#define TCP_CLIENT_SERVER_PORT 	2011
 /** @brief
  *
  *
@@ -2085,32 +2113,37 @@ void sdhc_card_detection(void)
  *  @return Void.
  *  @note
  */
-void Clb_NetTcpClientConnEvent(Network_ConnEvent event,
-		Network_Interface interface) {
-	switch(event) {
-	case NetConn_Disconnected:
+int	App_InitNetworkModule(SApp *pApp) {
 
-	break;
-	case NetConn_Connected:
+	Net_ModuleInitHw();
+	Net_RegisterConnEvent(Clb_NetStatus);
+	Net_RegisterTcpClientDataEvent(NetData_Received, Clb_NetTcpClientReceivedData);
+	Net_RegisterTcpClientDataEvent(NetData_SendDone, Clb_NetTcpClientSentData);
+	Net_RegisterTcpClientDataEvent(NetData_Error, Clb_NetTcpClientError);
 
-	break;
-	case NetConn_Network_Down:
-
-	break;
-
-	default:
-	break;
+	/**
+	 * Setup a TCP Server & Set example echo callback function
+	 */
+	NetStatus status =	Net_TCPServerStart(TCP_SERVER_PORT);
+	if (status == NET_ERR_NONE)
+	{
+		Net_RegisterTcpServerDataEvent(NetData_Received, 	Clb_NetTcpServerReceivedData);
+		Net_RegisterTcpServerDataEvent(NetData_SendDone, 	Clb_NetTcpServerSendDone);
+		Net_RegisterTcpServerDataEvent(NetData_Error, 		Clb_NetTcpServerError);
 	}
-}
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-void Clb_NetTcpClientRecvData(const uint8_t* data, int length) {
+
+	/**
+	 * Start TCP Client
+	 */
+	status = Net_TCPClientStart(TCP_CLIENT_SERVER_IP, TCP_CLIENT_SERVER_PORT);
+
+	/**
+	 * Start FTP client
+	 */
+	Net_FTPClientStart(FTP_SERVER_IP, FTP_SERVER_PORT, FTP_USER_NAME, FTP_PASSWORD);
+
+	return 0;
+
 
 }
 /*****************************************************************************/
@@ -2121,9 +2154,10 @@ void Clb_NetTcpClientRecvData(const uint8_t* data, int length) {
  *  @return Void.
  *  @note
  */
-void Clb_NetTcpClientSentData(const uint8_t* data, int length) {
-
+void Clb_NetStatus(Network_ConnEvent event, Network_Interface interface) {
+	NET_DEBUG_WARNING("\r\nClb_NetStatus is called event = %d, interface = %d\r\n", event, interface);
 }
+
 /*****************************************************************************/
 /** @brief
  *
@@ -2132,9 +2166,12 @@ void Clb_NetTcpClientSentData(const uint8_t* data, int length) {
  *  @return Void.
  *  @note
  */
-void Clb_NetTcpClientError(const uint8_t* data, int length) {
-
+void Clb_NetTcpClientReceivedData(const char* data, int length) {
+	NET_DEBUG_WARNING("\r\nClb_NetReceivedData is called data = %x, length = %d\r\n: %s", data, length, data);
+	//Net_TCPClientSendData(data, length);
 }
+
+
 /*****************************************************************************/
 /** @brief
  *
@@ -2143,23 +2180,10 @@ void Clb_NetTcpClientError(const uint8_t* data, int length) {
  *  @return Void.
  *  @note
  */
-void Clb_NetTcpServerConnEvent(Network_ConnEvent event,
-		Network_Interface interface) {
-	switch(event) {
-	case NetConn_Disconnected:
-
-	break;
-	case NetConn_Connected:
-
-	break;
-	case NetConn_Network_Down:
-
-	break;
-
-	default:
-	break;
-	}
+void Clb_NetTcpClientSentData(const char* data, int length) {
+	NET_DEBUG_WARNING("Clb_NetSentData is called data = %p, length = %d\r\n", data, length);
 }
+
 /*****************************************************************************/
 /** @brief
  *
@@ -2168,9 +2192,10 @@ void Clb_NetTcpServerConnEvent(Network_ConnEvent event,
  *  @return Void.
  *  @note
  */
-void Clb_NetTcpServerRecvData(const uint8_t* data, int length) {
-
+void Clb_NetTcpClientError(const char* data, int length) {
+	NET_DEBUG_WARNING("Clb_NetError is called data = %p, length = %d\r\n", data, length);
 }
+
 /*****************************************************************************/
 /** @brief
  *
@@ -2179,9 +2204,14 @@ void Clb_NetTcpServerRecvData(const uint8_t* data, int length) {
  *  @return Void.
  *  @note
  */
-void Clb_NetTcpServerSentData(const uint8_t* data, int length) {
 
+void Clb_NetTcpServerReceivedData(const char* data, int length) {
+
+	NET_DEBUG_WARNING("Clb_NetTcpServerReceivedData is received, length = %d\r\n", length);
 }
+
+
+
 /*****************************************************************************/
 /** @brief
  *
@@ -2190,8 +2220,24 @@ void Clb_NetTcpServerSentData(const uint8_t* data, int length) {
  *  @return Void.
  *  @note
  */
-void Clb_NetTcpServerError(const uint8_t* data, int length) {
 
+void Clb_NetTcpServerSendDone(const char* data, int length) {
+
+	NET_DEBUG_WARNING("Clb_NetTcpServerSendDone is invoked, length = %d\r\n", length);
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+void Clb_NetTcpServerError(const char* data, int length) {
+
+	NET_DEBUG_WARNING("Clb_NetTcpServerError is invoked, length = %d\r\n", length);
 }
 /*****************************************************************************/
 /** @brief

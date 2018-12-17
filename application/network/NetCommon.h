@@ -177,21 +177,21 @@ typedef enum  {
 // task prio
 #define TASK_NETWORK_FTPCLIENT_TX_PRIO      6U
 // task size
-#define TASK_NETWORK_FTPCLIENT_TX_SIZE   2048
+#define TASK_NETWORK_FTPCLIENT_TX_SIZE   	2048
 
 // task prio
-#define TASK_NETWORK_TCPCLIENT_PRIO      6U
+#define TASK_NETWORK_TCPCLIENT_PRIO      	6U
 // task size
-#define TASK_NETWORK_TCPCLIENT_SIZE   2048
+#define TASK_NETWORK_TCPCLIENT_SIZE   		2048
 
 // task prio
-#define TASK_NETWORK_TCPSERVER_PRIO      6U
+#define TASK_NETWORK_TCPSERVER_PRIO      	6U
 // task size
-#define TASK_NETWORK_TCPSERVER_SIZE   2048
+#define TASK_NETWORK_TCPSERVER_SIZE   		2048
 
-#define TASK_CLIENT_CONNECTED_PRIO      7U
+#define TASK_CLIENT_CONNECTED_PRIO     	 	7U
 
-#define TASK_CLIENT_CONNECTED_SIZE 1024
+#define TASK_CLIENT_CONNECTED_SIZE 			1024
 
 //typedef void (*NetTcpServerEvent)(NetTcpServerEventType_t type, void* data, int length);
 typedef void (*NetworkDataEvent)(const char* data, int length);

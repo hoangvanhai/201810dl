@@ -35,6 +35,8 @@
 #include <lwip/netif.h>
 #include <filesystem.h>
 #include <os_app_hooks.h>
+#include <Network.h>
+#include <ring_file.h>
 
 /************************** Constant Definitions *****************************/
 #define CONFIG_FILE_PATH		"/conf/config.dat"
@@ -149,6 +151,8 @@ bool			App_CheckNameExisted(SApp *pApp, const char *name);
 int 			App_GenerateLogFile(SApp *pApp);
 int 			App_GenerateLogFileByName(SApp *pApp, const char *name);
 int				App_GenerateFakeTime(SApp *pApp);
+
+int				App_InitNetworkModule(SApp *pApp);
 
 /* Callback section */
 void Clb_TimerControl(void *p_tmr, void *p_arg);
