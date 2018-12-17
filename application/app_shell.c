@@ -660,6 +660,9 @@ void control(int32_t argc, char**argv) {
 			App_SendUI(pAppObj, 100, data, 100, false);
 			OSA_SleepMs(100);
 		}
+	} else if(strcmp(argv[1], "stat") == 0) {
+		pAppObj->stat = !pAppObj->stat;
+		LREP("stat %d\r\n", pAppObj->stat);
 	}
 }
 

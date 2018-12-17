@@ -81,7 +81,7 @@ osa_status_t OSA_TaskCreate(task_t          task,
                  10,                 /* Number of messages can be sent to the task. */
                  0,                 /* Default time_quanta.                        */
                  0,                 /* TCB extension, not used.                    */
-                 usesFloat ? OS_OPT_TASK_SAVE_FP : 0,
+				 OS_OPT_TASK_STK_CHK | OS_OPT_TASK_SAVE_FP,
                  &err
                  );
     if (OS_ERR_NONE == err)

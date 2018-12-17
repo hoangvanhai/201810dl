@@ -34,6 +34,7 @@
 
 #define  MICRIUM_SOURCE
 #include "os.h"
+#include "fsl_debug_console.h"
 
 #ifdef VSC_INCLUDE_SOURCE_FILE_NAMES
 const  CPU_CHAR  *os_stat__c = "$Id: $";

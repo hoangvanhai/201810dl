@@ -35,7 +35,7 @@
 #define  MICRIUM_SOURCE
 #include "os.h"
 #include <os_app_hooks.h>
-#include "board.h"
+#include <app.h>
 
 
 /*
@@ -212,9 +212,75 @@ void  App_OS_InitHook (void)
 
 void  App_OS_StatTaskHook (void)
 {
-	//LREP("cpu usage: %.2f\r\n", (float)OSStatTaskCPUUsage / (float)OSStatTaskCPUUsageMax);
-	//LREP("cpu usage: %.2f\r\n", 100 * (float)OSStatTaskCtr / (float)OSStatTaskCtrMax);
-	//LREP("cpu usage: %.2f %\r\n", OSStatTaskCPUUsage / (float)10000);
+	if(pAppObj->stat) {
+
+		LREP("%10s used %4d free %4d\r\n", "ui",
+				TCB_task_ui.StkUsed,
+				TCB_task_ui.StkFree);
+
+		LREP("%10s used %4d free %4d\r\n", "modbus",
+				TCB_task_modbus.StkUsed,
+				TCB_task_modbus.StkFree);
+
+		LREP("%10s used %4d free %4d\r\n", "serialcomm",
+				TCB_task_serialcomm.StkUsed,
+				TCB_task_serialcomm.StkFree);
+
+		LREP("%10s used %4d free %4d\r\n", "periodic",
+				TCB_task_periodic.StkUsed,
+				TCB_task_periodic.StkFree);
+
+		LREP("%10s used %4d free %4d\r\n", "startup",
+				TCB_task_startup.StkUsed,
+				TCB_task_startup.StkFree);
+
+	}
+
+	/*
+	if(pAppObj->stat) {
+		OS_ERR err;
+		CPU_STK_SIZE free, used;
+		LREP("stat cpu %5.2f\r\n", (float)OSStatTaskCPUUsage / (float)100);
+		OSTaskStkChk(&TCB_task_ui, &free, &used, &err);
+		if(err == OS_ERR_NONE) {
+			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "ui", used, free,
+					(float)TCB_task_ui.CPUUsage / (float)100);
+		} else {
+			LREP("ui err = %d\r\n", err);
+		}
+
+		OSTaskStkChk(&TCB_task_modbus, &free, &used, &err);
+		if(err == OS_ERR_NONE) {
+			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "modbus", used, free,
+					(float)TCB_task_modbus.CPUUsage / (float)100);
+		} else {
+			LREP("modbus err = %d\r\n", err);
+		}
+		OSTaskStkChk(&TCB_task_serialcomm, &free, &used, &err);
+		if(err == OS_ERR_NONE) {
+			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "serialcomm", used, free,
+					(float)TCB_task_serialcomm.CPUUsage / (float)100);
+		} else {
+			LREP("serialcomm err = %d\r\n", err);
+		}
+
+		OSTaskStkChk(&TCB_task_periodic, &free, &used, &err);
+		if(err == OS_ERR_NONE) {
+			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "periodic", used, free,
+					(float)TCB_task_periodic.CPUUsage / (float)100);
+		} else {
+			LREP("periodic err = %d\r\n", err);
+		}
+
+		OSTaskStkChk(&TCB_task_startup, &free, &used, &err);
+		if(err == OS_ERR_NONE) {
+			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "startup", used, free,
+					(float)TCB_task_startup.CPUUsage / (float)100);
+		} else {
+			LREP("startup\t err = %d\r\n", err);
+		}
+	}
+		*/
 }
 
 

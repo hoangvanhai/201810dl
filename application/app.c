@@ -80,8 +80,7 @@ void App_Init(SApp *pApp) {
 
 	int err;
 	pApp->eStatus = SYS_ERR_NONE;
-	memset(pApp->currPath, 0, 256);
-
+	pApp->stat = false;
 	OS_ERR error;
 	OSSemCreate(&debug_sem, "debug", 0, &error);
 	ASSERT(error == OS_ERR_NONE);
@@ -766,19 +765,7 @@ void App_TaskStartup(task_param_t arg) {
 				(void*)NULL,
 				(OS_ERR*)&err);
 
-	if (err == OS_ERR_NONE) {
-		/* Timer was created but NOT started */
-		//LREP("timer created successful\r\n");
-		//OSTmrStart(&pApp->hCtrlTimer, &err);
-		//if (err == OS_ERR_NONE) {
-		//	/* Timer was created but NOT started */
-		//	LREP("timer started ok\r\n");
-		//} else {
-		//	LREP("timer start failed\r\n");
-		//}
-	} else {
-		LREP("timer create failed\r\n");
-	}
+	ASSERT(err == OS_ERR_NONE);
 
 	App_OS_SetAllHooks();
 
@@ -792,8 +779,6 @@ void App_TaskStartup(task_param_t arg) {
 
 		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
-			/* First, feed dog to prevent WDG reset */
-			WDOG_DRV_Refresh();
 
 			/* Check all pending command */
 			if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_1)) {
@@ -904,36 +889,38 @@ void App_CommRecvHandle(const uint8_t *data) {
 				(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue), false);
 	break;
 
-	case LOGGER_GET | LOGGER_STREAM_VALUE: {
-
-		if(data[2] & STREAM_AI) {
-			App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_AI,
-							(uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput), false);
-		}
-
-		if(data[2] & STREAM_MB) {
-			App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_MB,
-							(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue), false);
-		}
-
-		if(data[2] & STREAM_VALUE) {
-			STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
-			if(pMem != NULL) {
-				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
-					pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
-					pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
-					pMem->Node[i].meas_stt[0] = pAppObj->sTagValue.Node[i].meas_stt[0];
-					pMem->Node[i].meas_stt[1] = pAppObj->sTagValue.Node[i].meas_stt[1];
-					pMem->Node[i].meas_stt[2] = pAppObj->sTagValue.Node[i].meas_stt[2];
-				}
-				App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_VALUE,
-						(uint8_t*)pMem, sizeof(STagVArray), false);
-
-				OSA_FixedMemFree((uint8_t*)pMem);
-			}
-		}
-	}
-	break;
+	case LOGGER_GET | LOGGER_STREAM_VALUE:
+		break;
+//	{
+//
+//		if(data[2] & STREAM_AI) {
+//			App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_AI,
+//							(uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput), false);
+//		}
+//
+//		if(data[2] & STREAM_MB) {
+//			App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_MB,
+//							(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue), false);
+//		}
+//
+//		if(data[2] & STREAM_VALUE) {
+//			STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
+//			if(pMem != NULL) {
+//				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+//					pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
+//					pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
+//					pMem->Node[i].meas_stt[0] = pAppObj->sTagValue.Node[i].meas_stt[0];
+//					pMem->Node[i].meas_stt[1] = pAppObj->sTagValue.Node[i].meas_stt[1];
+//					pMem->Node[i].meas_stt[2] = pAppObj->sTagValue.Node[i].meas_stt[2];
+//				}
+//				App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_VALUE,
+//						(uint8_t*)pMem, sizeof(STagVArray), false);
+//
+//				OSA_FixedMemFree((uint8_t*)pMem);
+//			}
+//		}
+//	}
+//	break;
 
 	case LOGGER_GET | LOGGER_STREAM_HEADER: {
 		pAppObj->pcCounter = 0;

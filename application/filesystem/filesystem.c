@@ -171,8 +171,7 @@ int current_directory() {
 		memset(buffer, 0, 250);
 		err = f_getcwd((char*)buffer, len);
 		if(err == FR_OK) {
-			memcpy((char*)pAppObj->currPath, buffer, strlen((const char*)buffer));
-			LREP("current dir = %s\r\n", pAppObj->currPath);
+			LREP("current dir = %s\r\n", buffer);
 		} else {
 			LREP("get current dir failed \r\n");
 		}

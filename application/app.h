@@ -45,13 +45,13 @@
 
 /**************************** Type Definitions *******************************/
 typedef struct SApp_ {
-	STrans				sTransPc;
-	STrans				sTransUi;
-	semaphore_t			semTransPc;
-	semaphore_t			semTransUi;
 	ESysStatus			eStatus;
-	SModbus				sModbus;
 	ECtrlCode			eCtrlCode;
+	STrans				sTransPc;
+	semaphore_t			semTransPc;
+	STrans				sTransUi;
+	semaphore_t			semTransUi;
+	SModbus				sModbus;
 	SAnalogReader		sAnalogReader;
 	SDateTime			sDateTime;
 	SDigitalInputLog	sDI;
@@ -61,12 +61,12 @@ typedef struct SApp_ {
 	OS_TMR 				hCtrlTimer;
 	FATFS				sFS0;
 	FATFS				sFS1;
-	uint8_t				currPath[256];
 	uint8_t				currFileName[256];
 	SSysCfg				sCfg;
 	uint32_t			pcCounter;
 	uint32_t			uiCounter;
 	bool				sdhcPlugged;
+	bool				stat;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
