@@ -214,6 +214,8 @@ void  App_OS_StatTaskHook (void)
 {
 	if(pAppObj->stat) {
 
+		LREP("\r\nstat cpu %5.2f\r\n", (float)OSStatTaskCPUUsage / (float)100);
+
 		LREP("%10s used %4d free %4d\r\n", "ui",
 				TCB_task_ui.StkUsed,
 				TCB_task_ui.StkFree);
@@ -236,51 +238,6 @@ void  App_OS_StatTaskHook (void)
 
 	}
 
-	/*
-	if(pAppObj->stat) {
-		OS_ERR err;
-		CPU_STK_SIZE free, used;
-		LREP("stat cpu %5.2f\r\n", (float)OSStatTaskCPUUsage / (float)100);
-		OSTaskStkChk(&TCB_task_ui, &free, &used, &err);
-		if(err == OS_ERR_NONE) {
-			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "ui", used, free,
-					(float)TCB_task_ui.CPUUsage / (float)100);
-		} else {
-			LREP("ui err = %d\r\n", err);
-		}
-
-		OSTaskStkChk(&TCB_task_modbus, &free, &used, &err);
-		if(err == OS_ERR_NONE) {
-			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "modbus", used, free,
-					(float)TCB_task_modbus.CPUUsage / (float)100);
-		} else {
-			LREP("modbus err = %d\r\n", err);
-		}
-		OSTaskStkChk(&TCB_task_serialcomm, &free, &used, &err);
-		if(err == OS_ERR_NONE) {
-			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "serialcomm", used, free,
-					(float)TCB_task_serialcomm.CPUUsage / (float)100);
-		} else {
-			LREP("serialcomm err = %d\r\n", err);
-		}
-
-		OSTaskStkChk(&TCB_task_periodic, &free, &used, &err);
-		if(err == OS_ERR_NONE) {
-			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "periodic", used, free,
-					(float)TCB_task_periodic.CPUUsage / (float)100);
-		} else {
-			LREP("periodic err = %d\r\n", err);
-		}
-
-		OSTaskStkChk(&TCB_task_startup, &free, &used, &err);
-		if(err == OS_ERR_NONE) {
-			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "startup", used, free,
-					(float)TCB_task_startup.CPUUsage / (float)100);
-		} else {
-			LREP("startup\t err = %d\r\n", err);
-		}
-	}
-		*/
 }
 
 

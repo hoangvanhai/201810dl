@@ -19,13 +19,15 @@ static NetworkDataEvent lwtcp_server_on_data_received_cb = NULL;
 static NetworkDataEvent lwtcp_server_on_data_sent_cb = NULL;
 static NetworkDataEvent lwtcp_server_on_error_cb = NULL;
 
+// CLIENT CONNECTED THREAD HANDLER
 static task_handler_t taskHandler[LWTCP_SERVER_MAX_CLIENT];
 static task_stack_t *stackMem[LWTCP_SERVER_MAX_CLIENT] ;
 static bool clientThreadActivate[LWTCP_SERVER_MAX_CLIENT];
 static int childfds[LWTCP_SERVER_MAX_CLIENT];
 
+
 mutex_t tcp_Mutex;
-osa_status_t status_;
+osa_status_t status;
 int client_connected_stack_size = TASK_CLIENT_CONNECTED_SIZE;
 
 OSA_TASK_DEFINE(network_tcpclient, TASK_NETWORK_TCPCLIENT_SIZE);
@@ -33,7 +35,7 @@ OSA_TASK_DEFINE(network_tcpclient, TASK_NETWORK_TCPCLIENT_SIZE);
 // VARIALES for TCP Client Application
 //static char* lwftp_curdir;
 static bool tcp_client_running = false;
-static char* tcp_server_ip;
+static ip_addr_t tcp_server_ip;
 static int tcp_server_port;
 struct timeval tcp_client_tv;
 static int tcp_client_socket = -1;
@@ -121,9 +123,13 @@ static sys_thread_t lwtcp_create_thread(task_handler_t taskHandler, task_stack_t
 
 void tcp_connected_client_thread(void* arg) {
 	OS_ERR err;
-	osa_status_t status_;
+	OS_MSG_SIZE msg_size;
+	CPU_TS ts;
+	osa_status_t status;
 	size_t buf_size = NET_MAX_TCP_BUF_SIZE;
 	uint8_t *msg = OSA_FixedMemMalloc(buf_size);
+	SNetData *pNetData;
+	size_t sentLen;
 	int ret, recv_byte = 0;
 	if(!msg)
 	{
@@ -167,7 +173,7 @@ void tcp_connected_client_thread(void* arg) {
 					number_of_connected_clients -= 1;
 					clientThreadActivate[idx] = false;
 					if (childfds[idx] > 0) {
-						NET_DEBUG_WARNING("Client ID %d disconnected!", childfds[idx]);
+						NET_DEBUG_WARNING("Client[%d] socket %d disconnected!\r\n", childfds[idx]);
 						close(childfds[idx]);
 //						if(lwtcp_server_on_error_cb != NULL) {
 //							lwtcp_server_on_error_cb(TCP_SRV_CLIENT_DISCONNECTED, NULL, 0);
@@ -176,8 +182,30 @@ void tcp_connected_client_thread(void* arg) {
 				}
 //				NET_DEBUG_TCP("read %d bytes", ret);
 			}
-//				number_of_connected_clients -= 1;
-//			clientThreadActivate[idx] = false;
+			if (ret != 0) {
+				// Send data to client if possible
+				pNetData = OSTaskQPend(200,	OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
+				if (pNetData) {
+					sentLen = Network_LWTCP_Send(childfds[idx], pNetData->buf, pNetData->len);
+					if (sentLen == pNetData->len) {
+						NET_DEBUG_TCP("Client[%d] was sent %d bytes from this\r\n", idx, pNetData->len);
+						if(lwtcp_server_on_data_sent_cb != NULL) {
+							lwtcp_server_on_data_sent_cb(pNetData->buf, pNetData->len);
+						}
+					}
+					else {
+						NET_DEBUG_TCP("Client[%d] failed sent %d / %d bytes from this\r\n", idx, sentLen, pNetData->len);
+						if(lwtcp_server_on_error_cb != NULL) {
+							lwtcp_server_on_error_cb(pNetData->buf, pNetData->len);
+						}
+					}
+					//OSA_FixedMemFree(pNetData->buf);
+					OSA_FixedMemFree(pNetData);
+					NET_DEBUG_TCP("OSA_FixedMemFree pNetData(0x%x) , pNetData->buf(0x%x)\r\n", pNetData, pNetData->buf);
+				}
+			}
+			//				number_of_connected_clients -= 1;
+			//			clientThreadActivate[idx] = false;
 //			if (childfds[idx] > 0)
 //				close(childfds[idx]);
 //			NET_DEBUG_TCP("Number_of_connected_clients changed to %d\r\n", number_of_connected_clients);
@@ -195,8 +223,8 @@ void tcp_connected_client_thread(void* arg) {
 	/* Task body ... do work! */
 //	if (tcp_arg->stackMem) {
 //		NET_DEBUG_TCP("MemFree stackMem %d\r\n", tcp_arg->stackMem);
-//		status_ = OSA_MemFree((void*)tcp_arg->stackMem);
-//		if (status_ == kStatus_OSA_Success) {
+//		status = OSA_MemFree((void*)tcp_arg->stackMem);
+//		if (status == kStatus_OSA_Success) {
 //			NET_DEBUG_TCP("OSA_Memfree OK\r\n");
 //		} else {
 //			NET_DEBUG_TCP("OSA_Memfree NOK\r\n");
@@ -204,8 +232,8 @@ void tcp_connected_client_thread(void* arg) {
 //	}
 //	if (stackMem) {
 //		NET_DEBUG_TCP("MemFree stackMem %d\r\n", tcp_arg->stackMem);
-//		status_ = OSA_MemFree((void*)stackMem);
-//		if (status_ == kStatus_OSA_Success) {
+//		status = OSA_MemFree((void*)stackMem);
+//		if (status == kStatus_OSA_Success) {
 //			NET_DEBUG_TCP("OSA_Memfree OK\r\n");
 //		} else {
 //			NET_DEBUG_TCP("OSA_Memfree NOK\r\n");
@@ -213,9 +241,9 @@ void tcp_connected_client_thread(void* arg) {
 //	}
 //	if (tcp_arg->taskHandler) {
 //		NET_DEBUG_TCP("OSA_TaskDestroy taskHandler %d, %s\r\n", tcp_arg->taskHandler);
-//		status_ =  OSA_MemFree((void*)tcp_arg->taskHandler);
-//		//status_ = OSA_TaskDestroy(tcp_arg->taskHandler);
-//		if (status_ == kStatus_OSA_Success) {
+//		status =  OSA_MemFree((void*)tcp_arg->taskHandler);
+//		//status = OSA_TaskDestroy(tcp_arg->taskHandler);
+//		if (status == kStatus_OSA_Success) {
 //			NET_DEBUG_TCP("OSA_TaskDestroy OK\r\n");
 //		} else {
 //			NET_DEBUG_TCP("OSA_TaskDestroy NOK\r\n");
@@ -224,9 +252,9 @@ void tcp_connected_client_thread(void* arg) {
 //	OSTaskDel(0, &err);
 //	if (tcp_arg->taskHandler) {
 //		NET_DEBUG_TCP("OSA_TaskDestroy taskHandler %d, %s\r\n", tcp_arg->taskHandler);
-//		//status_ =  OSA_MemFree((void*)tcp_arg->taskHandler);
-//		status_ = OSA_TaskDestroy(tcp_arg->taskHandler);
-//		if (status_ == kStatus_OSA_Success) {
+//		//status =  OSA_MemFree((void*)tcp_arg->taskHandler);
+//		status = OSA_TaskDestroy(tcp_arg->taskHandler);
+//		if (status == kStatus_OSA_Success) {
 //			NET_DEBUG_TCP("OSA_TaskDestroy OK\r\n");
 //		} else {
 //			NET_DEBUG_TCP("OSA_TaskDestroy NOK\r\n");
@@ -302,9 +330,8 @@ static void tcp_server_thread(void *arg)
 	//bool threadClientAvailable = false;
 	/* Local variables */
 	// These task handler & stackmem are allocated for tcp_client_thread created later
-    static task_handler_t taskHandler[LWTCP_SERVER_MAX_CLIENT];
     osa_status_t error;
-    static task_stack_t *stackMem[LWTCP_SERVER_MAX_CLIENT] ;
+
 
     for (i = 0; i < LWTCP_SERVER_MAX_CLIENT; i++) {
     	char tmpStr[128];
@@ -330,15 +357,14 @@ static void tcp_server_thread(void *arg)
 		sprintf(tmpStr,"Client Thread %d\r\n", tcp_arg[i].idx);
 		PRINTF(tmpStr);
 		threadID = lwtcp_create_thread(taskHandler[i], stackMem[i],
-				tmpStr, tcp_connected_client_thread, &tcp_arg[i],
-				client_connected_stack_size, TASK_CLIENT_CONNECTED_PRIO);
+				tmpStr, tcp_connected_client_thread, &tcp_arg[i], client_connected_stack_size, TASK_CLIENT_CONNECTED_PRIO);
     }
 	/* Do something with ‘p_arg’ */
 	/* Task initialization */
 
 	NET_DEBUG_TCP("Start TCP SERVER THREAD\r\n");
-	status_ = OSA_MutexCreate(&tcp_Mutex);
-	if (status_ != kStatus_OSA_Success) {
+	status = OSA_MutexCreate(&tcp_Mutex);
+	if (status != kStatus_OSA_Success) {
 		NET_DEBUG_TCP("tcp_Mutex creation failed\r\n");
 	}
 
@@ -374,7 +400,7 @@ static void tcp_server_thread(void *arg)
 				}
 				else {
 					setsockopt(childfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-					NET_DEBUG_WARNING("Client ID %d connected!", childfd);
+					NET_DEBUG_WARNING("Client socket %d connected!, idx=%d", childfd, (idx));
 
 					OSA_MutexLock(&tcp_Mutex, OSA_WAIT_FOREVER);
 					clientThreadActivate[idx] = true;
@@ -408,8 +434,7 @@ lwtcp_result_t Network_LWTCPServer_Start(int portno) {
 	sys_thread_t threadID;
 	server_port = portno;
 //	lwtcp_result_t ret;
-	threadID = sys_thread_new("tcp_server_thread", tcp_server_thread, NULL,
-			TASK_NETWORK_TCPSERVER_SIZE, TASK_NETWORK_TCPSERVER_PRIO);
+	threadID = sys_thread_new("tcp_server_thread", tcp_server_thread, NULL, TASK_NETWORK_TCPSERVER_SIZE, TASK_NETWORK_TCPSERVER_PRIO);
 	if (threadID == NULL) {
 		NET_DEBUG_TCP("Server thread Created failed, ID = %d\r\n", threadID);
 		return LWTCP_RESULT_ERR_UNKNOWN;
@@ -426,32 +451,48 @@ lwtcp_result_t Network_LWTCPServer_SendToAllClientConnected(void* data, int leng
 {
 	lwtcp_result_t result = LWTCP_RESULT_OK;
 	int ret = -1;
-
+	OS_MSG_SIZE msg_size;
+	OS_ERR err;
+	CPU_TS ts;
+	SNetData *pNetData;
+	NetStatus status;
+	CPU_STK_SIZE n_free;
+	CPU_STK_SIZE n_used;
 	for (int idx = 0; idx < LWTCP_SERVER_MAX_CLIENT; idx ++) {
 		if(clientThreadActivate[idx] == true) {
-			ret = Network_LWTCP_Send(childfds[idx], data, length);
-			if(ret != length) {
-				NET_DEBUG_ERROR("Send To client id %d (sock: %d) error!!!", idx, childfds[idx]);
-				result = LWTCP_RESULT_ERR_SEND_ERR;
-				break;
+			// TODO: Send using some fucking
+			pNetData = (SNetData*) OSA_FixedMemMalloc(sizeof(SNetData) + length);
+
+			if (pNetData){
+
+				pNetData->buf = (uint8_t*)pNetData + sizeof(SNetData);
+				pNetData->len = length;
+				//pNetData->buf = OSA_FixedMemMalloc(length);
+				if (pNetData->buf) {
+					memcpy(pNetData->buf, data, length);
+					OSTaskQPost(taskHandler[idx], (void *) pNetData, sizeof(SNetData),
+							OS_OPT_POST_FIFO, &err);
+					if (err != OS_ERR_NONE) {
+						NET_DEBUG_FTP("OSTaskQPost err: %d client[%d]", err, idx);
+						result= LWTCP_RESULT_ERR_UNKNOWN;
+					} else {
+						NET_DEBUG_FTP("OSTaskQPost OK client[%d]", idx);
+					}
+				}
+			} else {
+				NET_DEBUG_TCP("Cannot OSA_FixedMemMalloc to pNetData to client [%d]\r\n", idx);
+				result = LWTCP_RESULT_ERR_BUSY;
 			}
+//			ret = Network_LWTCP_Send(childfds[idx], data, length);
+//			if(ret != length) {
+//				NET_DEBUG_ERROR("Send To client id %d (sock: %d) error!!!", idx, childfds[idx]);
+//				result = LWTCP_RESULT_ERR_SEND_ERR;
+//				break;
+//			}
 		}
 	}
-
-	if (result == LWTCP_RESULT_OK) {
-		// Invoke send done callback;
-		if(lwtcp_server_on_data_sent_cb != NULL) {
-			lwtcp_server_on_data_sent_cb(data, length);
-		}
-
-	} else {
-		// Invoke Error callback
-		if(lwtcp_server_on_data_sent_cb != NULL) {
-			lwtcp_server_on_data_sent_cb(data, ret);
-		}
-	}
-
 	return result;
+
 }
 
 /**
@@ -463,7 +504,7 @@ lwtcp_result_t Network_LWTCPServer_SendToAllClientConnected(void* data, int leng
  */
 int Network_LWTCP_Send(int clientSocketfd, const uint8_t *data, uint32_t length)
 {
-	return write(clientSocketfd, data, length);
+	return send(clientSocketfd, data, length, 0);
 }
 /**
  * Receive from socket a number of bytes
@@ -514,7 +555,7 @@ static void tcp_client_connect() {
 
 		setsockopt(tcp_client_socket, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval));
 //		setsockopt(tcp_client_socket, SOL_SOCKET, SO_RCVTIMEO, (const char* )&tcp_client_tv, sizeof tcp_client_tv);
-		tcp_server_ctrl.sin_addr.s_addr = inet_addr(tcp_server_ip);
+		tcp_server_ctrl.sin_addr.s_addr = tcp_server_ip.addr;//inet_addr(tcp_server_ip);
 		tcp_server_ctrl.sin_family = AF_INET;
 		tcp_server_ctrl.sin_port = htons(tcp_server_port);
 		ret = connect(tcp_client_socket, (struct sockaddr * )&tcp_server_ctrl,
@@ -586,7 +627,7 @@ static void tcp_client_thread(void *arg) {
 		}
 
 		if (error != 0) {
-			/* socket has a non zero error status_ */
+			/* socket has a non zero error status */
 			NET_DEBUG_TCP("TCPClient Thread socket error: %s\n", strerror(error));
 		}
 		if (ret != 0 || error != 0) {
@@ -697,7 +738,7 @@ void network_tcpclient(task_param_t param)
 		//		}
 		//
 		//		if (error != 0) {
-		//			/* socket has a non zero error status_ */
+		//			/* socket has a non zero error status */
 		//			NET_DEBUG_TCP("TCPClient Thread socket error: %s\n", strerror(error));
 		//		}
 		//		if (ret != 0 || error != 0) {
@@ -799,7 +840,7 @@ void network_tcpclient(task_param_t param)
 ////		}
 ////
 ////		if (error != 0) {
-////			/* socket has a non zero error status_ */
+////			/* socket has a non zero error status */
 ////			NET_DEBUG_TCP("TCPClient Thread socket error: %s\n", strerror(error));
 ////		}
 ////		if (ret != 0 || error != 0) {
@@ -816,7 +857,7 @@ void network_tcpclient(task_param_t param)
  * @param port
  * @return
  */
-lwtcp_result_t Network_LWTCPClientStart(const char* ip, int port)
+lwtcp_result_t Network_LWTCPClientStart(ip_addr_t ip, int port)
 {
 	//TODO: Implement
 //	static bool tcp_server_connected = false;
@@ -827,6 +868,7 @@ lwtcp_result_t Network_LWTCPClientStart(const char* ip, int port)
 //	static struct sockaddr_in tcp_server_ctrl;//, server_dat;
 	tcp_server_ip = ip;
 	tcp_server_port = port;
+	NET_DEBUG_TCP("Network_LWTCPClientStart tcp_server_ip = %x, port = %d\r\n", ip.addr, port);
 
 	osa_status_t result = OSA_TaskCreate(network_tcpclient,
                     (uint8_t *)"network_tcpclient",

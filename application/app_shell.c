@@ -420,8 +420,8 @@ void status(int32_t argc, char **argv) {
 					pAppObj->sDateTime.tm_sec);
 	} else if(strcmp(argv[1], "conf") == 0) {
 		//LREP("sizeof name = %d\r\n", sizeof(pAppObj->sCfg.sTag[0].name));
-		//print_sys(&pAppObj->sCfg);
-		print_comm(&pAppObj->sCfg.sCom);
+		print_sys(&pAppObj->sCfg);
+		//print_comm(&pAppObj->sCfg.sCom);
 		for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 			print_tag(&pAppObj->sCfg.sTag[i]);
 		}
@@ -637,6 +637,7 @@ void save_tag(int32_t argc, char**argv) {
  *  @note
  */
 void control(int32_t argc, char**argv) {
+	uint8_t data[100];
 	if(strcmp(argv[1], "save") == 0) {
 		App_SaveConfig(pAppObj, CONFIG_FILE_PATH);
 	} else if(strcmp(argv[1], "reset") == 0) {
@@ -647,14 +648,14 @@ void control(int32_t argc, char**argv) {
 			LREP("remove file failed err = %d\r\n", retVal);
 		}
 	} else if(strcmp(argv[1], "pc") == 0) {
-		uint8_t data[100];
+
 		for(int i = 0; i < 100; i++)
 		{
 			App_SendPC(pAppObj, 100, data, 100, false);
 			OSA_SleepMs(100);
 		}
 	} else if(strcmp(argv[1], "ui") == 0) {
-		uint8_t data[100];
+
 		//uint32_t time;
 		for(int i = 0; i < 100; i++)
 		{
@@ -664,6 +665,18 @@ void control(int32_t argc, char**argv) {
 	} else if(strcmp(argv[1], "stat") == 0) {
 		pAppObj->stat = !pAppObj->stat;
 		LREP("stat %d\r\n", pAppObj->stat);
+	} else if(strcmp(argv[1], "server") == 0) {
+		for(int i = 0; i < 1000; i++)
+		{
+			App_SendPCNetworkClient(100, data, 100);
+			OSA_SleepMs(100);
+		}
+	} else if(strcmp(argv[1], "client") == 0) {
+		for(int i = 0; i < 1000; i++)
+		{
+			Net_TCPClientSendData(data, 100);
+			OSA_SleepMs(100);
+		}
 	}
 }
 

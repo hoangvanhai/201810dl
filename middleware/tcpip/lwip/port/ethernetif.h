@@ -81,7 +81,7 @@
 #define ENET_IPV4_VERSION              (4)
 #endif
 /* MAC address configuration. */
-#define configMAC_ADDR0	0x00
+#define configMAC_ADDR0	0x20
 #define configMAC_ADDR1	0xCF
 #define configMAC_ADDR2	0x52
 #define configMAC_ADDR3	0x35

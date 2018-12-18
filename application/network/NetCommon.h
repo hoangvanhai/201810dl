@@ -62,7 +62,7 @@
 
 
 #ifndef NET_MAX_MTU
-#define NET_MAX_MTU	1500
+#define NET_MAX_MTU				1500
 #endif
 
 #ifndef NET_MAX_TCP_BUF_SIZE
@@ -134,8 +134,8 @@ typedef struct sNetStt {
 
 #define TCP_DATA_SIZE 1024
 typedef struct sNetData {
-	char *buf;
 	int len;
+	char *buf;
 }SNetData;
 
 #define FTP_DATA_SIZE 128
@@ -175,21 +175,21 @@ typedef enum  {
 } NetTcpServerEventType_t;
 
 // task prio
-#define TASK_NETWORK_FTPCLIENT_TX_PRIO      6U
+#define TASK_NETWORK_FTPCLIENT_TX_PRIO      11U
 // task size
 #define TASK_NETWORK_FTPCLIENT_TX_SIZE   	2048
 
 // task prio
-#define TASK_NETWORK_TCPCLIENT_PRIO      	6U
+#define TASK_NETWORK_TCPCLIENT_PRIO      	10U
 // task size
 #define TASK_NETWORK_TCPCLIENT_SIZE   		2048
 
 // task prio
-#define TASK_NETWORK_TCPSERVER_PRIO      	6U
+#define TASK_NETWORK_TCPSERVER_PRIO      	13U
 // task size
 #define TASK_NETWORK_TCPSERVER_SIZE   		2048
 
-#define TASK_CLIENT_CONNECTED_PRIO     	 	7U
+#define TASK_CLIENT_CONNECTED_PRIO      	12U
 
 #define TASK_CLIENT_CONNECTED_SIZE 			1024
 

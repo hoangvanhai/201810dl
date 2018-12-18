@@ -32,7 +32,7 @@
 #define PTRNLEN(s)  s,(sizeof(s)-1)
 //static char* lwftp_curdir;
 static bool lwftp_connected = false;
-static char* lwftp_ip;
+ip_addr_t lwftp_ip;
 static char* lwftp_user;
 static char* lwftp_passwd;
 static int lwftp_port;
@@ -66,7 +66,7 @@ static lwftp_result_t lwftp_reconnect() {
 	while (iTries++ < 10) {
 		// Step 1: Connect to the server if not connected
 		if (lwftp_connected != true) {
-			if (lwftp_ip != NULL) {
+			if (lwftp_ip.addr != 0) {
 				ret = lwftp_connect();
 			}
 			if (ret != LWFTP_RESULT_OK) {
@@ -136,7 +136,7 @@ static lwftp_result_t lwftp_connect() {
 	// set timeout of socket
 	setsockopt(socket_ctrl, SOL_SOCKET, SO_RCVTIMEO, (const char* )&tv,
 			sizeof tv);
-	server_ctrl.sin_addr.s_addr = inet_addr(lwftp_ip);
+	server_ctrl.sin_addr.s_addr = lwftp_ip.addr;// inet_addr(lwftp_ip);
 	server_ctrl.sin_family = AF_INET;
 	server_ctrl.sin_port = htons(lwftp_port);
 
@@ -216,7 +216,7 @@ static lwftp_result_t lwftp_connect() {
 	return LWFTP_RESULT_OK;
 }
 
-lwftp_result_t Network_LWFTP_Start(const char *ip, int port,
+lwftp_result_t Network_LWFTP_Start(ip_addr_t ip, int port,
 		const char* usrname, const char* passwd) {
 	int ret;
 	// TODO: check condition before openning new connection
@@ -473,7 +473,7 @@ lwftp_result_t Network_LWFTP_Disconnect() {
 	return LWFTP_RESULT_OK;
 }
 
-char *Netwrok_LWIP_Get_ServerIP() {
+ip_addr_t Netwrok_LWIP_Get_ServerIP() {
 	return lwftp_ip;
 }
 lwftp_state_t Network_LWIP_Get_State() {
@@ -789,7 +789,7 @@ lwftp_result_t Network_LWFTP_SendFile2(const char *local_path,
 			NET_DEBUG_FTP("Socket_dat: %d created successfully\r\n",
 					socket_dat);
 		}
-		server_dat.sin_addr.s_addr = inet_addr(lwftp_ip);
+		server_dat.sin_addr.s_addr = lwftp_ip.addr;// inet_addr(lwftp_ip);
 		server_dat.sin_family = AF_INET;
 		server_dat.sin_port = htons(data_port);
 		// Connect to server for data

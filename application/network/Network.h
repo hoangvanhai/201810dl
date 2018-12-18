@@ -41,7 +41,7 @@ NetStatus Net_TCPServerStart(int port);
  * @param port
  * @return NetStatus
  */
-NetStatus Net_TCPClientStart(const char* ip, int port);
+NetStatus Net_TCPClientStart(ip_addr_t ip, int port);
 
 /**
  * Set the client callback for each client connect
@@ -73,7 +73,7 @@ SNetStt Net_ModuleGetStatus();
  * @param passwd password of ftp
  * @return NetStatus 
  */
-NetStatus Net_FTPClientStart(const char *ip, int port, const char* usrname, const char* passwd);
+NetStatus Net_FTPClientStart(ip_addr_t ip, int port, const char* usrname, const char* passwd);
 /**
  * @brief If connected then send file.
  * If file send failed retry 3 times

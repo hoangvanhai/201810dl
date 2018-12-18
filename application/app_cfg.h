@@ -59,6 +59,11 @@
 
 #define BOARD_USE_VERSION					BOARD_FRDM_K64F
 
+
+
+
+#define NETWORK_MODULE_EN					1
+
 /**************************** Type Definitions *******************************/
 
 #endif /* APPLICATION_APP_CFG_H_ */

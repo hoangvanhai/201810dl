@@ -74,7 +74,7 @@ int Network_LWTCP_Send(int clientSocketfd, const uint8_t *data, uint32_t length)
 int Network_LWTCP_Receive(int clientSocketfd, uint8_t *buf, uint32_t max_received_bytes);
 
 // protoype functions for tcp client
-lwtcp_result_t Network_LWTCPClientStart(const char* ip, int port);
+lwtcp_result_t Network_LWTCPClientStart(ip_addr_t ip, int port);
 lwtcp_result_t Network_LWTCPClientProcess();
 lwtcp_result_t Network_LWTCPClientStop();
 uint32_t Network_LWTCPClientSendCmd(const uint8_t *data, uint32_t length);

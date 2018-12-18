@@ -226,7 +226,7 @@ void TransUI_SendTask(STransUI *pTrans)
  */
 void TransUI_Task(STransUI *pTrans)
 {
-	TransUI_RecvTask(pTrans);
+	//TransUI_RecvTask(pTrans);
 	TransUI_SendTask(pTrans);
 }
 /*****************************************************************************/

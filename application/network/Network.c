@@ -238,7 +238,7 @@ void Net_TCP_Echo_ClientCallback(int fd) {
  * @param port
  * @return
  */
-NetStatus Net_TCPClientStart(const char* ip, int port) {
+NetStatus Net_TCPClientStart(ip_addr_t ip, int port) {
 #if 1
 	lwtcp_result_t ret1 = Network_LWTCPClientStart(ip, port);//, usrname, passwd);
 	if (ret1 != LWTCP_RESULT_OK) {
@@ -400,7 +400,7 @@ void network_ftpclient_tx(task_param_t param) {
  * @param passwd password of ftp
  * @return NetStatus
  */
-NetStatus Net_FTPClientStart(const char *ip, int port, const char* usrname,
+NetStatus Net_FTPClientStart(ip_addr_t ip, int port, const char* usrname,
 		const char* passwd) {
 
 	osa_status_t result = OSA_TaskCreate(network_ftpclient_tx,
@@ -424,14 +424,15 @@ NetStatus Net_FTPClientStart(const char *ip, int port, const char* usrname,
 	}
 
 	// TODO: [manhbt] Init for 2 FTP server (see pApp->sCfg->sComm struct of Hai Do)
-	MDMFTP_result_t ret2 = Network_MDMFTP_Start(ip, port, usrname, passwd);
-	if (ret2 != MDMFTP_RESULT_OK) {
-		NET_DEBUG("Modem FTP Client start FAILED!");
-//		return NET_ERR_MODULE_NOT_INIT;
-	} else {
-		MODEM_DEBUG("Modem FTP Client start OK!");
-//		return NET_ERR_NONE;
-	}
+	MDMFTP_result_t ret2 = MDMFTP_RESULT_OK;
+//	MDMFTP_result_t ret2 = Network_MDMFTP_Start(ip, port, usrname, passwd);
+//	if (ret2 != MDMFTP_RESULT_OK) {
+//		NET_DEBUG("Modem FTP Client start FAILED!");
+////		return NET_ERR_MODULE_NOT_INIT;
+//	} else {
+//		MODEM_DEBUG("Modem FTP Client start OK!");
+////		return NET_ERR_NONE;
+//	}
 
 	if ((ret1 != LWTCP_RESULT_OK) && (ret2 != MDMFTP_RESULT_OK)) {
 		NET_DEBUG("FTP Client start FAILED");
@@ -471,6 +472,57 @@ static NetStatus net_ftp_client_send_file(const char *dirPath,
 	int len;
 	char cwd[128];
 	char tmp[64];
+	len = Str_Len(fileName);
+
+	if (len > 18) {
+		memset(tmp, 0, sizeof(tmp));
+		memset(tmpPath, 0, sizeof(tmpPath));
+		Str_Copy_N(tmpPath, DEFAULT_FTP_FOLDER_PATH, sizeof(tmpPath));//tmpPath = "/home/ftpuser1/test/thinh"
+		Str_Cat_N(tmpPath, "/", sizeof(tmpPath)); // tmpPath = "/home/ftpuser1/test/thinh"
+		memset(tmp, 0, sizeof(tmp));
+		memcpy(tmp, &fileName[len-18], 4); // tmp = 2018;
+		Str_Cat_N(tmpPath, tmp, sizeof(tmpPath));
+
+		Str_Cat_N(tmpPath, "/", sizeof(tmpPath)); // tmpPath = "/home/ftpuser1/test/thinh/2018/"
+		memset(tmp, 0, sizeof(tmp));
+		memcpy(tmp, &fileName[len-18+4], 2); // tmp = 11;
+		Str_Cat_N(tmpPath, tmp, sizeof(tmpPath));
+
+		Str_Cat_N(tmpPath, "/", sizeof(tmpPath)); // tmpPath = "/home/ftpuser1/test/thinh/2018/11/"
+		memset(tmp, 0, sizeof(tmp));
+		memcpy(tmp, &fileName[len-18+6], 2); // tmp = 07;
+		Str_Cat_N(tmpPath, tmp, sizeof(tmpPath));// tmpPath = "/home/ftpuser1/test/thinh/2018/11/07"
+		// Send file
+		NET_DEBUG("SendFile: %s,%s", tmpPath, fileName);
+//				ret1 = Network_LWFTP_SendFile(tmpPath, fileName); // dirpath should be//
+		ret1 = Network_LWFTP_SendFile2((const char*) dirPath,
+				(const char*) tmpPath, (const char*) fileName); // manhbt edited here
+		if (ret1 == LWFTP_RESULT_OK) {
+			ret = NET_ERR_NONE;
+			NET_DEBUG("Send File %s via Ethernet OK", fileName);
+			return ret;
+		} else
+		/**
+		 * manhbt send file via UC15
+		 */
+		{
+			LREP("Send File %s via Ethernet FAILED, trying with 3G modem ...\r\n", fileName);
+			MDMFTP_result_t ret2 = Network_MDMFTP_SendFile(
+					(const char*) dirPath, (const char*) tmpPath,
+					(const char*) fileName);
+			// TODO: [manhbt] Send file failed, push file info into retry table
+			if (ret2 != MDMFTP_RESULT_OK) {
+				ret = NET_ERR_SEND_FAILD;
+			} else {
+				ret = NET_ERR_NONE;
+			}
+		}
+	} else {
+		NET_DEBUG_FTP("FILENAM ERROR %s", fileName);
+		return NET_ERR_UNKNOWN;
+	}
+
+#if 0
 	tokens = str_split(fileName, '_');//AG_SGCE_KHI001_20181107105400.txt then *tokens ->
 	//NET_DEBUG_WARNING("Tokens after split = 0x%x\r\n", tokens);
 	if (tokens) {
@@ -503,25 +555,7 @@ static NetStatus net_ftp_client_send_file(const char *dirPath,
 				memcpy(tmp, tokens[i] + 6, 2);				// copy day 07
 				Str_Cat_N(tmpPath, ("/"), sizeof(tmpPath)); // now tmpPath = "/home/ftpuser1/test/thinh/2018/11/"
 				Str_Cat_N(tmpPath, tmp, sizeof(tmpPath)); // now tmpPath = "/home/ftpuser1/test/thinh/2018/11/07"
-				//NET_DEBUG_WARNING("tmpPath = %s\r\n", tmpPath);
-				//NET_DEBUG_WARNING("tokens[i] = %s\r\n", tokens[i]);
 
-//				strcpy(filePath,dirPath); // filePath = "/home
-//				strcat(filePath, ("/")); // now tmpPath = "/home/"
-//				strcat(filePath, fileName); // now tmpPath = "/home/AG_SGCE_KHI001_20181107105400.txt"
-
-//				err = f_getcwd(cwd, sizeof(cwd));
-//				if(err == FR_OK) {
-//					LREP("current dir = %s\r\n", cwd);
-//					//LREP("cwd successfully\r\n");
-//				} else {
-//					LREP("cwd failed \r\n");
-//				}
-//				// Change directory to dirpath
-//				retVal = f_chdir(dirPath);
-//				if(retVal != FR_OK) {
-//					LREP("chdir err = %d\r\n", retVal);
-//				}
 				// Send file
 				NET_DEBUG("SendFile: %s,%s", tmpPath, fileName);
 //				ret1 = Network_LWFTP_SendFile(tmpPath, fileName); // dirpath should be//
@@ -546,26 +580,17 @@ static NetStatus net_ftp_client_send_file(const char *dirPath,
 						ret = NET_ERR_NONE;
 					}
 				}
-//				// change back to previous directory
-//				retVal = f_chdir(cwd);
-//				if(retVal != FR_OK) {
-//					LREP("chdir err = %d\r\n", retVal);
-//				}
 			}
 		}
 		i = 0;
-		// Do not need to clear *(tokens +i) because it's tmpStr
-//		while(*(tokens+i)) {
-//			NET_DEBUG_WARNING("free tokens[%d] at 0x%x\r\n", i, *(tokens+i));
-//			free(*(tokens+i));
-//			i++;
-//		}
 		NET_DEBUG_WARNING("OSA_FixedMemFree token (filename) at 0x%x\r\n", tokens);
 		OSA_FixedMemFree(tokens);
+
 		return ret;
 	} else {
 		return NET_ERR_FILENAME;
 	}
+#endif
 	return NET_ERR_UNKNOWN;
 }
 
@@ -658,7 +683,10 @@ NetStatus Net_TCPClientSendData(const uint8_t *data, uint32_t length) {
  * @return NetStatus
  */
 NetStatus Net_TCPServerSendDataToAllClient(const uint8_t *data, uint32_t length) {
-
+	if (Network_LWTCPServer_SendToAllClientConnected(data, length) == LWTCP_RESULT_OK)
+	{
+		return NET_ERR_NONE;
+	}
 }
 
 /**

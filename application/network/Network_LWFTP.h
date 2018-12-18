@@ -167,7 +167,7 @@ lwftp_result_t Network_LWFTP_MKD(const char* dirpath);
  * @param port number (usually 21)
  * @param
  */
-lwftp_result_t Network_LWFTP_Start(const char *ipaddr, int port, const char* usrname, const char* passwd);
+lwftp_result_t Network_LWFTP_Start(ip_addr_t ipaddr, int port, const char* usrname, const char* passwd);
 /**
  * Send file to server
  * @param dirPath Directory Path in FTP Server
@@ -193,7 +193,7 @@ lwftp_result_t Network_LWFTP_Disconnect();
 /**
  * Get current server ip-address / domain name
  */
-char *Netwrok_LWIP_Get_ServerIP();
+ip_addr_t Netwrok_LWIP_Get_ServerIP();
 /**
  * Get lwip state
  */

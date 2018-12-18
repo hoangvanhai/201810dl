@@ -122,7 +122,7 @@ int 			App_SetDateTime(SApp *pApp, SDateTime time);
 // Communication
 int 			App_SendUI(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, bool ack);
 int				App_SendPC(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, bool ack);
-int				App_SendPCNetwork(uint8_t subctrl, uint8_t *data, uint8_t len);
+int				App_SendPCNetworkClient(uint8_t subctrl, uint8_t *data, uint8_t len);
 void			App_SetNetPCCallback(SApp *pApp);
 void 			App_SetFTPCallback(SApp *pApp);
 
