@@ -280,7 +280,7 @@ void  App_OS_TimeTickHook (void)
 	static uint32_t count = 0;
 	if(count++ >= 1000) {
 		//LREP("app tick hook on\r\n");
-		GPIO_DRV_TogglePinOutput(kGpioLEDBLUE);
+		//GPIO_DRV_TogglePinOutput(kGpioLEDBLUE);
 		count = 0;
 	}
 //	WDOG_DRV_Refresh();

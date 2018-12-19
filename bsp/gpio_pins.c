@@ -53,27 +53,7 @@
 #include "gpio_pins.h"
 #include <stdbool.h>
 
-gpio_input_pin_user_config_t switchPins[] = {
-  {
-    .pinName = kGpioSW1,
-    .config.isPullEnable = true,
-    .config.pullSelect = kPortPullUp,
-    .config.isPassiveFilterEnabled = false,
-    .config.interrupt = kPortIntDisabled
-  },
-  {
-    .pinName = kGpioSW3,
-    .config.isPullEnable = true,
-    .config.pullSelect = kPortPullUp,
-    .config.isPassiveFilterEnabled = false,
-    .config.interrupt = kPortIntDisabled
-  },
-  {
-    .pinName = GPIO_PINS_OUT_OF_RANGE,
-  }
-};
-
-
+#if 1
 
 const gpio_input_pin_user_config_t sdhcCdPin[] = {
   {
@@ -88,66 +68,6 @@ const gpio_input_pin_user_config_t sdhcCdPin[] = {
   }
 };
 
-
-
-const gpio_output_pin_user_config_t ledPins[] = {
-  {
-    .pinName = kGpioLEDRED,
-    .config.outputLogic = 1,
-    .config.slewRate = kPortSlowSlewRate,
-    .config.isOpenDrainEnabled = false,
-    .config.driveStrength = kPortLowDriveStrength,
-  },
-  {
-    .pinName = kGpioLEDGREEN,
-    .config.outputLogic = 1,
-    .config.slewRate = kPortSlowSlewRate,
-    .config.isOpenDrainEnabled = false,
-    .config.driveStrength = kPortLowDriveStrength,
-  },
-  {
-    .pinName = kGpioLEDBLUE,
-    .config.outputLogic = 1,
-    .config.slewRate = kPortSlowSlewRate,
-    .config.isOpenDrainEnabled = false,
-    .config.driveStrength = kPortLowDriveStrength,
-  },
-  {
-    .pinName = GPIO_PINS_OUT_OF_RANGE,
-  }
-};
-
-
-
-/* Declare SPI1 Card Detection pins for the spi sd card */
-gpio_input_pin_user_config_t sdcardCardDectionPin[] = {
-    {
-        .pinName = kGpioSdcardCardDetection,
-        .config.isPullEnable = true,
-        .config.pullSelect = kPortPullDown,
-        .config.isPassiveFilterEnabled = false,
-        .config.interrupt = kPortIntEitherEdge
-    },
-    {
-        .pinName = GPIO_PINS_OUT_OF_RANGE,
-    }
-};
-
-
-
-/* Declare SPI1 Card Detection pins for the spi sd card */
-const gpio_output_pin_user_config_t mbRs485Pin[] = {
-    {
-    	    .pinName = kGpioMbRs485,
-    	    .config.outputLogic = 1,
-    	    .config.slewRate = kPortSlowSlewRate,
-    	    .config.isOpenDrainEnabled = false,
-    	    .config.driveStrength = kPortLowDriveStrength,
-    },
-    {
-        .pinName = GPIO_PINS_OUT_OF_RANGE,
-    }
-};
 
 
 const gpio_output_pin_user_config_t DigitalOutputPin[] = {
@@ -193,6 +113,112 @@ const gpio_output_pin_user_config_t DigitalOutputPin[] = {
 		.config.isOpenDrainEnabled = false,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
+    {
+		.pinName = kGpioMbRs485,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+    },
+	{
+		.pinName = TriggerAnalog,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = RefCurrEn,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = RefCurrEf,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = EpromWp,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = WatchDogFeed,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = LcdVccOcf,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = LcdVccEn,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = LcdGpio1,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = LcdGpio2,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = LanPsuOcp,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = IoVccEn,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = IoVccOcf,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = ModbusPsuOcp,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = ModbusPsuEn,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+
 	{
 		.pinName = GPIO_PINS_OUT_OF_RANGE,
 	}
@@ -223,6 +249,34 @@ const gpio_output_pin_user_config_t SelectAnalogPin[] = {
 	},
 	{
 		.pinName = SelectAnalog3,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = SelectTrigger0,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = SelectTrigger1,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = SelectTrigger2,
+		.config.outputLogic = 1,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = SelectTrigger3,
 		.config.outputLogic = 1,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.isOpenDrainEnabled = false,
@@ -295,20 +349,7 @@ const gpio_input_pin_user_config_t DigitalInputPin[] = {
 	}
 };
 
-
-const gpio_output_pin_user_config_t triggerAnalogPin[] = {
-	{
-		.pinName = TriggerAnalog,
-		.config.outputLogic = 1,
-		.config.slewRate = kPortSlowSlewRate,
-		.config.isOpenDrainEnabled = false,
-		.config.driveStrength = kPortLowDriveStrength,
-	},
-	{
-		.pinName = GPIO_PINS_OUT_OF_RANGE,
-	}
-};
-
+#endif
 
 /* END gpio_pins. */
 /*!

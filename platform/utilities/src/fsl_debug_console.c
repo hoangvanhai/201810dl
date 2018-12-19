@@ -38,6 +38,7 @@
 #include "fsl_os_abstraction.h"
 #include "print_scan.h"
 #include "fsl_uart_driver.h"
+#include "fsl_lpuart_driver.h"
 #include "shell.h"
 #include "app.h"
 
@@ -51,7 +52,11 @@ static int debug_putc(int ch, void* stream);
 /*******************************************************************************
  * Global variable
  ******************************************************************************/
+#if BOARD_DEBUG_UART_INSTANCE == 5
+lpuart_state_t debug_uart_state;
+#else
 uart_state_t debug_uart_state;
+#endif
 static uint8_t rx_char;
 semaphore_t debug_sem;
 /*******************************************************************************
@@ -59,22 +64,31 @@ semaphore_t debug_sem;
  ******************************************************************************/
 void debug_rx_handle(uint32_t instance, void * uartState);
 
+#if BOARD_DEBUG_UART_INSTANCE == 5
 /*! @brief Operation functions definiations for debug console. */
 typedef struct DebugConsoleOperationFunctions {
     union {
         void (* Send)(void *base, const uint8_t *buf, uint32_t count);
-#if defined(UART_INSTANCE_COUNT)
-        void (* UART_Send)(UART_Type *base, const uint8_t *buf, uint32_t count);
-#endif
+        void (* UART_Send)(LPUART_Type *base, const uint8_t *buf, uint32_t count);
     } tx_union;
     union{
         void (* Receive)(void *base, uint8_t *buf, uint32_t count);
-#if defined(UART_INSTANCE_COUNT)
-        uart_status_t (* UART_Receive)(UART_Type *base, uint8_t *buf, uint32_t count);
-#endif
+        uart_status_t (* UART_Receive)(LPUART_Type *base, uint8_t *buf, uint32_t count);
     } rx_union;
 } debug_console_ops_t;
-
+#else
+/*! @brief Operation functions definiations for debug console. */
+typedef struct DebugConsoleOperationFunctions {
+    union {
+        void (* Send)(void *base, const uint8_t *buf, uint32_t count);
+        void (* UART_Send)(UART_Type *base, const uint8_t *buf, uint32_t count);
+    } tx_union;
+    union{
+        void (* Receive)(void *base, uint8_t *buf, uint32_t count);
+        uart_status_t (* UART_Receive)(UART_Type *base, uint8_t *buf, uint32_t count);
+    } rx_union;
+} debug_console_ops_t;
+#endif
 /*! @brief State structure storing debug console. */
 typedef struct DebugConsoleState {
     debug_console_device_type_t type;/*<! Indicator telling whether the debug console is inited. */
@@ -93,8 +107,7 @@ static debug_console_state_t s_debugConsole;
  * Code
  ******************************************************************************/
 /* See fsl_debug_console.h for documentation of this function.*/
-debug_console_status_t DbgConsole_Init(
-        uint32_t uartInstance, uint32_t baudRate, debug_console_device_type_t device)
+debug_console_status_t DbgConsole_Init( uint32_t uartInstance, uint32_t baudRate, debug_console_device_type_t device)
 {
     if (s_debugConsole.type != kDebugConsoleNone)
     {
@@ -103,13 +116,32 @@ debug_console_status_t DbgConsole_Init(
 
     /* Set debug console to initialized to avoid duplicated init operation.*/
     s_debugConsole.type = device;
-    s_debugConsole.instance = uartInstance;
+
 
     /* Switch between different device. */
     switch (device)
     {
 		case kDebugConsoleUART:
 		{
+
+#if BOARD_DEBUG_UART_INSTANCE == 5
+			s_debugConsole.instance = LPUART0_IDX;
+			lpuart_user_config_t lpuartConfig;
+			 lpuartConfig.clockSource = kClockLpuartSrcPllFllSel;
+			 lpuartConfig.baudRate = baudRate;
+			 lpuartConfig.bitCountPerChar = kLpuart8BitsPerChar;
+			 lpuartConfig.parityMode = kLpuartParityDisabled;
+			 lpuartConfig.stopBitCount = kLpuartOneStopBit;
+			 LPUART_Type * g_Base[LPUART_INSTANCE_COUNT] = LPUART_BASE_PTRS;
+			 LPUART_Type * base = g_Base[uartInstance];
+
+			 LPUART_DRV_Init(LPUART0_IDX, &debug_uart_state, &lpuartConfig);
+			 s_debugConsole.base = base;
+			 UART_DRV_InstallRxCallback(uartInstance, debug_rx_handle, &rx_char, NULL, true);
+			 s_debugConsole.ops.tx_union.UART_Send = LPUART_HAL_SendDataPolling;
+
+#else
+			 s_debugConsole.instance = uartInstance;
 			uart_user_config_t debug_uart_cfg = {
 				.baudRate = baudRate,
 				.parityMode = kUartParityDisabled,
@@ -126,7 +158,12 @@ debug_console_status_t DbgConsole_Init(
 //                s_debugConsole.ops.rx_union.UART_Receive = UART_HAL_ReceiveDataPolling;
 			UART_DRV_InstallRxCallback(uartInstance, debug_rx_handle, &rx_char, NULL, true);
 			s_debugConsole.base = base;
+
+#endif
+
 		}
+
+
 		break;
 
         /* If new device is requried as the low level device for debug console,
@@ -143,7 +180,19 @@ debug_console_status_t DbgConsole_Init(
     return kStatus_DEBUGCONSOLE_Success;
 }
 
-
+#if BOARD_DEBUG_UART_INSTANCE == 5
+void debug_rx_handle(uint32_t instance, void * uartState) {
+	lpuart_state_t *state = (lpuart_state_t*)uartState;
+	//debug_putchar(state->rxBuff[0]);
+	if(shell_push_command(state->rxBuff[0]) == true) {
+		OS_ERR err;
+		OSSemPost(&debug_sem, OS_OPT_POST_1, &err);
+		if(err != OS_ERR_NONE) {
+			LREP("sem post failed\r\n");
+		}
+	}
+}
+#else
 void debug_rx_handle(uint32_t instance, void * uartState) {
 	uart_state_t *state = (uart_state_t*)uartState;
 	//debug_putchar(state->rxBuff[0]);
@@ -155,6 +204,7 @@ void debug_rx_handle(uint32_t instance, void * uartState) {
 		}
 	}
 }
+#endif
 
 
 /* See fsl_debug_console.h for documentation of this function.*/

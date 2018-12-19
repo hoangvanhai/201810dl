@@ -56,17 +56,8 @@
 /* Include inherited beans */
 #include "fsl_gpio_driver.h"
 
-
-/*! @brief Configuration structure 0 for input pins */
-extern gpio_input_pin_user_config_t switchPins[];
-
 /*! @brief Configuration structure 3 for input pins */
 extern const gpio_input_pin_user_config_t sdhcCdPin[];
-
-/*! @brief Configuration structure 0 for output pins */
-extern const gpio_output_pin_user_config_t ledPins[];
-
-extern const gpio_output_pin_user_config_t mbRs485Pin[];
 
 extern const gpio_input_pin_user_config_t DigitalInputPin[];
 
@@ -74,43 +65,58 @@ extern const gpio_output_pin_user_config_t DigitalOutputPin[];
 
 extern const gpio_output_pin_user_config_t SelectAnalogPin[];
 
-extern const gpio_output_pin_user_config_t triggerAnalogPin[];
+extern const gpio_input_pin_user_config_t sdcardCardDectionPin[];
 
 /*! @brief Pin names */
-enum _gpio_pins_pinNames{
-	kGpioSW1                    = GPIO_MAKE_PIN(GPIOC_IDX, 6U),
-	kGpioSW3                    = GPIO_MAKE_PIN(GPIOA_IDX, 4U),
-	kGpioSdhc0Cd                = GPIO_MAKE_PIN(GPIOE_IDX, 6U),
-	kGpioLEDRED                 = GPIO_MAKE_PIN(GPIOB_IDX, 22U),
-	kGpioLEDGREEN               = GPIO_MAKE_PIN(GPIOE_IDX, 26U),
-	kGpioLEDBLUE                = GPIO_MAKE_PIN(GPIOB_IDX, 21U),
-	kGpioSdcardCardDetection    = GPIO_MAKE_PIN(PORTD_IDX, 15U),  /* Connects the TWR_MEM, this's SPI Card detector pin */
-	kGpioMbRs485                = GPIO_MAKE_PIN(GPIOE_IDX, 10U),
+enum _gpio_pins_pinNames {
+	kGpioSdhc0Cd                = GPIO_MAKE_PIN(GPIOD_IDX, 6U),
+	kGpioMbRs485                = GPIO_MAKE_PIN(GPIOC_IDX, 2U),
 
-	DigitalInput0				= GPIO_MAKE_PIN(GPIOC_IDX, 0U),
-	DigitalInput1				= GPIO_MAKE_PIN(GPIOC_IDX, 1U),
-	DigitalInput2				= GPIO_MAKE_PIN(GPIOC_IDX, 2U),
-	DigitalInput3				= GPIO_MAKE_PIN(GPIOC_IDX, 3U),
-	DigitalInput4				= GPIO_MAKE_PIN(GPIOC_IDX, 4U),
+	DigitalInput0				= GPIO_MAKE_PIN(GPIOB_IDX, 19U),
+	DigitalInput1				= GPIO_MAKE_PIN(GPIOB_IDX, 18U),
+	DigitalInput2				= GPIO_MAKE_PIN(GPIOB_IDX, 8U),
+	DigitalInput3				= GPIO_MAKE_PIN(GPIOC_IDX, 7U),
+	DigitalInput4				= GPIO_MAKE_PIN(GPIOC_IDX, 6U),
 	DigitalInput5				= GPIO_MAKE_PIN(GPIOC_IDX, 5U),
-	DigitalInput6				= GPIO_MAKE_PIN(GPIOC_IDX, 6U),
-	DigitalInput7				= GPIO_MAKE_PIN(GPIOC_IDX, 7U),
+	DigitalInput6				= GPIO_MAKE_PIN(GPIOC_IDX, 4U),
+	DigitalInput7				= GPIO_MAKE_PIN(GPIOC_IDX, 3U),
 
-	DigitalOutput0				= GPIO_MAKE_PIN(GPIOC_IDX, 8U),
-	DigitalOutput1				= GPIO_MAKE_PIN(GPIOC_IDX, 9U),
-	DigitalOutput2				= GPIO_MAKE_PIN(GPIOC_IDX, 10U),
-	DigitalOutput3				= GPIO_MAKE_PIN(GPIOC_IDX, 11U),
-	DigitalOutput4				= GPIO_MAKE_PIN(GPIOC_IDX, 12U),
-	DigitalOutput5				= GPIO_MAKE_PIN(GPIOC_IDX, 13U),
+	DigitalOutput0				= GPIO_MAKE_PIN(GPIOC_IDX, 1U),
+	DigitalOutput1				= GPIO_MAKE_PIN(GPIOC_IDX, 0U),
+	DigitalOutput2				= GPIO_MAKE_PIN(GPIOB_IDX, 23U),
+	DigitalOutput3				= GPIO_MAKE_PIN(GPIOB_IDX, 22U),
+	DigitalOutput4				= GPIO_MAKE_PIN(GPIOB_IDX, 21U),
+	DigitalOutput5				= GPIO_MAKE_PIN(GPIOB_IDX, 20U),
 
-	SelectAnalog0				= GPIO_MAKE_PIN(GPIOB_IDX, 0U),
-	SelectAnalog1				= GPIO_MAKE_PIN(GPIOB_IDX, 1U),
-	SelectAnalog2				= GPIO_MAKE_PIN(GPIOB_IDX, 2U),
-	SelectAnalog3				= GPIO_MAKE_PIN(GPIOB_IDX, 3U),
-	TriggerAnalog				= GPIO_MAKE_PIN(GPIOD_IDX, 1U),
+	SelectAnalog0				= GPIO_MAKE_PIN(GPIOC_IDX, 19U),
+	SelectAnalog1				= GPIO_MAKE_PIN(GPIOD_IDX, 1U),
+	SelectAnalog2				= GPIO_MAKE_PIN(GPIOC_IDX, 13U),
+	SelectAnalog3				= GPIO_MAKE_PIN(GPIOC_IDX, 18U),
+
+	SelectTrigger0				= GPIO_MAKE_PIN(GPIOC_IDX, 7U),
+	SelectTrigger1				= GPIO_MAKE_PIN(GPIOC_IDX, 6U),
+	SelectTrigger2				= GPIO_MAKE_PIN(GPIOC_IDX, 12U),
+	SelectTrigger3				= GPIO_MAKE_PIN(GPIOC_IDX, 9U),
+
+	TriggerAnalog				= GPIO_MAKE_PIN(GPIOC_IDX, 8U),
+	RefCurrEn					= GPIO_MAKE_PIN(GPIOD_IDX, 3U),
+	RefCurrEf					= GPIO_MAKE_PIN(GPIOD_IDX, 4U),
+	EpromWp						= GPIO_MAKE_PIN(GPIOC_IDX, 5U),
+
+	WatchDogFeed				= GPIO_MAKE_PIN(GPIOA_IDX, 24U),
+	LcdVccOcf					= GPIO_MAKE_PIN(GPIOA_IDX, 25U),
+	LcdVccEn					= GPIO_MAKE_PIN(GPIOD_IDX, 7U),
+	LcdGpio1					= GPIO_MAKE_PIN(GPIOA_IDX, 27U),
+	LcdGpio2					= GPIO_MAKE_PIN(GPIOA_IDX, 26U),
+	LanPsuOcp					= GPIO_MAKE_PIN(GPIOA_IDX, 28U),
+	LanPsuEn					= GPIO_MAKE_PIN(GPIOE_IDX, 12U),
+	IoVccEn						= GPIO_MAKE_PIN(GPIOA_IDX, 29U),
+	IoVccOcf					= GPIO_MAKE_PIN(GPIOB_IDX, 2U),
+	ModbusPsuOcp				= GPIO_MAKE_PIN(GPIOB_IDX, 16U),
+	ModbusPsuEn					= GPIO_MAKE_PIN(GPIOB_IDX, 17U),
 };
 
-extern gpio_input_pin_user_config_t sdcardCardDectionPin[];
+
 
 #endif
 

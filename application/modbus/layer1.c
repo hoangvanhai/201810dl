@@ -77,7 +77,6 @@ void Modbus_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxP
  */
 void RS485_Init()
 {
-	GPIO_DRV_Init(NULL, mbRs485Pin);
 }
 /*****************************************************************************/
 /** @brief

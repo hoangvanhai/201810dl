@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, Freescale Semiconductor, Inc.
+ * Copyright (c) 2013 - 2014, Freescale Semiconductor, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -28,63 +28,25 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "board.h"
-#include "pin_mux.h"
-#include "fsl_clock_manager.h"
-#include "fsl_debug_console.h"
-#include <includes.h>
+#include "fsl_device_registers.h"
 
-void hardware_init(void) {
+#if FSL_FEATURE_SOC_LPUART_COUNT
 
-	/* enable clock for PORTs */
-	CLOCK_SYS_EnablePortClock(PORTA_IDX);
-	CLOCK_SYS_EnablePortClock(PORTB_IDX);
-	CLOCK_SYS_EnablePortClock(PORTC_IDX);
-	CLOCK_SYS_EnablePortClock(PORTD_IDX);
-	CLOCK_SYS_EnablePortClock(PORTE_IDX);
+/*******************************************************************************
+ * Variables
+ ******************************************************************************/
 
-	CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
+/* Pointer to lpuart runtime state structure.*/
+void * g_lpuartStatePtr[LPUART_INSTANCE_COUNT] = { NULL };
 
-	CLOCK_SYS_EnableEnetClock(BOARD_ENET_INSTANCE);
-	CLOCK_SYS_SetEnetTimeStampSrc(0, kClockTimeSrcOsc0erClk);
-	configure_enet_pins(BOARD_ENET_INSTANCE);
-	configure_sdhc_pins(BOARD_SDHC_INSTANCE);
-	configure_i2c_pins(BOARD_I2C_RTC_INSTANCE);
+/* Table of base addresses for lpuart instances. */
+LPUART_Type * const g_lpuartBase[LPUART_INSTANCE_COUNT] = LPUART_BASE_PTRS;
 
-	/* Init board clock */
-	BOARD_ClockInit();
-	dbg_uart_init();
+/* Table to save LPUART enum numbers defined in CMSIS files. */
+IRQn_Type g_lpuartRxTxIrqId[LPUART_INSTANCE_COUNT] = LPUART_RX_TX_IRQS;
 
-#ifdef MPU_INSTANCE_COUNT /* File System need disabled MPU */
-    // disable MPU
-    for(int i = 0; i < MPU_INSTANCE_COUNT; i++)
-    {
-        MPU_HAL_Disable(g_mpuBase[i]);
-    }
-#endif
+#endif /* FSL_FEATURE_SOC_LPUART_COUNT */
+/*******************************************************************************
+ * EOF
+ ******************************************************************************/
 
-	// Configure the power mode protection
-	SMC_HAL_SetProtection(SMC_BASE_PTR, kAllowPowerModeVlp);
-
-	GPIO_DRV_Init(sdhcCdPin, NULL);
-
-    GPIO_DRV_Init(DigitalInputPin, NULL);
-    GPIO_DRV_Init(NULL, DigitalOutputPin);
-
-
-	BOARD_EnableAllFault();
-
-	BOARD_CreateWDG();
-}
-
-/*!
-** @}
-*/
-/*
-** ###################################################################
-**
-**     This file was created by Processor Expert 10.4 [05.10]
-**     for the Freescale Kinetis series of microcontrollers.
-**
-** ###################################################################
-*/
