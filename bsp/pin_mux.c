@@ -73,51 +73,37 @@ void configure_can_pins(uint32_t instance)
 
 void configure_enet_pins(uint32_t instance)
 {
-  /* Affects PORTC_PCR16 register */
-  PORT_HAL_SetMuxMode(PORTC,16u,kPortMuxAlt4);
-  /* Affects PORTC_PCR17 register */
-  PORT_HAL_SetMuxMode(PORTC,17u,kPortMuxAlt4);
-  /* Affects PORTC_PCR18 register */
-  PORT_HAL_SetMuxMode(PORTC,18u,kPortMuxAlt4);
-  /* Affects PORTC_PCR19 register */
-  PORT_HAL_SetMuxMode(PORTC,19u,kPortMuxAlt4);
-  /* Affects PORTA_PCR29 register */
-  PORT_HAL_SetMuxMode(PORTA,29u,kPortMuxAlt4);
-  /* Affects PORTA_PCR27 register */
-  PORT_HAL_SetMuxMode(PORTA,27u,kPortMuxAlt4);
-  /* Affects PORTB_PCR1 register */
-  PORT_HAL_SetMuxMode(PORTB,1u,kPortMuxAlt4);
-  /* Affects PORTB_PCR0 register */
-  PORT_HAL_SetMuxMode(PORTB,0u,kPortMuxAlt4);
-  PORT_HAL_SetOpenDrainCmd(PORTB,0u,true);
-  /* Affects PORTA_PCR11 register */
-  PORT_HAL_SetMuxMode(PORTA,11u,kPortMuxAlt4);
-  /* Affects PORTA_PCR13 register */
-  PORT_HAL_SetMuxMode(PORTA,13u,kPortMuxAlt4);
-  /* Affects PORTA_PCR12 register */
-  PORT_HAL_SetMuxMode(PORTA,12u,kPortMuxAlt4);
-  /* Affects PORTA_PCR10 register */
-  PORT_HAL_SetMuxMode(PORTA,10u,kPortMuxAlt4);
-  /* Affects PORTA_PCR9 register */
-  PORT_HAL_SetMuxMode(PORTA,9u,kPortMuxAlt4);
-  /* Affects PORTA_PCR14 register */
-  PORT_HAL_SetMuxMode(PORTA,14u,kPortMuxAlt4);
-  /* Affects PORTA_PCR5 register */
-  PORT_HAL_SetMuxMode(PORTA,5u,kPortMuxAlt4);
-  /* Affects PORTA_PCR25 register */
-  PORT_HAL_SetMuxMode(PORTA,25u,kPortMuxAlt4);
-  /* Affects PORTA_PCR16 register */
-  PORT_HAL_SetMuxMode(PORTA,16u,kPortMuxAlt4);
-  /* Affects PORTA_PCR17 register */
-  PORT_HAL_SetMuxMode(PORTA,17u,kPortMuxAlt4);
-  /* Affects PORTA_PCR24 register */
-  PORT_HAL_SetMuxMode(PORTA,24u,kPortMuxAlt4);
-  /* Affects PORTA_PCR26 register */
-  PORT_HAL_SetMuxMode(PORTA,26u,kPortMuxAlt4);
-  /* Affects PORTA_PCR15 register */
-  PORT_HAL_SetMuxMode(PORTA,15u,kPortMuxAlt4);
-  /* Affects PORTA_PCR28 register */
-  PORT_HAL_SetMuxMode(PORTA,28u,kPortMuxAlt4);
+	/* Affects PORTC_PCR16 register */
+	PORT_HAL_SetMuxMode(PORTC,16u,kPortMuxAlt4);
+	/* Affects PORTC_PCR17 register */
+	PORT_HAL_SetMuxMode(PORTC,17u,kPortMuxAlt4);
+	/* Affects PORTC_PCR18 register */
+	PORT_HAL_SetMuxMode(PORTC,18u,kPortMuxAlt4);
+	/* Affects PORTC_PCR19 register */
+	PORT_HAL_SetMuxMode(PORTC,19u,kPortMuxAlt4);
+	/* Affects PORTB_PCR1 register */
+	PORT_HAL_SetMuxMode(PORTB,1u,kPortMuxAlt4);
+	/* Affects PORTB_PCR0 register */
+	PORT_HAL_SetMuxMode(PORTB,0u,kPortMuxAlt4);
+	PORT_HAL_SetOpenDrainCmd(PORTB,0u,true);
+	PORT_HAL_SetPullMode(PORTB,0u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTB,0u,true);
+	/* Affects PORTA_PCR13 register */
+	PORT_HAL_SetMuxMode(PORTA,13u,kPortMuxAlt4);
+	/* Affects PORTA_PCR12 register */
+	PORT_HAL_SetMuxMode(PORTA,12u,kPortMuxAlt4);
+	/* Affects PORTA_PCR14 register */
+	PORT_HAL_SetMuxMode(PORTA,14u,kPortMuxAlt4);
+	/* Affects PORTA_PCR5 register */
+	PORT_HAL_SetMuxMode(PORTA,5u,kPortMuxAlt4);
+	/* Affects PORTA_PCR16 register */
+	PORT_HAL_SetMuxMode(PORTA,16u,kPortMuxAlt4);
+	/* Affects PORTA_PCR17 register */
+	PORT_HAL_SetMuxMode(PORTA,17u,kPortMuxAlt4);
+	/* Affects PORTA_PCR15 register */
+	PORT_HAL_SetMuxMode(PORTA,15u,kPortMuxAlt4);
+	/* Affects PORTA_PCR28 register */
+	PORT_HAL_SetMuxMode(PORTA,28u,kPortMuxAlt4);
 }
 
 void configure_ftm_pins(uint32_t instance)
@@ -345,10 +331,15 @@ void configure_uart_pins(uint32_t instance)
 {
   switch(instance) {
    case UART0_IDX:                      /* UART5 */
-	  /* Affects PORTD_PCR6 register */
-	  PORT_HAL_SetMuxMode(PORTD,6u,kPortMuxAlt3); 	// RxD
-	  /* Affects PORTD_PCR7 register */
-	  PORT_HAL_SetMuxMode(PORTD,7u,kPortMuxAlt3);	// TxD
+//	  /* Affects PORTD_PCR6 register */
+//	  PORT_HAL_SetMuxMode(PORTD,6u,kPortMuxAlt3); 	// RxD
+//	  /* Affects PORTD_PCR7 register */
+//	  PORT_HAL_SetMuxMode(PORTD,7u,kPortMuxAlt3);	// TxD
+
+      PORT_HAL_SetMuxMode(PORTB,16u,kPortMuxAlt3);
+      /* Affects PORTB_PCR17 register */
+      PORT_HAL_SetMuxMode(PORTB,17u,kPortMuxAlt3);
+
 	  break;
     case UART1_IDX:                      /* UART1 */
       /* Affects PORTC_PCR3 register */

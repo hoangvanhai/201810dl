@@ -39,12 +39,12 @@ void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type);
 void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type);
 void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type);
 void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type);
-void Clb_NetTcpClientConnEvent(Network_ConnEvent event,
+void Clb_NetTcpClientConnEvent(Network_Status event,
 		Network_Interface interface);
 void Clb_NetTcpClientRecvData(const uint8_t* data, int length);
 void Clb_NetTcpClientSentData(const uint8_t* data, int length);
 void Clb_NetTcpClientError(const uint8_t* data, int length);
-void Clb_NetTcpServerConnEvent(Network_ConnEvent event,
+void Clb_NetTcpServerConnEvent(Network_Status event,
 		Network_Interface interface);
 void Clb_NetTcpServerRecvData(const uint8_t* data, int length);
 void Clb_NetTcpServerSentData(const uint8_t* data, int length);
@@ -421,6 +421,7 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData) {
 	case LOGGER_SET | LOGGER_WRITE_DONE:
 		LREP("write config done\r\n");
 		App_SaveConfig(pApp, CONFIG_FILE_PATH);
+		pApp->reboot = true;
 	break;
 
 	default:
@@ -553,6 +554,18 @@ void App_TaskPeriodic(task_param_t parg) {
 	pApp->sDateTime.tm_year = 2018;
 
 	LREP("log min = %d\r\n", log_min);
+
+	Network_InitModule(&pApp->sCfg.sCom);
+
+	Network_Register_TcpClient_Notify(Clb_NetTcpClientConnEvent);
+	Network_Register_TcpClient_DataEvent(Event_DataReceived, Clb_NetTcpClientRecvData);
+	Network_Register_TcpClient_DataEvent(Event_DataSendDone, Clb_NetTcpClientSentData);
+	Network_Register_TcpClient_DataEvent(Event_DataError, Clb_NetTcpClientError);
+
+	Network_Register_TcpServer_Notify(Clb_NetTcpServerConnEvent);
+	Network_Register_TcpServer_DataEvent(Event_DataReceived, Clb_NetTcpServerRecvData);
+	Network_Register_TcpServer_DataEvent(Event_DataSendDone, Clb_NetTcpServerSentData);
+	Network_Register_TcpServer_DataEvent(Event_DataError, Clb_NetTcpServerError);
 
 	while(1) {
 		OSA_SleepMs(1000);
@@ -1030,7 +1043,10 @@ void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
 	}
 }
 
-void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type) {
+void Clb_TransPC_SentEvent(void *pData, uint8_t u8Type) {
+
+	SFrameInfo *pFrame = (SFrameInfo*)MEM_BODY((SMem*)pData);
+
 	//LREP("Sent done event 0x%x\r\n", u8Type);
 	if(App_IsCtrlCodePending(pAppObj, CTRL_SEND_HEADER)) {
 		if(pAppObj->pcCounter < SYSTEM_NUM_TAG) {
@@ -1065,6 +1081,20 @@ void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type) {
 			App_ClearCtrlCode(pAppObj, CTRL_SEND_HEADER);
 			pAppObj->pcCounter = 0;
 		}
+	}
+
+
+	switch(u8Type & 0x3F) {
+	case FRM_DATA:
+		if(pFrame->pu8Data[0] == (LOGGER_SET | LOGGER_WRITE_SUCCESS)) {
+			if(pAppObj->reboot) {
+				NVIC_SystemReset();
+			}
+		}
+		break;
+
+	default:
+		break;
 	}
 }
 
@@ -1140,7 +1170,7 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_HEADER,
 					(uint8_t*)mem, sizeof(STagHeader) + 1, false);
 
-			LREP("send header %d\r\n", pAppObj->uiCounter);
+			//LREP("send header %d\r\n", pAppObj->uiCounter);
 			OSA_FixedMemFree(mem);
 			pAppObj->uiCounter++;
 		}
@@ -1161,7 +1191,7 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 		}
 	}
 
-	LREP("counter = %d\r\n", counter);
+	//LREP("counter = %d\r\n", counter);
 	counter++;
 
 }
@@ -2085,21 +2115,23 @@ void sdhc_card_detection(void)
  *  @return Void.
  *  @note
  */
-void Clb_NetTcpClientConnEvent(Network_ConnEvent event,
+void Clb_NetTcpClientConnEvent(Network_Status event,
 		Network_Interface interface) {
 	switch(event) {
-	case NetConn_Disconnected:
-
-	break;
-	case NetConn_Connected:
-
-	break;
-	case NetConn_Network_Down:
-
-	break;
-
+	case Status_Connected:
+		LREP("Event connected\r\n");
+		break;
+	case Status_Disconnected:
+		LREP("Event disconnected\r\n");
+		break;
+	case Status_Network_Down:
+		LREP("Event network down\r\n");
+		break;
+	case Status_Connecting:
+		LREP("Event connecting\r\n");
+		break;
 	default:
-	break;
+		break;
 	}
 }
 /*****************************************************************************/
@@ -2143,21 +2175,23 @@ void Clb_NetTcpClientError(const uint8_t* data, int length) {
  *  @return Void.
  *  @note
  */
-void Clb_NetTcpServerConnEvent(Network_ConnEvent event,
+void Clb_NetTcpServerConnEvent(Network_Status event,
 		Network_Interface interface) {
 	switch(event) {
-	case NetConn_Disconnected:
-
-	break;
-	case NetConn_Connected:
-
-	break;
-	case NetConn_Network_Down:
-
-	break;
-
+	case Status_Connected:
+		LREP("Event connected\r\n");
+		break;
+	case Status_Disconnected:
+		LREP("Event disconnected\r\n");
+		break;
+	case Status_Network_Down:
+		LREP("Event network down\r\n");
+		break;
+	case Status_Connecting:
+		LREP("Event connecting\r\n");
+		break;
 	default:
-	break;
+		break;
 	}
 }
 /*****************************************************************************/

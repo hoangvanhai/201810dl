@@ -60,6 +60,11 @@ void hardware_init(void) {
     }
 #endif
 
+    CLOCK_SYS_EnableEnetClock(0);
+    // Select PTP timer OUTCLK
+    CLOCK_SYS_SetEnetTimeStampSrc(0, kClockTimeSrcOsc0erClk);
+    configure_enet_pins(0);
+
     // Configure the power mode protection
     SMC_HAL_SetProtection(SMC_BASE_PTR, kAllowPowerModeVlp);
 

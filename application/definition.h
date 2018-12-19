@@ -14,22 +14,6 @@
 #include <lwip/netif.h>
 #include <time.h>
 
-typedef enum Network_Interface_ {
-	Interface_Ethernet,
-	Interface_Wireless,
-	Interface_All
-}Network_Interface;
-typedef enum Network_ConnEvent_ {
-	NetConn_Disconnected = 0,
-	NetConn_Connected,
-	NetConn_Network_Down
-}Network_ConnEvent;
-typedef enum Network_DataEvent_ {
-	NetData_Received = 0,
-	NetData_SendDone,
-	NetData_Error
-}Network_DataEvent;
-
 
 #define LOGGER_DEV_ID             			0x02
 #define LOGGER_PC_ID         				0x01

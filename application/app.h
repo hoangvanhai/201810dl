@@ -35,6 +35,7 @@
 #include <lwip/netif.h>
 #include <filesystem.h>
 #include <os_app_hooks.h>
+#include <network.h>
 
 /************************** Constant Definitions *****************************/
 #define CONFIG_FILE_PATH		"/conf/config.dat"
@@ -67,6 +68,7 @@ typedef struct SApp_ {
 	uint32_t			uiCounter;
 	bool				sdhcPlugged;
 	bool				stat;
+	bool				reboot;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/

@@ -214,25 +214,26 @@ void  App_OS_StatTaskHook (void)
 {
 	if(pAppObj->stat) {
 
-		LREP("%10s used %4d free %4d\r\n", "ui",
-				TCB_task_ui.StkUsed,
-				TCB_task_ui.StkFree);
-
-		LREP("%10s used %4d free %4d\r\n", "modbus",
-				TCB_task_modbus.StkUsed,
-				TCB_task_modbus.StkFree);
-
-		LREP("%10s used %4d free %4d\r\n", "serialcomm",
-				TCB_task_serialcomm.StkUsed,
-				TCB_task_serialcomm.StkFree);
-
-		LREP("%10s used %4d free %4d\r\n", "periodic",
-				TCB_task_periodic.StkUsed,
-				TCB_task_periodic.StkFree);
-
-		LREP("%10s used %4d free %4d\r\n", "startup",
-				TCB_task_startup.StkUsed,
-				TCB_task_startup.StkFree);
+		LREP("\rcpu usage %d", OSStatTaskCPUUsage);
+//		LREP("%10s used %4d free %4d\r\n", "ui",
+//				TCB_task_ui.StkUsed,
+//				TCB_task_ui.StkFree);
+//
+//		LREP("%10s used %4d free %4d\r\n", "modbus",
+//				TCB_task_modbus.StkUsed,
+//				TCB_task_modbus.StkFree);
+//
+//		LREP("%10s used %4d free %4d\r\n", "serialcomm",
+//				TCB_task_serialcomm.StkUsed,
+//				TCB_task_serialcomm.StkFree);
+//
+//		LREP("%10s used %4d free %4d\r\n", "periodic",
+//				TCB_task_periodic.StkUsed,
+//				TCB_task_periodic.StkFree);
+//
+//		LREP("%10s used %4d free %4d\r\n", "startup",
+//				TCB_task_startup.StkUsed,
+//				TCB_task_startup.StkFree);
 
 	}
 
