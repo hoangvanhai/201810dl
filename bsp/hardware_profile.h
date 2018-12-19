@@ -9,7 +9,11 @@
 #define APPLICATION_HW_PROFILE_H_
 
 #include <app_cfg.h>
+#ifdef CPU_MK66FN2M0VLQ18
+#include <MK66F18_extension.h>
+#else
 #include <MK64F12_extension.h>
+#endif
 
 /* The board name */
 #define BOARD_NAME                      "DATA_LOGGER"

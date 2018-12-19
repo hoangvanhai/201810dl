@@ -360,12 +360,12 @@ void configure_uart_pins(uint32_t instance)
 	  /* Affects PORTE_PCR25 register */
 	  PORT_HAL_SetMuxMode(PORTE,25u,kPortMuxAlt3);	// RxD
 	  break;
-    case UART5_IDX:                      /* UART5 */
-      /* Affects PORTE_PCR9 register */
-      PORT_HAL_SetMuxMode(PORTE,9u,kPortMuxAlt3);	//
-      /* Affects PORTE_PCR8 register */
-      PORT_HAL_SetMuxMode(PORTE,8u,kPortMuxAlt3);	//
-      break;
+//    case UART5_IDX:                      /* UART5 */
+//      /* Affects PORTE_PCR9 register */
+//      PORT_HAL_SetMuxMode(PORTE,9u,kPortMuxAlt3);	//
+//      /* Affects PORTE_PCR8 register */
+//      PORT_HAL_SetMuxMode(PORTE,8u,kPortMuxAlt3);	//
+//      break;
 
     default:
       break;
