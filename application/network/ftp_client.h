@@ -18,22 +18,22 @@
 
 enum FtpCode {
 	FTP_ERR_NONE = 0,
-	FTP_ERR_FILE,
-	FTP_ERR_PUT,
-	FTP_ERR_GET,
-	FTP_ERR_CD,
-	FTP_ERR_NCD,
-	FTP_ERR_MKD,
-	FTP_ERR_PWD,
-	FTP_ERR_OPEN_CTRL_CONN,
-	FTP_ERR_OPEN_DATA_CONN,
-	FTP_ERR_RECV_CTRL_MSG,
-	FTP_ERR_RECV_DATA_MSG,
-	FTP_ERR_SEND_CTRL_MSG,
-	FTP_ERR_SEND_DATA_MSG,
-	FTP_ERR_AUTHEN,
-	FTP_ERR_PASV,
-	FTP_ERR_CODE
+	FTP_ERR_FILE,			//1
+	FTP_ERR_PUT,			//2
+	FTP_ERR_GET,			//3
+	FTP_ERR_CD,				//4
+	FTP_ERR_NCD,			//5
+	FTP_ERR_MKD,			//6
+	FTP_ERR_PWD,			//7
+	FTP_ERR_OPEN_CTRL_CONN,	//8
+	FTP_ERR_OPEN_DATA_CONN, //9
+	FTP_ERR_RECV_CTRL_MSG,	//10
+	FTP_ERR_RECV_DATA_MSG,	//11
+	FTP_ERR_SEND_CTRL_MSG,	//12
+	FTP_ERR_SEND_DATA_MSG,	//13
+	FTP_ERR_AUTHEN,			//14
+	FTP_ERR_PASV,			//15
+	FTP_ERR_CODE			//16
 };
 
 typedef struct ServerInfo_ {
@@ -43,6 +43,12 @@ typedef struct ServerInfo_ {
 	CPU_CHAR	*username;
 	CPU_CHAR	*passwd;
 }ServerInfo;
+
+
+typedef struct FtpMsg_ {
+	uint8_t local_path[128];
+	uint8_t file_name[128];
+}FtpMsg;
 
 typedef struct FtpClient_ {
 	int 				fd_ctrl;
@@ -57,6 +63,7 @@ typedef struct FtpClient_ {
 	Network_Status		status_data;
 	uint8_t				curr_sv_idx;
 	ServerInfo			server_list[NUM_FTP_SERVER];
+	sys_thread_t		send_thread;
 
 }FtpClient;
 
@@ -75,9 +82,9 @@ int		ftp_close_data_sock(FtpClient *pFC);
 int 	ftp_get_pasv_port(FtpClient *pFC);
 int 	ftp_remote_cwd(FtpClient *pFC, const char *path);
 int 	ftp_remote_mkd(FtpClient *pFC, const char *path);
-int 	ftp_remote_put(FtpClient *pFC, uint8_t index, const char* filename,
-						const char *local_path, const char *remote_path);
-int 	ftp_remote_mkd_recursive(FtpClient *pFC, const char* remote_path);
+int 	ftp_remote_put(FtpClient *pFC, uint8_t index, char* filename,
+						char *local_path, char *remote_path);
+int 	ftp_remote_mkd_recursive(FtpClient *pFC, char* remote_path);
 int 	ftp_remote_send_recv_ctrl(FtpClient *pFC, const char *msg);
 int 	ftp_send_ctrl_msg(FtpClient *pFC, const char *msg);
 int 	ftp_recv_ctrl_msg(FtpClient *pFC, int timeout);
@@ -86,5 +93,7 @@ int 	ftp_remote_send_data(FtpClient *pFC, const uint8_t *data, int len);
 int		ftp_destroy_channel(FtpClient *pFC);
 int		ftp_get_code(FtpClient *pFC);
 
+void 	ftp_client_sender(void *arg);
+int		ftp_add_filename(FtpClient *pFC, const uint8_t * local_path, const uint8_t* file_name);
 
 #endif /* APPLICATION_FTP_CLIENT_H_ */

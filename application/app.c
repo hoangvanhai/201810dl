@@ -341,7 +341,7 @@ int App_DefaultTag(STag *pHandle, uint8_t tagIdx) {
  *  @return Void.
  *  @note
  */
-int App_SetConfig(SApp *pApp, const uint8_t *pData) {
+int App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial) {
 	switch(pData[0]) {
 	case LOGGER_SET | LOGGER_COMMON:
 		if(pData[1] == sizeof(SCommon)) {
@@ -429,8 +429,13 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData) {
 		break;
 	}
 
-	return App_SendPC(pApp, LOGGER_SET | LOGGER_WRITE_SUCCESS, NULL, 0, false);
+	int ret;
+	if(serial)
+		ret = App_SendPC(pApp, LOGGER_SET | LOGGER_WRITE_SUCCESS, NULL, 0, false);
+	else
+		ret = App_SendPCNetworkClient(LOGGER_SET | LOGGER_WRITE_SUCCESS, NULL, 0);
 
+	return ret;
 }
 /*****************************************************************************/
 /** @brief
@@ -555,6 +560,7 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	LREP("log min = %d\r\n", log_min);
 
+#if NETWORK_MODULE_EN > 0
 	Network_InitModule(&pApp->sCfg.sCom);
 
 	Network_Register_TcpClient_Notify(Clb_NetTcpClientConnEvent);
@@ -566,6 +572,7 @@ void App_TaskPeriodic(task_param_t parg) {
 	Network_Register_TcpServer_DataEvent(Event_DataReceived, Clb_NetTcpServerRecvData);
 	Network_Register_TcpServer_DataEvent(Event_DataSendDone, Clb_NetTcpServerSentData);
 	Network_Register_TcpServer_DataEvent(Event_DataError, Clb_NetTcpServerError);
+#endif
 
 	while(1) {
 		OSA_SleepMs(1000);
@@ -576,12 +583,10 @@ void App_TaskPeriodic(task_param_t parg) {
 					pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec); */
 			//LREP(".");
 			//GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
-
 		}
 
 
 		App_DiReadAllPort(pApp);
-		//App_AiReadAllPort(pApp);
 		App_UpdateTagContent(pApp);
 
         if(pApp->sDateTime.tm_min != last_min && logged) {
@@ -678,32 +683,7 @@ void App_TaskSerialcomm(task_param_t param) {
 		OSSemPend(&pApp->semTransPc, 1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
 			Trans_Task(&pApp->sTransPc);
-
-//			if(App_IsCtrlCodePending(pApp, CTRL_SEND_HEADER)) {
-//				if(pApp->counter < SYSTEM_NUM_TAG) {
-//					STagHeader *hdr = (STagHeader*)OSA_FixedMemMalloc(sizeof(STagHeader));
-//					if(hdr != NULL) {
-//						hdr->id = pApp->sTagValue.Node[pApp->counter].id;
-//						hdr->alarm_value = pApp->sTagValue.Node[pApp->counter].alarm_value;
-//						hdr->alarm_enable = pApp->sTagValue.Node[pApp->counter].alarm_enable;
-//						Str_Copy_N(hdr->name, pApp->sTagValue.Node[pApp->counter].name,
-//								sizeof(hdr->name));
-//						Str_Copy_N(hdr->raw_unit, pApp->sTagValue.Node[pApp->counter].raw_unit,
-//								sizeof(hdr->raw_unit));
-//						Str_Copy_N(hdr->std_unit, pApp->sTagValue.Node[pApp->counter].std_unit,
-//								sizeof(hdr->std_unit));
-//						App_SendPC(pApp, LOGGER_GET | LOGGER_STREAM_HEADER,
-//								(uint8_t*)hdr, sizeof(STagHeader), false);
-//
-//						LREP("send header %d\r\n", pApp->counter);
-//						App_SetCtrlCode(pApp, CTRL_SEND_HEADER);
-//						pApp->counter++;
-//					}
-//					//OSA_SleepMs(100);
-//				} else {
-//					App_ClearCtrlCode(pApp, CTRL_SEND_HEADER);
-//				}
-//			}
+			//LREP("#");
 		}
 	}
 }
@@ -877,7 +857,7 @@ void App_CommRecvHandle(const uint8_t *data) {
 	case LOGGER_SET | LOGGER_DI:
 	case LOGGER_SET | LOGGER_DO:
 	case LOGGER_SET | LOGGER_WRITE_DONE:
-		App_SetConfig(pAppObj, data);
+		App_SetConfig(pAppObj, data, true);
 		break;
 	case LOGGER_SET | LOGGER_TIME:
 
@@ -903,37 +883,36 @@ void App_CommRecvHandle(const uint8_t *data) {
 	break;
 
 	case LOGGER_GET | LOGGER_STREAM_VALUE:
-		break;
-//	{
-//
-//		if(data[2] & STREAM_AI) {
-//			App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_AI,
-//							(uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput), false);
-//		}
-//
-//		if(data[2] & STREAM_MB) {
-//			App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_MB,
-//							(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue), false);
-//		}
-//
-//		if(data[2] & STREAM_VALUE) {
-//			STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
-//			if(pMem != NULL) {
-//				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
-//					pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
-//					pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
-//					pMem->Node[i].meas_stt[0] = pAppObj->sTagValue.Node[i].meas_stt[0];
-//					pMem->Node[i].meas_stt[1] = pAppObj->sTagValue.Node[i].meas_stt[1];
-//					pMem->Node[i].meas_stt[2] = pAppObj->sTagValue.Node[i].meas_stt[2];
-//				}
-//				App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_VALUE,
-//						(uint8_t*)pMem, sizeof(STagVArray), false);
-//
-//				OSA_FixedMemFree((uint8_t*)pMem);
-//			}
-//		}
-//	}
-//	break;
+	{
+
+		if(data[2] & STREAM_AI) {
+			App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_AI,
+							(uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput), false);
+		}
+
+		if(data[2] & STREAM_MB) {
+			App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_MB,
+							(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue), false);
+		}
+
+		if(data[2] & STREAM_VALUE) {
+			STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
+			if(pMem != NULL) {
+				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+					pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
+					pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
+					pMem->Node[i].meas_stt[0] = pAppObj->sTagValue.Node[i].meas_stt[0];
+					pMem->Node[i].meas_stt[1] = pAppObj->sTagValue.Node[i].meas_stt[1];
+					pMem->Node[i].meas_stt[2] = pAppObj->sTagValue.Node[i].meas_stt[2];
+				}
+				App_SendPC(pAppObj, LOGGER_GET | LOGGER_STREAM_VALUE,
+						(uint8_t*)pMem, sizeof(STagVArray), false);
+
+				OSA_FixedMemFree((uint8_t*)pMem);
+			}
+		}
+	}
+	break;
 
 	case LOGGER_GET | LOGGER_STREAM_HEADER: {
 		pAppObj->pcCounter = 0;
@@ -955,6 +934,126 @@ void App_CommRecvHandle(const uint8_t *data) {
 	}
 }
 
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void App_NetRecvHandle(const uint8_t *data) {
+	uint8_t sendData[30];
+	switch(data[0]) {
+
+	case LOGGER_LOGIN: {
+		bool normal = (Str_Cmp_N((CPU_CHAR*)pAppObj->sCfg.sAccount.username,
+					(CPU_CHAR*)&data[2], SYS_CFG_USER_LENGTH) == 0) &&
+					(Str_Cmp_N((CPU_CHAR*)pAppObj->sCfg.sAccount.password,
+					(CPU_CHAR*)&data[SYS_CFG_USER_LENGTH + 2], SYS_CFG_PASSWD_LENGTH) == 0);
+
+		bool root = (Str_Cmp_N((CPU_CHAR*)pAppObj->sCfg.sAccount.rootname,
+					(CPU_CHAR*)&data[2], SYS_CFG_USER_LENGTH) == 0) &&
+					(Str_Cmp_N((CPU_CHAR*)pAppObj->sCfg.sAccount.rootpass,
+					(CPU_CHAR*)&data[SYS_CFG_USER_LENGTH + 2], SYS_CFG_PASSWD_LENGTH) == 0);
+
+		if(normal || root) {
+			sendData[0] = LOGGER_SUCCESS;
+			LREP("login as %s user\r\n", root ? "root" : "normal");
+		} else {
+			sendData[0] = LOGGER_ERROR;
+			LREP("invalid username %s password %s\r\n",
+					&data[2], &data[2 + SYS_CFG_PASSWD_LENGTH]);
+		}
+
+		App_SendPCNetworkClient(LOGGER_LOGIN, sendData, 1);
+	}
+		break;
+	case LOGGER_SET | LOGGER_COMMON:
+	case LOGGER_SET | LOGGER_TAG:
+	case LOGGER_SET | LOGGER_DI:
+	case LOGGER_SET | LOGGER_DO:
+	case LOGGER_SET | LOGGER_WRITE_DONE:
+		App_SetConfig(pAppObj, data, false);
+		break;
+	case LOGGER_SET | LOGGER_TIME:
+
+		memcpy((uint8_t*)&pAppObj->sDateTime, &data[2], sizeof(SDateTime));
+		 LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
+				 pAppObj->sDateTime.tm_year, pAppObj->sDateTime.tm_mon,
+				 pAppObj->sDateTime.tm_mday, pAppObj->sDateTime.tm_hour,
+				 pAppObj->sDateTime.tm_min,  pAppObj->sDateTime.tm_sec);
+		 App_SendPCNetworkClient(LOGGER_SET | LOGGER_TIME, NULL, 0);
+		break;
+	case LOGGER_CHANGE_PASSWD:
+
+		break;
+
+	case LOGGER_GET | LOGGER_STREAM_AI:
+	App_SendPCNetworkClient(LOGGER_GET | LOGGER_STREAM_AI,
+				(uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput));
+	break;
+
+	case LOGGER_GET | LOGGER_STREAM_MB:
+	App_SendPCNetworkClient(LOGGER_GET | LOGGER_STREAM_MB,
+				(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue));
+	break;
+
+	case LOGGER_GET | LOGGER_STREAM_VALUE:
+	{
+
+		if(data[2] & STREAM_AI) {
+			int ret = App_SendPCNetworkClient(LOGGER_GET | LOGGER_STREAM_AI,
+							(uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput));
+			LREP("send stream ai %d \r\n", ret);
+		}
+
+		if(data[2] & STREAM_MB) {
+
+			int ret = App_SendPCNetworkClient(LOGGER_GET | LOGGER_STREAM_MB,
+							(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue));
+			LREP("send stream mb %d\r\n", ret);
+		}
+
+		if(data[2] & STREAM_VALUE) {
+
+			STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
+			if(pMem != NULL) {
+				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+					pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
+					pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
+					pMem->Node[i].meas_stt[0] = pAppObj->sTagValue.Node[i].meas_stt[0];
+					pMem->Node[i].meas_stt[1] = pAppObj->sTagValue.Node[i].meas_stt[1];
+					pMem->Node[i].meas_stt[2] = pAppObj->sTagValue.Node[i].meas_stt[2];
+				}
+				App_SendPCNetworkClient(LOGGER_GET | LOGGER_STREAM_VALUE,
+						(uint8_t*)pMem, sizeof(STagVArray));
+				LREP("send stream value \r\n");
+				OSA_FixedMemFree((uint8_t*)pMem);
+			}
+		}
+	}
+	break;
+
+	case LOGGER_GET | LOGGER_STREAM_HEADER: {
+		pAppObj->pcCounter = 0;
+		App_SetCtrlCode(pAppObj, CTRL_SEND_HEADER);
+	}
+	break;
+
+	case LOGGER_SET | LOGGER_CALIB_AI:
+		App_CommCalibAi(pAppObj, data);
+	break;
+
+	case LOGGER_SET | LOGGER_CALIB_CURR_PWR:
+
+	break;
+
+	default:
+		LREP("unhandled msg type: 0x%02x\r\n", data[0]);
+		break;
+	}
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -1634,6 +1733,29 @@ inline int	App_SendPC(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, b
  *  @return Void.
  *  @note
  */
+int	App_SendPCNetworkClient(uint8_t subctrl, uint8_t *data, uint8_t len) {
+	bool ret = false;
+	uint8_t *sdata = OSA_FixedMemMalloc(len + 2);
+	if(sdata != NULL) {
+		sdata[0] = subctrl;
+		sdata[1] = len;
+		if(len > 0 && data != NULL)
+			memcpy(&sdata[2], data, len);
+
+		//TODO send data to tcpclient
+		ret = Network_TcpServer_Send(sdata, len + 2);
+		OSA_FixedMemFree(sdata);
+	}
+	return ret;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void App_SetNetPCCallback(SApp *pApp) {
 
 }
@@ -1805,7 +1927,7 @@ int App_GenerateLogFile(SApp *pApp) {
 		OSA_FixedMemFree((uint8_t*)time);
 		OSA_FixedMemFree((uint8_t*)year);
 		OSA_FixedMemFree((uint8_t*)mon);
-		return -4;
+		return -5;
 	}
 
 
@@ -1891,7 +2013,11 @@ int App_GenerateLogFile(SApp *pApp) {
 				OSA_FixedMemFree((uint8_t*)row);
 
 				if(retVal == FR_OK) {
-					// TODO: send file name to Net module
+					retVal = f_close(&file);
+					if(retVal == FR_OK) {
+						// TODO: send file name to Net module
+						Network_FtpClient_Send((uint8_t*)day, (uint8_t*)filename);
+					}
 				}
 			}
 		}
@@ -2144,6 +2270,8 @@ void Clb_NetTcpClientConnEvent(Network_Status event,
  */
 void Clb_NetTcpClientRecvData(const uint8_t* data, int length) {
 
+	LREP("client recv data len = %d \r\n", length);
+	Network_TcpClient_Send(data, length);
 }
 /*****************************************************************************/
 /** @brief
@@ -2154,7 +2282,7 @@ void Clb_NetTcpClientRecvData(const uint8_t* data, int length) {
  *  @note
  */
 void Clb_NetTcpClientSentData(const uint8_t* data, int length) {
-
+	LREP("client send done len = %d\r\n", length);
 }
 /*****************************************************************************/
 /** @brief
@@ -2165,7 +2293,7 @@ void Clb_NetTcpClientSentData(const uint8_t* data, int length) {
  *  @note
  */
 void Clb_NetTcpClientError(const uint8_t* data, int length) {
-
+	LREP("client send error len = %d\r\n", length);
 }
 /*****************************************************************************/
 /** @brief
@@ -2203,7 +2331,8 @@ void Clb_NetTcpServerConnEvent(Network_Status event,
  *  @note
  */
 void Clb_NetTcpServerRecvData(const uint8_t* data, int length) {
-
+	LREP("server recv data len = %d\r\n", length);
+	App_NetRecvHandle((uint8_t*)data);
 }
 /*****************************************************************************/
 /** @brief
@@ -2214,7 +2343,41 @@ void Clb_NetTcpServerRecvData(const uint8_t* data, int length) {
  *  @note
  */
 void Clb_NetTcpServerSentData(const uint8_t* data, int length) {
+	LREP("server send done len = %d\r\n", length);
+	if(App_IsCtrlCodePending(pAppObj, CTRL_SEND_HEADER)) {
+		if(pAppObj->pcCounter < SYSTEM_NUM_TAG) {
+			uint8_t *mem = OSA_FixedMemMalloc(sizeof(STagHeader) + 1);
+			if(mem != NULL) {
+				STagHeader *hdr = (STagHeader*)((uint8_t*)mem + 1);
+				mem[0] = (uint8_t)pAppObj->pcCounter;
+				hdr->id = pAppObj->sCfg.sTag[pAppObj->pcCounter].id;
+				hdr->enable = pAppObj->sCfg.sTag[pAppObj->pcCounter].enable;
+				hdr->min = pAppObj->sCfg.sTag[pAppObj->pcCounter].raw_min;
+				hdr->max = pAppObj->sCfg.sTag[pAppObj->pcCounter].raw_max;
+				hdr->alarm_value = pAppObj->sCfg.sTag[pAppObj->pcCounter].alarm_value;
+				hdr->alarm_enable = pAppObj->sCfg.sTag[pAppObj->pcCounter].alarm_enable;
+				Str_Copy_N((CPU_CHAR*)hdr->name,
+						(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->pcCounter].name,
+						sizeof(hdr->name));
+				Str_Copy_N((CPU_CHAR*)hdr->raw_unit,
+						(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->pcCounter].raw_unit,
+						sizeof(hdr->raw_unit));
+				Str_Copy_N((CPU_CHAR*)hdr->std_unit,
+						(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->pcCounter].std_unit,
+						sizeof(hdr->std_unit));
+				App_SendPCNetworkClient(LOGGER_GET | LOGGER_STREAM_HEADER,
+						(uint8_t*)mem, sizeof(STagHeader) + 1);
 
+				LREP("send header %d\r\n", pAppObj->pcCounter);
+				App_SetCtrlCode(pAppObj, CTRL_SEND_HEADER);
+				pAppObj->pcCounter++;
+				OSA_FixedMemFree(mem);
+			}
+		} else {
+			App_ClearCtrlCode(pAppObj, CTRL_SEND_HEADER);
+			pAppObj->pcCounter = 0;
+		}
+	}
 }
 /*****************************************************************************/
 /** @brief

@@ -95,7 +95,7 @@ int 			App_SaveConfig(SApp *pApp, const char* cfg_path);
 int				App_GenDefaultConfig(SSysCfg *pHandle);
 int				App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx);
 int 			App_DefaultTag(STag *pHandle, uint8_t tagIdx);
-int 			App_SetConfig(SApp *pApp, const uint8_t *pData);
+int 			App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial);
 int				App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type);
 
 /* File system */
@@ -120,10 +120,12 @@ int 			App_SetDateTime(SApp *pApp, SDateTime time);
 // Communication
 int 			App_SendUI(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, bool ack);
 int				App_SendPC(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, bool ack);
+int				App_SendPCNetworkClient(uint8_t subctrl, uint8_t *data, uint8_t len);
 void			App_SetNetPCCallback(SApp *pApp);
 void 			App_SetFTPCallback(SApp *pApp);
 
 void 			App_CommRecvHandle(const uint8_t *data);
+void 			App_NetRecvHandle(const uint8_t *data);
 void			App_CommCalibAi(SApp *pApp, const uint8_t *data);
 void			App_CommCalibCurrPwr(SApp *pApp, const uint8_t *data);
 

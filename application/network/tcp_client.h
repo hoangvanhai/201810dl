@@ -48,7 +48,8 @@ int 	tcp_client_send_nonblocking(TcpClient *pEP, const uint8_t *data, int len);
 
 void 	tcp_client_register_notify(TcpClient *pEP, NetworkConnNotify func);
 
-void 	tcp_client_register_data_event(TcpClient *pEP, Network_DataEvent evt, NetworkDataEvent func);
+void 	tcp_client_register_data_event(TcpClient *pEP,
+		Network_DataEvent evt, NetworkDataEvent func);
 
 int		tcp_client_get_status(TcpClient *pEP);
 

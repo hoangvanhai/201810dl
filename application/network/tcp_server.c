@@ -74,7 +74,7 @@ void tcp_server_listener(void *arg) {
 				continue;
 			}
 
-			set_nonblocking(pHandle->peer_fd);
+			//set_blocking(pHandle->peer_fd);
 			LREP("peer fd = %d ", pHandle->peer_fd);
 			pHandle->status = Status_Connected;
 			if(pHandle->notify)
@@ -92,6 +92,11 @@ void tcp_server_listener(void *arg) {
 						PRINTF("rlen = %d\r\n", rlen);
 						break;
 					}
+				}
+
+				if(event & Event_Error) {
+					LREP("event error \r\n");
+					break;
 				}
 
 			}
@@ -135,7 +140,7 @@ int tcp_server_send_blocking(TcpServer *pHandle, const uint8_t *data, int len) {
 int tcp_server_send_nonblocking(TcpServer *pHandle, const uint8_t *data, int len) {
 	int retVal = 0;
 	if(pHandle->status == Status_Connected) {
-		SMsg *pMsg = (SMsg*)OSA_MemAlloc(sizeof(SMsg) + len);
+		SMsg *pMsg = (SMsg*)OSA_FixedMemMalloc(sizeof(SMsg) + len);
 		if(pMsg) {
 			OS_ERR err;
 			pMsg->length = len;
@@ -161,7 +166,8 @@ void tcp_server_register_notify(TcpServer *pHandle, NetworkConnNotify func) {
 		pHandle->notify = func;
 }
 
-void tcp_server_register_data_event(TcpServer *pHandle, Network_DataEvent evt, NetworkDataEvent func) {
+void tcp_server_register_data_event(TcpServer *pHandle,
+		Network_DataEvent evt, NetworkDataEvent func) {
 	switch(evt) {
 	case Event_DataReceived:
 		pHandle->recv_handler = func;
@@ -201,7 +207,7 @@ void tcp_server_sender(void *arg) {
 					}
 				}
 
-				OSA_MemFree(pMsg);
+				OSA_FixedMemFree((uint8_t*)pMsg);
 			}
 		}
 	}

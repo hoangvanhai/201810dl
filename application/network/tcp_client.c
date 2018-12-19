@@ -104,7 +104,7 @@ int tcp_client_send_nonblocking(TcpClient *pEP, const uint8_t *data,
 		int len) {
 	int retVal = 0;
 	if(pEP->status == Status_Connected) {
-		SMsg *pMsg = (SMsg*)OSA_MemAlloc(sizeof(SMsg) + len);
+		SMsg *pMsg = (SMsg*)OSA_FixedMemMalloc(sizeof(SMsg) + len);
 		if(pMsg) {
 			OS_ERR err;
 			pMsg->length = len;
@@ -223,7 +223,7 @@ void tcp_client_sender(void *arg) {
 					}
 				}
 
-				OSA_MemFree(pMsg);
+				OSA_FixedMemFree((uint8_t*)pMsg);
 			}
 		}
 	}

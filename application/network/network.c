@@ -15,20 +15,18 @@ uint8_t		 tcpclient_recv_buff[512];
 TcpServer 	tcpServer;
 uint8_t 	tcpserver_recv_buff[512];
 
+FtpClient	ftpClient;
+uint8_t 	ftpclient_rx_ctrl_buf[512];
+uint8_t 	ftpclient_tx_ctrl_buf[512];
+uint8_t 	ftpclient_tx_data_buf[512];
+
 const static char http_html_hdr[] = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\n\r\n";
 const static char http_index_html[] = "<html><head><title>Congrats!</title></head><body><h1>Welcome to our lwIP HTTP server!</h1><p>This is a small test page, served by httpserver-netconn.</body></html>";
 struct netif fsl_netif0;
 
 // default callback function
-void Clb_TcpServer_SendDone(const uint8_t *data, int len);
-void Clb_TcpServer_RecvData(const uint8_t *data, int len);
-void Clb_TcpServer_DataError(const uint8_t *data, int len);
-void Clb_TcpServer_Notify(Network_Status status,
-		Network_Interface intf);
-void Clb_TcpClient_SendDone(const uint8_t *data, int len);
-void Clb_TcpClient_RecvData(const uint8_t *data, int len);
-void Clb_TcpClient_DataError(const uint8_t *data, int len);
-void Clb_TcpClient_Notify(Network_Status status,
+void Clb_Default_DataEvent(const uint8_t *data, int len);
+void Clb_Default_Notify(Network_Status status,
 		Network_Interface intf);
 void http_server_netconn_init();
 
@@ -58,8 +56,9 @@ void Network_InitModule(SCommon *pCM) {
 	}
 
 	http_server_netconn_init();
-	tcp_client_init(pCM->server_ctrl_ip, pCM->server_ctrl_port);
-	tcp_server_init(12345);
+//	tcp_client_init(pCM->server_ctrl_ip, pCM->server_ctrl_port);
+//	tcp_server_init(12345);
+	ftp_client_init(pCM);
 }
 
 
@@ -75,18 +74,17 @@ void tcp_client_init(ip_addr_t ip, int port) {
 
 	tcp_client_configuration(&tcpClient, ip, port, 512, 512, tcpclient_recv_buff);
 
-	tcp_client_register_notify(&tcpClient, Clb_TcpClient_Notify);
-	tcp_client_register_data_event(&tcpClient, Event_DataReceived, Clb_TcpClient_RecvData);
-	tcp_client_register_data_event(&tcpClient, Event_DataSendDone, Clb_TcpClient_SendDone);
-	tcp_client_register_data_event(&tcpClient, Event_DataError, 	Clb_TcpClient_DataError);
-
-    tcpClient.recv_thread = sys_thread_new("listener",
+    tcpClient.recv_thread = sys_thread_new("client_listener",
 							tcp_client_listener,
-							&tcpClient, 2048, 10);
+							&tcpClient,
+							TASK_TCP_CLIENT_LISTEN_SIZE,
+							TASK_TCP_CLIENT_LISTEN_PRIO);
 
-	tcpClient.send_thread = sys_thread_new("sender",
+	tcpClient.send_thread = sys_thread_new("client_sender",
 							tcp_client_sender,
-							&tcpClient, 2048, 9);
+							&tcpClient,
+							TASK_TCP_CLIENT_SENDER_SIZE,
+							TASK_TCP_CLIENT_SENDER_PRIO);
 }
 
 
@@ -104,22 +102,17 @@ void tcp_client_init(ip_addr_t ip, int port) {
 void tcp_server_init(int port) {
 
 	tcp_server_config(&tcpServer, port, 512, 512, tcpserver_recv_buff);
-	tcp_server_register_notify(&tcpServer,
-			Clb_TcpServer_Notify);
-	tcp_server_register_data_event(&tcpServer, Event_DataReceived,
-			Clb_TcpServer_RecvData);
-	tcp_server_register_data_event(&tcpServer, Event_DataSendDone,
-			Clb_TcpServer_SendDone);
-	tcp_server_register_data_event(&tcpServer, Event_DataError,
-			Clb_TcpServer_DataError);
-
-	tcpServer.recv_thread = sys_thread_new("listener",
+	tcpServer.recv_thread = sys_thread_new("server_listener",
 							tcp_server_listener,
-							&tcpServer, 2048, 10);
+							&tcpServer,
+							TASK_TCP_SERVER_LISTEN_SIZE,
+							TASK_TCP_SERVER_LISTEN_PRIO);
 
-	tcpServer.send_thread = sys_thread_new("sender",
+	tcpServer.send_thread = sys_thread_new("server_sender",
 							tcp_server_sender,
-							&tcpServer, 2048, 9);
+							&tcpServer,
+							TASK_TCP_SERVER_SENDER_SIZE,
+							TASK_TCP_SERVER_SENDER_PRIO);
 }
 
 
@@ -221,7 +214,7 @@ void http_server_netconn_init()
 {
     sys_thread_new("http_server_netconn",
     		http_server_netconn_thread, NULL,
-    		2048, 7);
+    		2048, 3);
 
 }
 
@@ -277,7 +270,6 @@ void Network_Register_TcpServer_DataEvent(Network_DataEvent evt, NetworkDataEven
 }
 
 
-
 /*****************************************************************************/
 /** @brief
  *
@@ -286,8 +278,19 @@ void Network_Register_TcpServer_DataEvent(Network_DataEvent evt, NetworkDataEven
  *  @return Void.
  *  @note
  */
-void Clb_TcpServer_SendDone(const uint8_t *data, int len) {
-	LREP("server send done len = %d\r\n", len);
+int Network_TcpClient_Send(const uint8_t *data, int len) {
+	return tcp_client_send_nonblocking(&tcpClient, data, len);
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int Network_TcpServer_Send(const uint8_t *data, int len) {
+	return tcp_server_send_nonblocking(&tcpServer, data, len);
 }
 
 /*****************************************************************************/
@@ -298,81 +301,87 @@ void Clb_TcpServer_SendDone(const uint8_t *data, int len) {
  *  @return Void.
  *  @note
  */
-void Clb_TcpServer_RecvData(const uint8_t *data, int len) {
-	LREP("server recv data len = %d\r\n", len);
-}
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-void Clb_TcpServer_DataError(const uint8_t *data, int len) {
-	LREP("server data failed len = %d\r\n", len);
-}
-
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-void Clb_TcpServer_Notify(Network_Status status,
+void Clb_Default_Notify(Network_Status status,
 		Network_Interface intf) {
-	switch(status) {
-	case Status_Connected:
-		LREP("Event connected\r\n");
-		break;
-	case Status_Disconnected:
-		LREP("Event disconnected\r\n");
-		break;
-	case Status_Network_Down:
-		LREP("Event network down\r\n");
-		break;
-	case Status_Connecting:
-		LREP("Event connecting\r\n");
-		break;
-	default:
-		break;
-	}
+	LREP("default notify\r\n");
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_Default_DataEvent(const uint8_t *data, int len) {
+	LREP("default data event\r\n");
+}
+
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int Network_FtpClient_Send(const uint8_t *local_path,
+							const uint8_t *filename) {
+	return ftp_add_filename(&ftpClient, local_path, filename);
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int ftp_client_init(SCommon *pCM) {
+
+	ServerInfo server;
+
+	ftp_client_init_handle(&ftpClient,
+			ftpclient_tx_ctrl_buf,
+			ftpclient_rx_ctrl_buf,
+			ftpclient_tx_data_buf);
+
+	server.enable = pCM->ftp_enable1;
+	server.ip = pCM->server_ftp_ip1;
+	server.port = pCM->server_ftp_port1;
+	server.username = pCM->ftp_usrname1;
+	server.passwd = pCM->ftp_passwd1;
+
+	ftp_client_add_server(&ftpClient, &server, 0);
+
+	server.enable = 0;	//pCM->ftp_enable2;
+	server.ip = pCM->server_ftp_ip2;
+	server.port = pCM->server_ftp_port2;
+	server.username = pCM->ftp_usrname2;
+	server.passwd = pCM->ftp_passwd2;
+
+	ftp_client_add_server(&ftpClient, &server, 1);
+
+
+	ftpClient.send_thread = sys_thread_new("client_sender",
+							ftp_client_sender,
+							&ftpClient,
+							TASK_TCP_CLIENT_SENDER_SIZE,
+							TASK_TCP_CLIENT_SENDER_PRIO);
+
 }
 
 
 
-void Clb_TcpClient_SendDone(const uint8_t *data, int len) {
-	LREP("client send done len = %d\r\n", len);
-}
 
 
-void Clb_TcpClient_RecvData(const uint8_t *data, int len) {
-	LREP("client recv data len = %d\r\n", len);
-}
-
-void Clb_TcpClient_DataError(const uint8_t *data, int len) {
-	LREP("client data failed len = %d\r\n", len);
-}
 
 
-void Clb_TcpClient_Notify(Network_Status status,
-		Network_Interface intf) {
-	switch(status) {
-	case Status_Connected:
-		LREP("Event connected\r\n");
-		break;
-	case Status_Disconnected:
-		LREP("Event disconnected\r\n");
-		break;
-	case Status_Network_Down:
-		LREP("Event network down\r\n");
-		break;
-	case Status_Connecting:
-		LREP("Event connecting\r\n");
-		break;
-	default:
-		break;
-	}
-}
+
+
+
+
+
+
