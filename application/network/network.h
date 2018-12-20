@@ -18,6 +18,8 @@
 #include <tcp_client.h>
 #include <tcp_server.h>
 #include <ftp_client.h>
+#include <network_cfg.h>
+
 
 
 

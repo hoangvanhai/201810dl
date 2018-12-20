@@ -10,19 +10,35 @@
 #include <app.h>
 
 TcpClient	 tcpClient;
-uint8_t		 tcpclient_recv_buff[512];
+uint8_t		 tcpclient_recv_buff[TCP_CLIENT_BUFF_SIZE];
 
 TcpServer 	tcpServer;
-uint8_t 	tcpserver_recv_buff[512];
+uint8_t 	tcpserver_recv_buff[TCP_SERVER_BUFF_SIZE];
 
 FtpClient	ftpClient;
-uint8_t 	ftpclient_rx_ctrl_buf[512];
-uint8_t 	ftpclient_tx_ctrl_buf[512];
-uint8_t 	ftpclient_tx_data_buf[512];
+uint8_t 	ftpclient_rx_ctrl_buf[FTP_CLIENT_BUFF_SIZE];
+uint8_t 	ftpclient_tx_ctrl_buf[FTP_CLIENT_BUFF_SIZE];
+uint8_t 	ftpclient_tx_data_buf[FTP_CLIENT_BUFF_SIZE];
+
+
+APP_TASK_DEFINE(tcp_client_sender, 		TASK_TCP_CLIENT_SENDER_PRIO);
+APP_TASK_DEFINE(tcp_client_listen, 		TASK_TCP_CLIENT_LISTEN_PRIO);
+APP_TASK_DEFINE(tcp_server_sender, 		TASK_TCP_SERVER_SENDER_PRIO);
+APP_TASK_DEFINE(tcp_server_listen,		TASK_TCP_SERVER_LISTEN_PRIO);
+APP_TASK_DEFINE(ftp_client_sender,		TASK_FTP_CLIENT_SENDER_PRIO);
+
+task_stack_t	tcp_client_sender_stack[TASK_TCP_CLIENT_SENDER_SIZE/ sizeof(task_stack_t)];
+task_stack_t	tcp_client_listen_stack[TASK_TCP_CLIENT_LISTEN_SIZE/ sizeof(task_stack_t)];
+task_stack_t	tcp_server_sender_stack[TASK_TCP_SERVER_SENDER_SIZE/ sizeof(task_stack_t)];
+task_stack_t	tcp_server_listen_stack[TASK_TCP_SERVER_LISTEN_SIZE/ sizeof(task_stack_t)];
+task_stack_t	ftp_client_sender_stack[TASK_FTP_CLIENT_SENDER_SIZE/ sizeof(task_stack_t)];
+
+
+
 
 const static char http_html_hdr[] = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\n\r\n";
 const static char http_index_html[] = "<html><head><title>Congrats!</title></head><body><h1>Welcome to our lwIP HTTP server!</h1><p>This is a small test page, served by httpserver-netconn.</body></html>";
-struct netif fsl_netif0;
+struct netif eth0;
 
 // default callback function
 void Clb_Default_DataEvent(const uint8_t *data, int len);
@@ -42,17 +58,17 @@ void http_server_netconn_init();
 void Network_InitModule(SCommon *pCM) {
 	tcpip_init(NULL,NULL);
 	if(pCM->dev_dhcp == false) {
-		ip_addr_t fsl_netif0_gw;
-		IP4_ADDR(&fsl_netif0_gw, 		192,168,0,254);
-		netif_add(&fsl_netif0, &pCM->dev_ip,
-				&pCM->dev_netmask, &fsl_netif0_gw,
+		ip_addr_t eth0_gw;
+		IP4_ADDR(&eth0_gw, 		192,168,0,254);
+		netif_add(&eth0, &pCM->dev_ip,
+				&pCM->dev_netmask, &eth0_gw,
 				NULL, ethernetif_init, tcpip_input);
 
-		netif_set_default(&fsl_netif0);
+		netif_set_default(&eth0);
 
-		PRINTF("ip 			%s\r\n", ipaddr_ntoa(&fsl_netif0.ip_addr));
-		PRINTF("nm			%s\r\n", ipaddr_ntoa(&fsl_netif0.netmask));
-		PRINTF("gw 			%s\r\n", ipaddr_ntoa(&fsl_netif0.gw));
+		PRINTF("ip 			%s\r\n", ipaddr_ntoa(&eth0.ip_addr));
+		PRINTF("nm			%s\r\n", ipaddr_ntoa(&eth0.netmask));
+		PRINTF("gw 			%s\r\n", ipaddr_ntoa(&eth0.gw));
 	}
 
 	http_server_netconn_init();
@@ -74,17 +90,37 @@ void tcp_client_init(ip_addr_t ip, int port) {
 
 	tcp_client_configuration(&tcpClient, ip, port, 512, 512, tcpclient_recv_buff);
 
-    tcpClient.recv_thread = sys_thread_new("client_listener",
-							tcp_client_listener,
-							&tcpClient,
-							TASK_TCP_CLIENT_LISTEN_SIZE,
-							TASK_TCP_CLIENT_LISTEN_PRIO);
+	osa_status_t result;
 
-	tcpClient.send_thread = sys_thread_new("client_sender",
-							tcp_client_sender,
-							&tcpClient,
-							TASK_TCP_CLIENT_SENDER_SIZE,
-							TASK_TCP_CLIENT_SENDER_PRIO);
+    result = OSA_TaskCreate(tcp_client_listener,
+                    (uint8_t *)"client_listener",
+					TASK_TCP_CLIENT_LISTEN_SIZE,
+					tcp_client_listen_stack,
+					TASK_TCP_CLIENT_LISTEN_PRIO,
+                    (task_param_t)&tcpClient,
+                    false,
+                    &tcp_client_listen_task_handler);
+    if (result != kStatus_OSA_Success)
+    {
+        ERR("Failed to create tcp_client_listen_task_handler task\r\n\r\n");
+    }
+
+    tcpClient.recv_thread = tcp_client_listen_task_handler;
+
+    result = OSA_TaskCreate(tcp_client_sender,
+                    (uint8_t *)"client_sender",
+					TASK_TCP_CLIENT_SENDER_SIZE,
+					tcp_client_sender_stack,
+					TASK_TCP_CLIENT_SENDER_PRIO,
+                    (task_param_t)&tcpClient,
+                    false,
+                    &tcp_client_sender_task_handler);
+    if (result != kStatus_OSA_Success)
+    {
+        ERR("Failed to create tcp_client_sender_task_handler task\r\n\r\n");
+    }
+
+    tcpClient.send_thread = tcp_client_sender_task_handler;
 }
 
 
@@ -102,17 +138,92 @@ void tcp_client_init(ip_addr_t ip, int port) {
 void tcp_server_init(int port) {
 
 	tcp_server_config(&tcpServer, port, 512, 512, tcpserver_recv_buff);
-	tcpServer.recv_thread = sys_thread_new("server_listener",
-							tcp_server_listener,
-							&tcpServer,
-							TASK_TCP_SERVER_LISTEN_SIZE,
-							TASK_TCP_SERVER_LISTEN_PRIO);
+	osa_status_t result;
+    result = OSA_TaskCreate(tcp_server_listener,
+                    (uint8_t *)"server_listener",
+					TASK_TCP_SERVER_LISTEN_SIZE,
+					tcp_server_listen_stack,
+					TASK_TCP_SERVER_LISTEN_PRIO,
+                    (task_param_t)&tcpServer,
+                    false,
+                    &tcp_server_listen_task_handler);
+    if (result != kStatus_OSA_Success)
+    {
+        ERR("Failed to create tcp_server_listen_task_handler task\r\n\r\n");
+    }
 
-	tcpServer.send_thread = sys_thread_new("server_sender",
-							tcp_server_sender,
-							&tcpServer,
-							TASK_TCP_SERVER_SENDER_SIZE,
-							TASK_TCP_SERVER_SENDER_PRIO);
+    tcpServer.recv_thread = tcp_server_listen_task_handler;
+
+    result = OSA_TaskCreate(tcp_server_sender,
+                    (uint8_t *)"server_sender",
+					TASK_TCP_SERVER_SENDER_SIZE,
+					tcp_server_sender_stack,
+					TASK_TCP_SERVER_SENDER_PRIO,
+                    (task_param_t)&tcpServer,
+                    false,
+                    &tcp_server_sender_task_handler);
+    if (result != kStatus_OSA_Success)
+    {
+        ERR("Failed to create tcp_server_sender_task_handler task\r\n\r\n");
+    }
+
+    tcpServer.send_thread = tcp_server_sender_task_handler;
+
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int ftp_client_init(SCommon *pCM) {
+
+	ServerInfo server;
+
+	ftp_client_init_handle(&ftpClient,
+			ftpclient_tx_ctrl_buf,
+			ftpclient_rx_ctrl_buf,
+			ftpclient_tx_data_buf);
+
+	server.enable = pCM->ftp_enable1;
+	server.ip = pCM->server_ftp_ip1;
+	server.port = pCM->server_ftp_port1;
+	server.username = pCM->ftp_usrname1;
+	server.passwd = pCM->ftp_passwd1;
+	server.prefix = pCM->ftp_prefix1;
+
+	ftp_client_add_server(&ftpClient, &server, 0);
+
+	server.enable = 0;	//pCM->ftp_enable2;
+	server.ip = pCM->server_ftp_ip2;
+	server.port = pCM->server_ftp_port2;
+	server.username = pCM->ftp_usrname2;
+	server.passwd = pCM->ftp_passwd2;
+	server.prefix = pCM->ftp_prefix2;
+
+	ftp_client_add_server(&ftpClient, &server, 1);
+
+
+	osa_status_t result;
+    result = OSA_TaskCreate(ftp_client_sender,
+                    (uint8_t *)"client_sender",
+					TASK_TCP_CLIENT_SENDER_SIZE,
+					ftp_client_sender_stack,
+					TASK_TCP_CLIENT_SENDER_PRIO,
+                    (task_param_t)&ftpClient,
+                    false,
+                    &ftp_client_sender_task_handler);
+    if (result != kStatus_OSA_Success)
+    {
+        ERR("Failed to create ftp_client_sender_task_handler task\r\n\r\n");
+    }
+
+    ftpClient.send_thread = ftp_client_sender_task_handler;
+
+    return result;
 }
 
 
@@ -178,7 +289,7 @@ http_server_netconn_thread(void *arg)
     struct netconn *conn, *newconn;
     err_t err;
     LWIP_UNUSED_ARG(arg);
-    netif_set_up(&fsl_netif0);
+    netif_set_up(&eth0);
     // Create a new TCP connection handle
     conn = netconn_new(NETCONN_TCP);
     LWIP_ERROR("http_server: invalid conn", (conn != NULL), return;);
@@ -330,47 +441,6 @@ void Clb_Default_DataEvent(const uint8_t *data, int len) {
 int Network_FtpClient_Send(const uint8_t *local_path,
 							const uint8_t *filename) {
 	return ftp_add_filename(&ftpClient, local_path, filename);
-}
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-int ftp_client_init(SCommon *pCM) {
-
-	ServerInfo server;
-
-	ftp_client_init_handle(&ftpClient,
-			ftpclient_tx_ctrl_buf,
-			ftpclient_rx_ctrl_buf,
-			ftpclient_tx_data_buf);
-
-	server.enable = pCM->ftp_enable1;
-	server.ip = pCM->server_ftp_ip1;
-	server.port = pCM->server_ftp_port1;
-	server.username = pCM->ftp_usrname1;
-	server.passwd = pCM->ftp_passwd1;
-
-	ftp_client_add_server(&ftpClient, &server, 0);
-
-	server.enable = 0;	//pCM->ftp_enable2;
-	server.ip = pCM->server_ftp_ip2;
-	server.port = pCM->server_ftp_port2;
-	server.username = pCM->ftp_usrname2;
-	server.passwd = pCM->ftp_passwd2;
-
-	ftp_client_add_server(&ftpClient, &server, 1);
-
-
-	ftpClient.send_thread = sys_thread_new("client_sender",
-							ftp_client_sender,
-							&ftpClient,
-							TASK_TCP_CLIENT_SENDER_SIZE,
-							TASK_TCP_CLIENT_SENDER_PRIO);
-
 }
 
 

@@ -46,6 +46,7 @@
 #define IO_MAXLINE  20
 
 
+
 /*Configuration for toolchain's printf/scanf or KSDK version printf/scanf */
 #define LREP          	debug_printf
 #define PRINTF         	debug_printf
@@ -56,6 +57,7 @@
 //#define PUTCHAR         putchar
 //#define GETCHAR         debug_getchar
 //#define GETCHAR         getchar
+
 
 
 /*! @brief Error code for the debug console driver. */

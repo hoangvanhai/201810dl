@@ -27,6 +27,7 @@ int ftp_client_add_server(FtpClient *pFC, ServerInfo *server, uint8_t index) {
 	pFC->server_list[index].port 	 = server->port;
 	pFC->server_list[index].username = server->username;
 	pFC->server_list[index].passwd 	 = server->passwd;
+	pFC->server_list[index].prefix 	 = server->prefix;
 
 	LREP("setup point to ftp server %s:%d\r\n", ipaddr_ntoa(&server->ip), server->port);
 	return 0;
@@ -43,7 +44,7 @@ int ftp_start_ctrl_sock(FtpClient *pFC) {
 	pFC->fd_ctrl = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (pFC->fd_ctrl != INVALIDSOCK) {
 
-		//set_nonblocking(pEP->fd);
+		set_nonblocking(pFC->fd_ctrl);
 		//set_buffer_size(pEP->fd, pEP->tx_buf_size, pEP->rx_buf_size);
 
 		struct sockaddr_in addr;
@@ -84,8 +85,11 @@ int ftp_start_ctrl_sock(FtpClient *pFC) {
 		}
 	}
 
-	return err;
+	if(err == 0) {
+		pFC->status_ctrl = Status_Connected;
+	}
 
+	return err;
 }
 
 
@@ -102,7 +106,7 @@ int ftp_start_data_sock(FtpClient *pFC, int port) {
 	pFC->fd_data = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (pFC->fd_data != INVALIDSOCK) {
 
-		//set_nonblocking(pEP->fd);
+		set_nonblocking(pFC->fd_data);
 		//set_buffer_size(pEP->fd, pEP->tx_buf_size, pEP->rx_buf_size);
 
 		struct sockaddr_in addr;
@@ -141,6 +145,10 @@ int ftp_start_data_sock(FtpClient *pFC, int port) {
 		if (err) {
 			ftp_close_data_sock(pFC);
 		}
+	}
+
+	if(err == 0) {
+		pFC->status_data = Status_Connected;
 	}
 
 	return err;
@@ -184,14 +192,19 @@ int ftp_setup_channel(FtpClient *pFC, uint8_t idx) {
 		if(err <= 0) {
 			return FTP_ERR_RECV_CTRL_MSG;
 		} else {
-			LREP("recv msg %s\r\n", pFC->rx_buff_ctrl);
+			LREP("recv msg %s", pFC->rx_buff_ctrl);
 		}
 
-		memset(buff, 0, 100);
-		Str_Copy(buff, "USER ");
-		Str_Cat(buff, pFC->server_list[pFC->curr_sv_idx].username);
-		Str_Cat(buff, "\r\n");
-		if(ftp_send_ctrl_msg(pFC, buff) <= 0) {
+		memset(pFC->tx_buff_ctrl, 0, 100);
+		Str_Copy_N((CPU_CHAR*)pFC->tx_buff_ctrl, "USER ", FTP_CLIENT_BUFF_SIZE);
+		Str_Cat_N((CPU_CHAR*)pFC->tx_buff_ctrl,
+				pFC->server_list[pFC->curr_sv_idx].username,
+				FTP_CLIENT_BUFF_SIZE);
+		Str_Cat_N((CPU_CHAR*)pFC->tx_buff_ctrl, "\r\n", FTP_CLIENT_BUFF_SIZE);
+
+		err = ftp_send_ctrl_msg(pFC, (char*)pFC->tx_buff_ctrl);
+		if(err <= 0) {
+			LREP("send username error err = %d\r\n", err);
 			return FTP_ERR_SEND_CTRL_MSG;
 		}
 
@@ -199,14 +212,16 @@ int ftp_setup_channel(FtpClient *pFC, uint8_t idx) {
 		if(err <= 0) {
 			return FTP_ERR_RECV_CTRL_MSG;
 		} else {
-			LREP("recv msg %s\r\n", pFC->rx_buff_ctrl);
+			LREP("recv msg %s", pFC->rx_buff_ctrl);
 		}
 
-		memset(buff, 0, 100);
-		Str_Copy(buff, "PASS ");
-		Str_Cat(buff, pFC->server_list[pFC->curr_sv_idx].passwd);
-		Str_Cat(buff, "\r\n");
-		if(ftp_send_ctrl_msg(pFC, buff) <= 0) {
+		memset(pFC->tx_buff_ctrl, 0, 100);
+		Str_Copy_N((CPU_CHAR*)pFC->tx_buff_ctrl, "PASS ", FTP_CLIENT_BUFF_SIZE);
+		Str_Cat_N((CPU_CHAR*)pFC->tx_buff_ctrl,
+				pFC->server_list[pFC->curr_sv_idx].passwd,
+				FTP_CLIENT_BUFF_SIZE);
+		Str_Cat_N((CPU_CHAR*)pFC->tx_buff_ctrl, "\r\n", FTP_CLIENT_BUFF_SIZE);
+		if(ftp_send_ctrl_msg(pFC, (char*)pFC->tx_buff_ctrl) <= 0) {
 			return FTP_ERR_SEND_CTRL_MSG;
 		}
 
@@ -214,7 +229,7 @@ int ftp_setup_channel(FtpClient *pFC, uint8_t idx) {
 		if(err <= 0) {
 			return FTP_ERR_RECV_CTRL_MSG;
 		} else {
-			LREP("recv msg %s\r\n", pFC->rx_buff_ctrl);
+			LREP("recv msg %s", pFC->rx_buff_ctrl);
 		}
 
 		return ftp_start_data_channel(pFC);
@@ -226,34 +241,29 @@ int ftp_setup_channel(FtpClient *pFC, uint8_t idx) {
 int	ftp_start_data_channel(FtpClient *pFC) {
 
 	int err;
-	if(ftp_send_ctrl_msg(pFC, "pasv\r\n") <= 0) {
-		LREP("pasv cmd failed\n");
-		return FTP_ERR_SEND_CTRL_MSG;
-	}
-
-	err = ftp_recv_ctrl_msg(pFC, 100);
-	if(err <= 0) {
+	err = ftp_remote_send_recv_ctrl(pFC, "PASV\r\n");
+	if(err != FTP_ERR_NONE) {
 		LREP("start_data_channel failed\n");
-		return FTP_ERR_RECV_CTRL_MSG;
-	} else {
-		LREP("recv msg %s\r\n", pFC->rx_buff_ctrl);
+		return err;
 	}
+	//else
+	//{
+	//	LREP("recv msg %s\r\n", pFC->rx_buff_ctrl);
+	//}
 
 	int port = ftp_get_pasv_port(pFC);
 	LREP("get port = %d\r\n", port);
 	if(port != 0) {
 		err = ftp_start_data_sock(pFC, port);
 		if(err != 0) {
-			LREP("data conn failed {}\n", err);
+			LREP("open data channel err = %d\r\n", err);
 			return FTP_ERR_OPEN_DATA_CONN;
 		}
 	} else {
 		LREP("no ip and port in recv msg\n");
 		return FTP_ERR_PASV;
 	}
-
-	pFC->status_data = Status_Connected;
-	LREP("set up data channel success \r\n");
+	//LREP("set up data channel success \r\n");
 	return FTP_ERR_NONE;
 }
 
@@ -286,34 +296,94 @@ int ftp_remote_mkd(FtpClient *pFC, const char *path) {
 int ftp_remote_mkd_recursive(FtpClient *pFC, char* remote_path) {
 
     int err = FTP_ERR_CD;
-    LREP("remote path = %d\r\n", remote_path);
+    LREP("prefix = %s remote path = %s\r\n",
+    		pFC->server_list[pFC->curr_sv_idx].prefix,
+    		remote_path);
 
+    // if set prefix
+    if(Str_Len(pFC->server_list[pFC->curr_sv_idx].prefix) > 0) {
+    	// try cd to prefix
+    	err = ftp_remote_cwd(pFC, pFC->server_list[pFC->curr_sv_idx].prefix);
+		if((err == FTP_ERR_NONE) &&
+			(Str_Str_N((CPU_CHAR*)pFC->rx_buff_ctrl,
+					"successful", FTP_CLIENT_BUFF_SIZE) != NULL)) {
+			LREP("cd to prefix %s success\r\n", pFC->server_list[pFC->curr_sv_idx].prefix);
+		} else { // if can not cd to, try make frefix
+			LREP("cd failed try mkd %s\r\n", pFC->server_list[pFC->curr_sv_idx].prefix);
+			err = ftp_remote_mkd(pFC, pFC->server_list[pFC->curr_sv_idx].prefix);
+			if(err != FTP_ERR_NONE) { // if make prefix failed
+				LREP("mkd error %d \r\n", err);
+				ASSERT(FALSE);
+				return err;
+			} else {
+				LREP("mkd ok, cd to %s\r\n", pFC->server_list[pFC->curr_sv_idx].prefix);
+				err = ftp_remote_cwd(pFC, pFC->server_list[pFC->curr_sv_idx].prefix);
+				if((err == FTP_ERR_NONE) &&
+					(Str_Str_N((CPU_CHAR*)pFC->rx_buff_ctrl,
+							"successful", FTP_CLIENT_BUFF_SIZE) != NULL)) {
+					LREP("cd to prefix %s success\r\n",
+							pFC->server_list[pFC->curr_sv_idx].prefix);
+				} else {
+					ASSERT(FALSE);
+					return err;
+				}
+			}
+		}
+    } else { // no prefix require
+		err = ftp_remote_cwd(pFC, "/");
+		if(err != FTP_ERR_NONE) {
+			ASSERT(FALSE);
+			return err;
+		}
+    }
+
+    // try cd to prefer localtion
+    err = ftp_remote_cwd(pFC, remote_path);
+	if((err == FTP_ERR_NONE) &&
+		(Str_Str_N((CPU_CHAR*)pFC->rx_buff_ctrl,
+				"successful", FTP_CLIENT_BUFF_SIZE) != NULL)) {
+		LREP("cd to %s success\r\n", remote_path);
+		return FTP_ERR_NONE;
+	}
+
+	// if prefer location not existed, make new
+	// change to prefix
+    if(Str_Len(pFC->server_list[pFC->curr_sv_idx].prefix) == 0) {
+		err = ftp_remote_cwd(pFC, "/");
+		if(err != FTP_ERR_NONE) {
+			ASSERT(FALSE);
+			return err;
+		}
+    }
+
+    // start make new folder
     CPU_CHAR *path = (CPU_CHAR*)OSA_FixedMemMalloc(128);
     if(path == NULL)
-    	return err;
+    	return FTP_ERR_CD;
 
     memset(path, 0, 128);
 	char *pch;
 	pch = strtok((char*)remote_path, "/");
 
 	while(pch != NULL) {
-		Str_Cat(path, pch);
-		Str_Cat(path, "/");
+		Str_Cat_N(path, pch, FTP_CLIENT_BUFF_SIZE);
+		Str_Cat_N(path, "/", FTP_CLIENT_BUFF_SIZE);
 		err = ftp_remote_mkd(pFC, path);
 		pch = strtok(NULL, "/");
 	}
 
-    if(err == FTP_ERR_NONE) {
+    if(err == FTP_ERR_NONE && Str_Len(path) > 0) {
         err = ftp_remote_cwd(pFC, path);
         if((err == FTP_ERR_NONE) &&
-        	(Str_Str((CPU_CHAR*)pFC->rx_buff_ctrl, "successful") != NULL)) {
+        	(Str_Str_N((CPU_CHAR*)pFC->rx_buff_ctrl,
+        			"successful", FTP_CLIENT_BUFF_SIZE) != NULL)) {
                 err = FTP_ERR_NONE;
         } else {
             err = FTP_ERR_CD;
         }
     }
 
-    OSA_FixedMemFree(path);
+    OSA_FixedMemFree((uint8_t*)path);
 
     return err;
 
@@ -326,70 +396,89 @@ int ftp_remote_put(FtpClient *pFC, uint8_t index,
 
 	int retVal;
 	int err = FTP_ERR_PUT;
-	uint8_t data[128];
-	Str_Copy(data, local_path);
+	CPU_CHAR data[128];
+	memset(data, 0, 128);
+	Str_Copy_N(data, local_path, 128);
+	LREP("local path = %s \r\n", data);
 
 	err = ftp_setup_channel(pFC, index);
-	if(err != FTP_ERR_NONE)
+	if(err != FTP_ERR_NONE) {
+		ERR("setup channel failed \r\n");
 		return err;
+	}
 
 	err = ftp_remote_mkd_recursive(pFC, (char*)remote_path);
-	if(err != FTP_ERR_NONE)
-			return err;
+	if(err != FTP_ERR_NONE) {
+		WARN_LINE("make folder recuresive error = %d\r\n", err);
+		return err;
+	}
+
 
 	memset(pFC->tx_buff_data, 0, 256);
-	Str_Copy(pFC->tx_buff_data, "stor ");
-	Str_Cat(pFC->tx_buff_data, &filename[1]);
-	Str_Cat(pFC->tx_buff_data, "\r\n");
-	err = ftp_remote_send_recv_ctrl(pFC, pFC->tx_buff_data);
-	if(err != FTP_ERR_NONE)
+	Str_Copy_N((CPU_CHAR*)pFC->tx_buff_data, "STOR ", FTP_CLIENT_BUFF_SIZE);
+	Str_Cat_N((CPU_CHAR*)pFC->tx_buff_data, &filename[1], FTP_CLIENT_BUFF_SIZE);
+	Str_Cat_N((CPU_CHAR*)pFC->tx_buff_data, "\r\n", FTP_CLIENT_BUFF_SIZE);
+	err = ftp_remote_send_recv_ctrl(pFC, (char*)pFC->tx_buff_data);
+	if(err != FTP_ERR_NONE) {
+		WARN_LINE("STOR command failed\r\n");
 		return err;
+	}
 
 	int code = ftp_get_code(pFC);
+	LREP("get code %d \r\n", code);
 	if(code != 125 && code != 150) {
-		LREP("get code %d \r\n", code);
 		err = FTP_ERR_CODE;
+		WARN_LINE("get invalid code %d\r\n", code);
 		return err;
 	}
 
 	memset(pFC->tx_buff_data, 0, 256);
-	Str_Copy(pFC->tx_buff_data, data);
-	Str_Cat(pFC->tx_buff_data, filename);
+	Str_Copy_N((CPU_CHAR*)pFC->tx_buff_data, data, FTP_CLIENT_BUFF_SIZE);
+	Str_Cat_N((CPU_CHAR*)pFC->tx_buff_data, filename, FTP_CLIENT_BUFF_SIZE);
 
-
+	// ensure the file is existed before use STOR command
+	if(check_obj_existed((char*)pFC->tx_buff_data) == false) {
+		ERR_LINE("file %s not found !\r\n", pFC->tx_buff_data);
+		return FTP_ERR_FILE;
+	}
 
 	UINT read;
 	FIL file;
-	retVal = f_open(&file, pFC->tx_buff_data, FA_OPEN_EXISTING | FA_READ);
+	retVal = f_open(&file, (const char*)pFC->tx_buff_data, FA_OPEN_EXISTING | FA_READ);
 	if(retVal == FR_OK) {
-		LREP("opened file %s\r\n", pFC->tx_buff_data);
 		int fr;
 		do {
 			fr = f_read(&file, pFC->tx_buff_data, 256, &read);
 			if(read > 0) {
-				LREP("read line: %s\r\n", pFC->tx_buff_data);
 				retVal = ftp_remote_send_data(pFC, pFC->tx_buff_data, read);
 				if(retVal <= 0) {
 					LREP("send data failed\r\n");
 					err = FTP_ERR_SEND_DATA_MSG;
 					break;
 				}
+				OSA_SleepMs(1000);
 			}
 		} while(fr == FR_OK && read > 0);
 	} else {
-		LREP("open file %s error\r\n", pFC->tx_buff_data);
+		ERR_LINE("open file %s error !\r\n", pFC->tx_buff_data);
+		ASSERT(FALSE);
 		err = FTP_ERR_FILE;
 	}
 
+	ftp_close_data_sock(pFC);
+
 	if(err == FTP_ERR_NONE) {
-		err = ftp_recv_ctrl_msg(pFC, 100);
-
-		if(err != FTP_ERR_NONE)
-			return err;
-
-		// check control message
-		if(Str_Str((CPU_CHAR*)pFC->rx_buff_ctrl, "Complete") != NULL) {
-			LREP("Put file success %s\r\n", pFC->rx_buff_ctrl);
+		retVal = ftp_recv_ctrl_msg(pFC, 500);
+		if(retVal <= 0) {
+			ASSERT(FALSE);
+			err = FTP_ERR_RECV_CTRL_MSG;
+		} else {
+			// check control message
+			LREP("recv msg %s", pFC->rx_buff_ctrl);
+			if(Str_Str_N((CPU_CHAR*)pFC->rx_buff_ctrl,
+					"complete", FTP_CLIENT_BUFF_SIZE) == NULL) {
+				err = FTP_ERR_PUT;
+			}
 		}
 	}
 
@@ -405,13 +494,13 @@ int ftp_remote_send_recv_ctrl(FtpClient *pFC, const char *msg) {
 		return FTP_ERR_SEND_CTRL_MSG;
 	}
 
-	err = ftp_recv_ctrl_msg(pFC, 200);
+	OSA_SleepMs(200);
+
+	err = ftp_recv_ctrl_msg(pFC, 300);
 	if(err <= 0) {
 		return FTP_ERR_RECV_CTRL_MSG;
 	}
-
-	LREP("recv msg: %s\r\n", pFC->rx_buff_ctrl);
-
+	//LREP("recv msg: %s", pFC->rx_buff_ctrl);
 	return FTP_ERR_NONE;
 }
 
@@ -425,11 +514,13 @@ int ftp_remote_send_data(FtpClient *pFC, const uint8_t *data, int len) {
 	if(data == NULL || len <= 0)
 		return -2;
 
-	int event = wait_event(pFC->fd_data, 100, false, true);
+	int event = wait_event(pFC->fd_data, 500, false, true);
 	if(event & Event_Writeable) {
 		err = send(pFC->fd_data, data, len, 0);
+
 	}
 
+	LREP("sent = %d\r\n", err);
 	return err;
 }
 
@@ -439,7 +530,7 @@ int	ftp_destroy_channel(FtpClient *pFC) {
 	ftp_close_data_sock(pFC);
 	ftp_close_ctrl_sock(pFC);
 
-	LREP("close two socket\r\n");
+	LREP("close socket pair\r\n");
 	return 0;
 }
 
@@ -458,7 +549,7 @@ int ftp_send_ctrl_msg(FtpClient *pFC, const char *msg) {
 	int event = wait_event(pFC->fd_ctrl, 100, false, true);
 	if(event & Event_Writeable) {
 		err = send(pFC->fd_ctrl, msg, len, 0);
-		LREP("send %s\r\n", msg);
+		LREP("send msg %s", msg);
 	}
 
 	return err;
@@ -470,8 +561,8 @@ int ftp_recv_ctrl_msg(FtpClient *pFC, int timeout) {
 	OSA_SleepMs(timeout);
 	int event = wait_event(pFC->fd_ctrl, 100, true, false);
 	if(event & Event_Readable) {
-		memset(pFC->rx_buff_ctrl, 0, 512);
-		rlen = recv(pFC->fd_ctrl, pFC->rx_buff_ctrl, 512, 0);
+		memset(pFC->rx_buff_ctrl, 0, 256);
+		rlen = recv(pFC->fd_ctrl, pFC->rx_buff_ctrl, 256, 0);
 	}
 
 	return rlen;
@@ -486,42 +577,63 @@ void ftp_client_sender(void *arg) {
 	OS_ERR err;
 	FtpMsg *pMsg;
 	int retVal;
-
+	bool stat;
 	while(1) {
 		pMsg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
 		if(err == OS_ERR_NONE) {
 			if(pMsg) {
-				LREP("get data %s %s\r\n", pMsg->local_path, pMsg->file_name);
-				if(pFC->server_list[0].enable) {
-					retVal = ftp_remote_put(pFC, 0,
-							(char*)pMsg->file_name,
-							(char*)pMsg->local_path,
-							(char*)pMsg->local_path);
+				LREP("SENDER PROCSESSING: [%s%s]\r\n", pMsg->local_path, pMsg->file_name);
+				uint8_t *temp = OSA_FixedMemMalloc(256);
+				if(temp != NULL) {
+					memset(temp, 0, 256);
+					Str_Copy_N((CPU_CHAR*)temp, (CPU_CHAR*)pMsg->local_path,
+							FTP_CLIENT_BUFF_SIZE);
+					Str_Cat_N((CPU_CHAR*)temp, (CPU_CHAR*)pMsg->file_name,
+							FTP_CLIENT_BUFF_SIZE);
+					stat = check_obj_existed((char*)temp);
+					OSA_FixedMemFree(temp);
+					if(stat) {
+						CPU_CHAR temp_path[128];
+						Str_Copy_N(temp_path, (CPU_CHAR*)pMsg->local_path, 128);
+						do {
+							if(pFC->server_list[0].enable) {
+								retVal = ftp_remote_put(pFC, 0,
+										(char*)pMsg->file_name,
+										(char*)pMsg->local_path,
+										(char*)pMsg->local_path);
 
-					if(retVal != FTP_ERR_NONE) {
-						LREP("put file server 0 err = %d\r\n", retVal);
+								if(retVal != FTP_ERR_NONE) {
+									LREP("put file server 0 err = %d\r\n", retVal);
+									ftp_print_err(retVal);
+									Str_Copy_N((CPU_CHAR*)pMsg->local_path, temp_path, 128);
+									OSA_SleepMs(1000);
+								}
+								ftp_destroy_channel(pFC);
+							}
+
+							if(pFC->server_list[1].enable) {
+								retVal = ftp_remote_put(pFC, 1,
+										(char*)pMsg->file_name,
+										(char*)pMsg->local_path,
+										(char*)pMsg->local_path);
+
+								if(retVal != FTP_ERR_NONE) {
+									LREP("put file server 1 err = %d\r\n", retVal);
+									ftp_print_err(retVal);
+									Str_Copy_N((CPU_CHAR*)pMsg->local_path, temp_path, 128);
+									OSA_SleepMs(1000);
+								}
+								ftp_destroy_channel(pFC);
+							}
+						} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE);
+					} else {
+						ASSERT(FALSE);
 					}
 				}
-
-				ftp_destroy_channel(pFC);
-
-				if(pFC->server_list[1].enable) {
-					retVal = ftp_remote_put(pFC, 1,
-							(char*)pMsg->file_name,
-							(char*)pMsg->local_path,
-							(char*)pMsg->local_path);
-
-					if(retVal != FTP_ERR_NONE) {
-						LREP("put file server 1 err = %d\r\n", retVal);
-					}
-				}
-
-				ftp_destroy_channel(pFC);
-
 				OSA_FixedMemFree((uint8_t*)pMsg);
+
 			}
 		}
-		LREP("thread ftp sender\r\n");
 	}
 }
 
@@ -557,6 +669,29 @@ int	ftp_get_code(FtpClient *pFC) {
 }
 
 
+void ftp_print_err(int err) {
+	switch(err) {
+	case FTP_ERR_NONE: LREP("FTP_ERR_NONE\r\n"); break;
+	case FTP_ERR_FILE: LREP("FTP_ERR_FILE\r\n"); break;
+	case FTP_ERR_PUT: LREP("FTP_ERR_PUT\r\n"); break;
+	case FTP_ERR_GET: LREP("FTP_ERR_GET\r\n"); break;
+	case FTP_ERR_CD: LREP("FTP_ERR_CD\r\n"); break;
+	case FTP_ERR_NCD: LREP("FTP_ERR_NCD\r\n"); break;
+	case FTP_ERR_MKD: LREP("FTP_ERR_MKD\r\n"); break;
+	case FTP_ERR_PWD: LREP("FTP_ERR_PWD\r\n"); break;
+	case FTP_ERR_OPEN_CTRL_CONN: LREP("FTP_ERR_OPEN_CTRL_CONN\r\n"); break;
+	case FTP_ERR_OPEN_DATA_CONN: LREP("FTP_ERR_OPEN_DATA_CONN\r\n"); break;
+	case FTP_ERR_RECV_CTRL_MSG: LREP("FTP_ERR_RECV_CTRL_MSG\r\n"); break;
+	case FTP_ERR_RECV_DATA_MSG: LREP("FTP_ERR_RECV_DATA_MSG\r\n"); break;
+	case FTP_ERR_SEND_CTRL_MSG: LREP("FTP_ERR_SEND_CTRL_MSG\r\n"); break;
+	case FTP_ERR_SEND_DATA_MSG: LREP("FTP_ERR_SEND_DATA_MSG\r\n"); break;
+	case FTP_ERR_AUTHEN: LREP("FTP_ERR_AUTHEN\r\n"); break;
+	case FTP_ERR_PASV: LREP("FTP_ERR_PASV\r\n"); break;
+	case FTP_ERR_CODE: LREP("FTP_ERR_CODE\r\n"); break;
 
+	default:
+		break;
+	}
+}
 
 

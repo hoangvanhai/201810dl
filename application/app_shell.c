@@ -663,6 +663,9 @@ void control(int32_t argc, char**argv) {
 	} else if(strcmp(argv[1], "stat") == 0) {
 		pAppObj->stat = !pAppObj->stat;
 		LREP("stat %d\r\n", pAppObj->stat);
+	}  else if(strcmp(argv[1], "log") == 0) {
+		LREP("start log\r\n");
+		App_GenerateLogFile(pAppObj);
 	}
 }
 

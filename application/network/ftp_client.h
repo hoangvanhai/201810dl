@@ -10,11 +10,8 @@
 
 #include <socket_common.h>
 #include <lib_str.h>
+#include <network_cfg.h>
 
-#define NUM_FTP_SERVER		2
-#define SIZE_TX_BUFF_CTRL	100
-#define SIZE_RX_BUFF_CTRL	100
-#define SIZE_TX_BUFF_DATA	100
 
 enum FtpCode {
 	FTP_ERR_NONE = 0,
@@ -42,6 +39,7 @@ typedef struct ServerInfo_ {
 	bool		enable;
 	CPU_CHAR	*username;
 	CPU_CHAR	*passwd;
+	CPU_CHAR	*prefix;
 }ServerInfo;
 
 
@@ -62,7 +60,7 @@ typedef struct FtpClient_ {
 	Network_Status		status_ctrl;
 	Network_Status		status_data;
 	uint8_t				curr_sv_idx;
-	ServerInfo			server_list[NUM_FTP_SERVER];
+	ServerInfo			server_list[FTP_CLIENT_SERVER_NUM];
 	sys_thread_t		send_thread;
 
 }FtpClient;
@@ -95,5 +93,6 @@ int		ftp_get_code(FtpClient *pFC);
 
 void 	ftp_client_sender(void *arg);
 int		ftp_add_filename(FtpClient *pFC, const uint8_t * local_path, const uint8_t* file_name);
+void 	ftp_print_err(int err);
 
 #endif /* APPLICATION_FTP_CLIENT_H_ */
