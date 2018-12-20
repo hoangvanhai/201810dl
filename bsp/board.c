@@ -95,6 +95,7 @@ const clock_manager_user_config_t g_defaultClockConfigRun =
         .prdiv0              = 0x13U,
         .vdiv0               = 0x18U,
     },
+
     .simConfig =
     {
         .pllFllSel = kClockPllFllSelPll,    // PLLFLLSEL select PLL.
@@ -163,7 +164,7 @@ void BOARD_ClockInit(void)
 #if (CLOCK_INIT_CONFIG == CLOCK_VLPR)
     CLOCK_SetBootConfig(&g_defaultClockConfigVlpr);
 #else
-    CLOCK_SetBootConfig(&g_defaultClockConfigRun);
+//    CLOCK_SetBootConfig(&g_defaultClockConfigRun);
 #endif
 }
 

@@ -61,6 +61,13 @@ const char *logo_msg = { "\r\n\n"
  */
 #if 1
 
+
+void delay_us(uint32_t us) {
+	while(us--) {
+		__NOP();
+	}
+}
+
 int main(void)
 {
 	osa_status_t result;
@@ -70,6 +77,32 @@ int main(void)
 
     LREP("chip id = 0x%x\r\n", 		SIM_UIDL_UID(SIM_BASE_PTR));
     LREP("OS Tick rate = %d\r\n", 	OSCfg_TickRate_Hz);
+
+    while(0)
+    {
+    	LREP("console wakeup %d!\r\n", SystemCoreClock);
+    	delay_us(0xFFFFF);
+    	GPIO_DRV_TogglePinOutput(kGpioMbRs485);
+
+		GPIO_DRV_TogglePinOutput(DigitalOutput0	);
+		GPIO_DRV_TogglePinOutput(DigitalOutput1	);
+		GPIO_DRV_TogglePinOutput(DigitalOutput2	);
+		GPIO_DRV_TogglePinOutput(DigitalOutput3	);
+		GPIO_DRV_TogglePinOutput(DigitalOutput4	);
+		GPIO_DRV_TogglePinOutput(DigitalOutput5	);
+
+		GPIO_DRV_TogglePinOutput(SelectAnalog0	);
+		GPIO_DRV_TogglePinOutput(SelectAnalog1);
+		GPIO_DRV_TogglePinOutput(SelectAnalog2);
+		GPIO_DRV_TogglePinOutput(SelectAnalog3);
+
+		GPIO_DRV_TogglePinOutput(SelectTrigger0);
+		GPIO_DRV_TogglePinOutput(SelectTrigger1);
+		GPIO_DRV_TogglePinOutput(SelectTrigger2);
+		GPIO_DRV_TogglePinOutput(SelectTrigger3);
+
+    }
+
 
 
     BOARD_CheckResetCause();
@@ -110,64 +143,64 @@ int main(void)
 int App_CreateAppTask(SApp *pApp) {
 
 	osa_status_t result;
-	LREP("start create app task \r\n");
-    result = OSA_TaskCreate(App_TaskModbus,
-                    (uint8_t *)"modbus",
-                    TASK_MODBUS_STACK_SIZE,
-					task_modbus_stack,
-                    TASK_MODBUS_PRIO,
-                    (task_param_t)pApp,
-                    false,
-                    &task_modbus_task_handler);
-    if(result != kStatus_OSA_Success)
-    {
-        LREP("Failed to create slave task\r\n\r\n");
-        return -1;
-    }
-
-    result = OSA_TaskCreate(App_TaskSerialcomm,
-                    (uint8_t *)"serialcomm",
-                    TASK_SERIAL_COMM_STACK_SIZE,
-					task_serialcomm_stack,
-                    TASK_SERIALCOMM_PRIO,
-                    (task_param_t)pApp,
-                    false,
-                    &task_serialcomm_task_handler);
-    if (result != kStatus_OSA_Success)
-    {
-        LREP("Failed to create serialcomm task\r\n\r\n");
-        return -1;
-    }
-
-    result = OSA_TaskCreate(App_TaskUserInterface,
-                    (uint8_t *)"ui",
-                    TASK_UI_STACK_SIZE,
-					task_ui_stack,
-                    TASK_UI_PRIO,
-                    (task_param_t)pApp,
-                    false,
-                    &task_ui_task_handler);
-    if (result != kStatus_OSA_Success)
-    {
-        LREP("Failed to create user interface task\r\n\r\n");
-        return -1;
-    }
-
-
+//	LREP("start create app task \r\n");
+//    result = OSA_TaskCreate(App_TaskModbus,
+//                    (uint8_t *)"modbus",
+//                    TASK_MODBUS_STACK_SIZE,
+//					task_modbus_stack,
+//                    TASK_MODBUS_PRIO,
+//                    (task_param_t)pApp,
+//                    false,
+//                    &task_modbus_task_handler);
+//    if(result != kStatus_OSA_Success)
+//    {
+//        LREP("Failed to create slave task\r\n\r\n");
+//        return -1;
+//    }
+//
+//    result = OSA_TaskCreate(App_TaskSerialcomm,
+//                    (uint8_t *)"serialcomm",
+//                    TASK_SERIAL_COMM_STACK_SIZE,
+//					task_serialcomm_stack,
+//                    TASK_SERIALCOMM_PRIO,
+//                    (task_param_t)pApp,
+//                    false,
+//                    &task_serialcomm_task_handler);
+//    if (result != kStatus_OSA_Success)
+//    {
+//        LREP("Failed to create serialcomm task\r\n\r\n");
+//        return -1;
+//    }
+//
+//    result = OSA_TaskCreate(App_TaskUserInterface,
+//                    (uint8_t *)"ui",
+//                    TASK_UI_STACK_SIZE,
+//					task_ui_stack,
+//                    TASK_UI_PRIO,
+//                    (task_param_t)pApp,
+//                    false,
+//                    &task_ui_task_handler);
+//    if (result != kStatus_OSA_Success)
+//    {
+//        LREP("Failed to create user interface task\r\n\r\n");
+//        return -1;
+//    }
+//
+//
     //  create app tasks
-	result = OSA_TaskCreate(App_TaskPeriodic,
-					(uint8_t *)"periodic",
-					TASK_PERIODIC_STACK_SIZE,
-					task_periodic_stack,
-					TASK_PERIODIC_PRIO,
-					(task_param_t)pApp,
-					false,
-					&task_periodic_task_handler);
-	if (result != kStatus_OSA_Success)
-	{
-		LREP("Failed to create periodic task\r\n\r\n");
-		return -1;
-	}
+//	result = OSA_TaskCreate(App_TaskPeriodic,
+//					(uint8_t *)"periodic",
+//					TASK_PERIODIC_STACK_SIZE,
+//					task_periodic_stack,
+//					TASK_PERIODIC_PRIO,
+//					(task_param_t)pApp,
+//					false,
+//					&task_periodic_task_handler);
+//	if (result != kStatus_OSA_Success)
+//	{
+//		LREP("Failed to create periodic task\r\n\r\n");
+//		return -1;
+//	}
 
     // create app tasks
     result = OSA_TaskCreate(App_TaskShell,

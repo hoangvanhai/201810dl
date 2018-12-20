@@ -62,7 +62,7 @@
 
 
 
-#define NETWORK_MODULE_EN					1
+#define NETWORK_MODULE_EN					0
 
 /**************************** Type Definitions *******************************/
 
