@@ -41,6 +41,15 @@ int ftp_start_ctrl_sock(FtpClient *pFC) {
 
 	int timeout = 1000;
 	int err = -3;
+	bool status = true;
+
+	if(Network_GetLinkStatus(&status)) {
+		if(status == false) {
+			LREP("ftp_start_ctrl_sock link down ... \r\n");
+			return err;
+		}
+	}
+
 	pFC->fd_ctrl = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (pFC->fd_ctrl != INVALIDSOCK) {
 
@@ -103,6 +112,15 @@ int	ftp_close_ctrl_sock(FtpClient *pFC) {
 int ftp_start_data_sock(FtpClient *pFC, int port) {
 	int timeout = 1000;
 	int err = -3;
+	bool status = true;
+
+	if(Network_GetLinkStatus(&status)) {
+		if(status == false) {
+			LREP("ftp_start_data_sock link down ... \r\n");
+			return err;
+		}
+	}
+
 	pFC->fd_data = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (pFC->fd_data != INVALIDSOCK) {
 

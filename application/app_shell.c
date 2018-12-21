@@ -636,6 +636,7 @@ void save_tag(int32_t argc, char**argv) {
  *  @note
  */
 void control(int32_t argc, char**argv) {
+	uint8_t data[100];
 	if(strcmp(argv[1], "save") == 0) {
 		App_SaveConfig(pAppObj, CONFIG_FILE_PATH);
 	} else if(strcmp(argv[1], "reset") == 0) {
@@ -646,14 +647,14 @@ void control(int32_t argc, char**argv) {
 			LREP("remove file failed err = %d\r\n", retVal);
 		}
 	} else if(strcmp(argv[1], "pc") == 0) {
-		uint8_t data[100];
+
 		for(int i = 0; i < 100; i++)
 		{
 			App_SendPC(pAppObj, 100, data, 100, false);
 			OSA_SleepMs(100);
 		}
 	} else if(strcmp(argv[1], "ui") == 0) {
-		uint8_t data[100];
+
 		//uint32_t time;
 		for(int i = 0; i < 100; i++)
 		{
@@ -666,6 +667,19 @@ void control(int32_t argc, char**argv) {
 	}  else if(strcmp(argv[1], "log") == 0) {
 		LREP("start log\r\n");
 		App_GenerateLogFile(pAppObj);
+	} else if(strcmp(argv[1], "tc") == 0) {
+
+		LREP("forece send data to thread\r\n");
+		for(int i = 0; i < 1000000; i++)
+		{
+			memset(data, i, 100);
+			LREP("send err = %d\r\n", App_SendPCNetworkClient(100, data, 100));
+			Network_TcpClient_Send(data, 100);
+			if((i % 100) == 0)
+				App_GenerateLogFile(pAppObj);
+
+			OSA_SleepMs(100);
+		}
 	}
 }
 

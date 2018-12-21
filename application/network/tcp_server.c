@@ -33,6 +33,18 @@ void tcp_server_listener(void *arg) {
 	socklen_t clientlen;
 
 	while(1) {
+
+		bool status = true;
+
+		if(Network_GetLinkStatus(&status)) {
+			if(status == false) {
+				LREP("tcp_server_listener link down ... \r\n");
+				OSA_TimeDelay(3000);
+				continue;
+			}
+		}
+
+
 		pHandle->listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 		if (pHandle->listen_fd < 0) {
 			LREP("error create socket\r\n");
@@ -66,6 +78,16 @@ void tcp_server_listener(void *arg) {
 		clientlen = sizeof(clientaddr);
 
 		while(1) {
+
+			bool status = true;
+
+			if(Network_GetLinkStatus(&status)) {
+				if(status == false) {
+					LREP("on accept link down ... \r\n");
+					break;
+				}
+			}
+
 			pHandle->peer_fd = accept(pHandle->listen_fd,
 					(struct sockaddr *) &clientaddr, &clientlen);
 			if(pHandle->peer_fd < 0) {
@@ -157,7 +179,6 @@ int tcp_server_send_nonblocking(TcpServer *pHandle, const uint8_t *data, int len
 	} else {
 		retVal = -3;
 	}
-
 	return retVal;
 }
 

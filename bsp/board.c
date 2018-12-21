@@ -217,6 +217,7 @@ void BusFault_Handler(void) {
 	LREP("SCB->SHCSR = 0x%x SCB->CFSR = 0x%x\r\n", SCB->SHCSR, SCB->CFSR);
 	LREP("BUS FAULT ADDRESS: 0x%x\r\n", SCB->BFAR);
 	BOARD_GetFaultType();
+	for(;;);
 }
 /*****************************************************************************/
 /** @brief
@@ -241,6 +242,7 @@ void MemManage_Handler(void) {
 	LREP("SCB->SHCSR = 0x%x SCB->CFSR = 0x%x\r\n", SCB->SHCSR, SCB->CFSR);
 	LREP("MEMMAN FAULT ADDRESS 0x%x\r\n", SCB->MMFAR);
 	BOARD_GetFaultType();
+	for(;;);
 }
 /*****************************************************************************/
 /** @brief

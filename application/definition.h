@@ -142,7 +142,7 @@ enum MbDataType {
 };
 
 typedef enum ESysStatus_ {
-    SYS_ERR_NONE		= 1 << 0,
+    SYS_ERR_NONE		= 0 << 0,
     SYS_ERR_RTC			= 1 << 1,
     SYS_ERR_SDCARD_1	= 1 << 2,
     SYS_ERR_SDCARD_2	= 1 << 3,

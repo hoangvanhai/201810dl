@@ -77,8 +77,6 @@ int main(void)
 
     OSA_Init();
 
-    App_InitTaskHandle(&sApp);
-
     result = OSA_TaskCreate(App_TaskStartup,
                     (uint8_t *)"startup",
                     TASK_STARTUP_STACK_SIZE,

@@ -27,6 +27,15 @@ int tcp_client_configuration(TcpClient *pEP, ip_addr_t ip,
 
 int tcp_client_open_connection(TcpClient *pEP, int timeout) {
 	int err = -3;
+
+	bool status = true;
+	if(Network_GetLinkStatus(&status)) {
+		if(status == false) {
+			LREP("tcp_client_open_connection link down ... \r\n");
+			return err;
+		}
+	}
+
     pEP->fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
     if (pEP->fd != INVALIDSOCK) {
 
@@ -188,6 +197,11 @@ void tcp_client_listener(void *arg)  {
 					PRINTF("rlen = %d\r\n", rlen);
 					break;
 				}
+			}
+
+			if(event & Event_Error) {
+				LREP("event error \r\n");
+				break;
 			}
 		}
 		LREP("disconnected to server %s:%d\r\n",

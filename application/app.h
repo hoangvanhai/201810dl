@@ -69,6 +69,8 @@ typedef struct SApp_ {
 	bool				sdhcPlugged;
 	bool				stat;
 	bool				reboot;
+	uint32_t			aiReadCount;
+	uint32_t			mbReadCount;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/

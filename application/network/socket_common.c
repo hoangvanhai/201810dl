@@ -7,6 +7,8 @@
 
 
 #include <socket_common.h>
+#include <fsl_phy_driver.h>
+#include <ethernetif.h>
 
 int set_blocking(int fd){
 	uint32_t mode = 0;
@@ -26,6 +28,13 @@ int set_nodelay(int fd) {
 }
 
 int wait_event(int fd, int timeout, bool r, bool w) {
+	bool status = true;
+	if(Network_GetLinkStatus(&status)) {
+		if(status == false) {
+			return Event_Error;
+		}
+	}
+
 	int event = 0;
 	struct timeval tv;
 	fd_set fdw, fderror, fdr;
@@ -65,6 +74,8 @@ int wait_event(int fd, int timeout, bool r, bool w) {
 
 
 int set_buffer_size(int fd, int tx_size, int rx_size) {
+	return 0;
+	// lwip not implement yet
     int err = 0;
     int ival = (int)rx_size / 2;
     socklen_t bufsizelen = sizeof(ival);
@@ -74,4 +85,11 @@ int set_buffer_size(int fd, int tx_size, int rx_size) {
     if (ival > 0)
         err = setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char *)&ival, bufsizelen) || err;
     return err;
+}
+
+
+bool Network_GetLinkStatus(bool *status) {
+	return (PHY_DRV_GetLinkStatus(
+			0, enetDevIf[0].phyAddr, status)
+			== kStatus_ENET_Success);
 }

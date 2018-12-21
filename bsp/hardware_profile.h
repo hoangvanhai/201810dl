@@ -12,11 +12,11 @@
 #include <MK64F12_extension.h>
 
 /* The board name */
-#define BOARD_NAME                      "DATA_LOGGER"
+#define BOARD_NAME                      	"DATA_LOGGER"
 
-#define CLOCK_VLPR 						1U
-#define CLOCK_RUN  						2U
-#define CLOCK_NUMBER_OF_CONFIGURATIONS 	3U
+#define CLOCK_VLPR 							1U
+#define CLOCK_RUN  							2U
+#define CLOCK_NUMBER_OF_CONFIGURATIONS 		3U
 
 #ifndef CLOCK_INIT_CONFIG
 #define CLOCK_INIT_CONFIG CLOCK_RUN

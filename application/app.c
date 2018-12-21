@@ -79,8 +79,7 @@ extern const shell_command_t cmd_table[];
 void App_Init(SApp *pApp) {
 
 	int err;
-	pApp->eStatus = SYS_ERR_NONE;
-	pApp->stat = false;
+	memset(pApp, 0, sizeof(SApp));
 	OS_ERR error;
 	OSSemCreate(&debug_sem, "debug", 0, &error);
 	ASSERT(error == OS_ERR_NONE);
@@ -117,19 +116,6 @@ void App_Init(SApp *pApp) {
     LREP("sizeof(SCtrlPort) %d\r\n",	sizeof(SCtrlPort));
     LREP("sizeof(STagValue) %d\r\n", 	sizeof(STagNode));
     LREP("sizeof(SSysCfg) %d\r\n", 		sizeof(SSysCfg));
-}
-
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-
-void	App_InitTaskHandle(SApp *pApp) {
-
 }
 
 /*****************************************************************************/
@@ -595,15 +581,18 @@ void App_TaskPeriodic(task_param_t parg) {
 
 
 		if((logged == false) && (pApp->sDateTime.tm_min % log_min == 0)) {
-			if(pApp->sCfg.sCom.ftp_enable1 ||
-					pApp->sCfg.sCom.ftp_enable2) {
-				LREP("generate log file\r\n");
-				ASSERT(App_GenerateLogFile(pApp) == FR_OK);
-			} else {
-				LREP("disabled generate log file\r\n");
+			// To ensure has valid data before log to file
+			if(pApp->aiReadCount > 0 && pApp->mbReadCount > 0) {
+				if(pApp->sCfg.sCom.ftp_enable1 ||
+						pApp->sCfg.sCom.ftp_enable2) {
+					LREP("generate log file\r\n");
+					ASSERT(App_GenerateLogFile(pApp) == FR_OK);
+				} else {
+					LREP("disabled generate log file\r\n");
+				}
+				last_min = pApp->sDateTime.tm_min;
+				logged = true;
 			}
-			last_min = pApp->sDateTime.tm_min;
-			logged = true;
 		}
 
 	}
@@ -810,7 +799,7 @@ void App_TaskStartup(task_param_t arg) {
 			//LEP("Feed dog \r\n");
 			/* Feed dog to prevent WDG reset */
 			//WDOG_DRV_Refresh();
-			//App_AiReadAllPort(pApp);
+			App_AiReadAllPort(pApp);
 		}
 
 
@@ -1385,6 +1374,7 @@ int	App_ModbusDoRead(SApp *pApp){
 			}
 		}
 	}
+	pApp->mbReadCount++;
 
 	return 0;
 }
@@ -1726,7 +1716,7 @@ inline int	App_SendPC(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, b
 }
 
 /*****************************************************************************/
-/** @brief
+/** @brief send data to tcp client (PC)
  *
  *
  *  @param
@@ -1734,14 +1724,13 @@ inline int	App_SendPC(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, b
  *  @note
  */
 int	App_SendPCNetworkClient(uint8_t subctrl, uint8_t *data, uint8_t len) {
-	bool ret = false;
+	int ret = 0;
 	uint8_t *sdata = OSA_FixedMemMalloc(len + 2);
 	if(sdata != NULL) {
 		sdata[0] = subctrl;
 		sdata[1] = len;
 		if(len > 0 && data != NULL)
 			memcpy(&sdata[2], data, len);
-
 		//TODO send data to tcpclient
 		ret = Network_TcpServer_Send(sdata, len + 2);
 		OSA_FixedMemFree(sdata);
@@ -1847,6 +1836,7 @@ void App_AiReadAllPort(SApp *pApp) {
 			}
 		}
 	}
+	pApp->aiReadCount++;
 #else
 
 	uint32_t randout;
@@ -2271,7 +2261,7 @@ void Clb_NetTcpClientConnEvent(Network_Status event,
 void Clb_NetTcpClientRecvData(const uint8_t* data, int length) {
 
 	LREP("client recv data len = %d \r\n", length);
-	Network_TcpClient_Send(data, length);
+	//Network_TcpClient_Send(data, length);
 }
 /*****************************************************************************/
 /** @brief
@@ -2332,7 +2322,7 @@ void Clb_NetTcpServerConnEvent(Network_Status event,
  */
 void Clb_NetTcpServerRecvData(const uint8_t* data, int length) {
 	LREP("server recv data len = %d\r\n", length);
-	App_NetRecvHandle((uint8_t*)data);
+	//App_NetRecvHandle((uint8_t*)data);
 }
 /*****************************************************************************/
 /** @brief
