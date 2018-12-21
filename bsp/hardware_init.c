@@ -43,13 +43,13 @@ void hardware_init(void) {
 	CLOCK_SYS_EnablePortClock(PORTD_IDX);
 	CLOCK_SYS_EnablePortClock(PORTE_IDX);
 
-//	CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
-//
-//	CLOCK_SYS_EnableEnetClock(BOARD_ENET_INSTANCE);
-//	CLOCK_SYS_SetEnetTimeStampSrc(0, kClockTimeSrcOsc0erClk);
-//	configure_enet_pins(BOARD_ENET_INSTANCE);
+	//CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
+
+	CLOCK_SYS_EnableEnetClock(BOARD_ENET_INSTANCE);
+	CLOCK_SYS_SetEnetTimeStampSrc(0, kClockTimeSrcOsc0erClk);
+	configure_enet_pins(BOARD_ENET_INSTANCE);
 //	configure_sdhc_pins(BOARD_SDHC_INSTANCE);
-//	configure_i2c_pins(BOARD_I2C_RTC_INSTANCE);
+	configure_i2c_pins(BOARD_I2C_RTC_INSTANCE);
 
 	/* Init board clock */
 	BOARD_ClockInit();
@@ -64,7 +64,7 @@ void hardware_init(void) {
 //#endif
 
 	// Configure the power mode protection
-//	SMC_HAL_SetProtection(SMC_BASE_PTR, kAllowPowerModeVlp);
+	SMC_HAL_SetProtection(SMC_BASE_PTR, kAllowPowerModeVlp);
 
 //	GPIO_DRV_Init(sdhcCdPin, NULL);
 //

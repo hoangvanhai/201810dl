@@ -74,6 +74,7 @@ const clock_manager_user_config_t g_defaultClockConfigVlpr =
     }
 };
 
+#if 0
 /* Configuration for enter RUN mode. Core clock = 120MHz. */
 const clock_manager_user_config_t g_defaultClockConfigRun =
 {
@@ -104,6 +105,48 @@ const clock_manager_user_config_t g_defaultClockConfigRun =
         .outdiv2   = 1U,
         .outdiv3   = 1U,
         .outdiv4   = 4U,
+    },
+    .oscerConfig =
+    {
+        .enable       = true,  // OSCERCLK enable.
+        .enableInStop = false, // OSCERCLK disable in STOP mode.
+    }
+};
+
+#endif
+
+
+/* Configuration for enter RUN mode. Core clock = 120MHz. */
+const clock_manager_user_config_t g_defaultClockConfigRun =
+{
+    .mcgConfig =
+    {
+        .mcg_mode           = kMcgModePEE,   // Work in PEE mode.
+        .irclkEnable        = true,  		 // MCGIRCLK enable.
+        .irclkEnableInStop  = false, 		 // MCGIRCLK disable in STOP mode.
+        .ircs               = kMcgIrcSlow, 	 // Select IRC32k.
+        .fcrdiv             = 0U,    		 // FCRDIV is 0.
+
+        .frdiv   = 0U,
+        .drs     = kMcgDcoRangeSelLow,  // Low frequency range
+        .dmx32   = kMcgDmx32Default,    // DCO has a default range of 25%
+        .oscsel  = kMcgOscselIrc,       // Select OSC
+
+        .pll0EnableInFllMode = false,  // PLL0 disable
+        .pll0EnableInStop    = false,  // PLL0 disalbe in STOP mode
+        .prdiv0              = 0x3U,
+        .vdiv0               = 0xeU,
+		.pllcs				 = kMcgPllClkSelPll0,
+    },
+
+    .simConfig =
+    {
+        .pllFllSel = kClockPllFllSelIrc48M,    // PLLFLLSEL select PLL.
+        .er32kSrc  = kClockEr32kSrcRtc,        // ERCLK32K selection, use RTC.
+        .outdiv1   = 0U,
+        .outdiv2   = 1U,
+        .outdiv3   = 1U,
+        .outdiv4   = 6U,
     },
     .oscerConfig =
     {
@@ -156,15 +199,15 @@ void BOARD_ClockInit(void)
     /* Setup board clock source. */
     // Setup OSC0 if used.
     // Configure OSC0 pin mux.
-    PORT_HAL_SetMuxMode(EXTAL0_PORT, EXTAL0_PIN, EXTAL0_PINMUX);
-    PORT_HAL_SetMuxMode(XTAL0_PORT, XTAL0_PIN, XTAL0_PINMUX);
-    BOARD_InitOsc0();
+//    PORT_HAL_SetMuxMode(EXTAL0_PORT, EXTAL0_PIN, EXTAL0_PINMUX);
+//    PORT_HAL_SetMuxMode(XTAL0_PORT, XTAL0_PIN, XTAL0_PINMUX);
+//    BOARD_InitOsc0();
 
     /* Set system clock configuration. */
 #if (CLOCK_INIT_CONFIG == CLOCK_VLPR)
     CLOCK_SetBootConfig(&g_defaultClockConfigVlpr);
 #else
-//    CLOCK_SetBootConfig(&g_defaultClockConfigRun);
+    CLOCK_SetBootConfig(&g_defaultClockConfigRun);
 #endif
 }
 

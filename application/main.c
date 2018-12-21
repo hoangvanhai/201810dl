@@ -107,6 +107,23 @@ int main(void)
 
     BOARD_CheckResetCause();
 
+    LREP("MCG->C1 %x\r\n", 	MCG->C1);
+	LREP("MCG->C2 %x\r\n", 	MCG->C2);     /**< MCG Control 2 Register, offset: 0x1 */
+	LREP("MCG->C3 %x\r\n", 	MCG->C3);     /**< MCG Control 3 Register, offset: 0x2 */
+	LREP("MCG->C4 %x\r\n", 	MCG->C4);     /**< MCG Control 4 Register, offset: 0x3 */
+	LREP("MCG->C5 %x\r\n", 	MCG->C5);     /**< MCG Control 5 Register, offset: 0x4 */
+	LREP("MCG->C6 %x\r\n", 	MCG->C6);     /**< MCG Control 6 Register, offset: 0x5 */
+	LREP("MCG->S %x\r\n", 	MCG->S);      /**< MCG Status Register, offset: 0x6 */
+	LREP("MCG->SC %x\r\n", 	MCG->SC);     /**< MCG Status and Control Register, offset: 0x8 */
+	LREP("MCG-> ATCVH %x\r\n", MCG->ATCVH); /**< MCG Auto Trim Compare Value High Register, offset: 0xA */
+	LREP("MCG->ATCVL %x\r\n", MCG->ATCVL);  /**< MCG Auto Trim Compare Value Low Register, offset: 0xB */
+	LREP("MCG->C7 %x\r\n", 	MCG->C7);     /**< MCG Control 7 Register, offset: 0xC */
+	LREP("MCG->C8 %x\r\n", 	MCG->C8);     /**< MCG Control 8 Register, offset: 0xD */
+	LREP("MCG->C9 %x\r\n", 	MCG->C9);     /**< MCG Control 9 Register, offset: 0xE */
+	LREP("MCG->C11 %x\r\n", MCG->C11);    /**< MCG Control 11 Register, offset: 0x10 */
+	LREP("MCG->S2 %x\r\n", 	MCG->S2);
+
+	LREP("sysclock = %d\r\n", SystemCoreClock);
 
     OSA_Init();
 

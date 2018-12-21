@@ -491,6 +491,8 @@ int	App_InitFS(SApp *pApp) {
 
 	int retVal;
 
+	LREP("start init FS\r\n");
+
 	memset(&pApp->sFS0, 0, sizeof(FATFS));
 
 	retVal = f_mount(&pApp->sFS0, "", 0);
