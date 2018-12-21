@@ -43,70 +43,38 @@ void hardware_init(void) {
 	CLOCK_SYS_EnablePortClock(PORTD_IDX);
 	CLOCK_SYS_EnablePortClock(PORTE_IDX);
 
-	//CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
-
+	CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
+	CLOCK_SYS_EnableLpuartClock(0);
 	CLOCK_SYS_EnableEnetClock(BOARD_ENET_INSTANCE);
-	CLOCK_SYS_SetEnetTimeStampSrc(0, kClockTimeSrcOsc0erClk);
-	configure_enet_pins(BOARD_ENET_INSTANCE);
+	//CLOCK_SYS_SetEnetTimeStampSrc(0, kClockTimeSrcOsc0erClk);
+//	CLOCK_SYS_SetEnetTimeStampSrc(0, kClockTimeSrcExt);
+//	configure_enet_pins(BOARD_ENET_INSTANCE);
 //	configure_sdhc_pins(BOARD_SDHC_INSTANCE);
-	configure_i2c_pins(BOARD_I2C_RTC_INSTANCE);
+
 
 	/* Init board clock */
 	BOARD_ClockInit();
 	dbg_uart_init();
 
-//#ifdef MPU_INSTANCE_COUNT /* File System need disabled MPU */
-//    // disable MPU
-//    for(int i = 0; i < MPU_INSTANCE_COUNT; i++)
-//    {
-//        MPU_HAL_Disable(g_mpuBase[i]);
-//    }
-//#endif
+#ifdef MPU_INSTANCE_COUNT /* File System need disabled MPU */
+    // disable MPU
+    for(int i = 0; i < MPU_INSTANCE_COUNT; i++)
+    {
+        MPU_HAL_Disable(g_mpuBase[i]);
+    }
+#endif
 
 	// Configure the power mode protection
-	SMC_HAL_SetProtection(SMC_BASE_PTR, kAllowPowerModeVlp);
+	//SMC_HAL_SetProtection(SMC_BASE_PTR, kAllowPowerModeVlp);
 
 //	GPIO_DRV_Init(sdhcCdPin, NULL);
 //
 //    GPIO_DRV_Init(DigitalInputPin, NULL);
     GPIO_DRV_Init(NULL, DigitalOutputPin);
 
-
-
 //	BOARD_EnableAllFault();
 //
 //	BOARD_CreateWDG();
-
-
-	GPIO_DRV_ClearPinOutput(kGpioMbRs485);
-	GPIO_DRV_ClearPinOutput(DigitalOutput0);
-	GPIO_DRV_ClearPinOutput(DigitalOutput1);
-	GPIO_DRV_ClearPinOutput(DigitalOutput2);
-	GPIO_DRV_ClearPinOutput(DigitalOutput3);
-	GPIO_DRV_ClearPinOutput(DigitalOutput4);
-	GPIO_DRV_ClearPinOutput(DigitalOutput5);
-
-	GPIO_DRV_ClearPinOutput(SelectAnalog0);
-	GPIO_DRV_ClearPinOutput(SelectAnalog1);
-	GPIO_DRV_ClearPinOutput(SelectAnalog2);
-	GPIO_DRV_ClearPinOutput(SelectAnalog3);
-
-	GPIO_DRV_ClearPinOutput(SelectTrigger0);
-	GPIO_DRV_ClearPinOutput(SelectTrigger1);
-	GPIO_DRV_ClearPinOutput(SelectTrigger2);
-	GPIO_DRV_ClearPinOutput(SelectTrigger3);
-
-	GPIO_DRV_ClearPinOutput(WatchDogFeed);
-	GPIO_DRV_ClearPinOutput(LcdVccOcf);
-	GPIO_DRV_ClearPinOutput(LcdVccEn);
-	GPIO_DRV_ClearPinOutput(LcdGpio1);
-	GPIO_DRV_ClearPinOutput(LcdGpio2);
-	GPIO_DRV_ClearPinOutput(LanPsuOcp);
-	GPIO_DRV_ClearPinOutput(LanPsuEn);
-	GPIO_DRV_ClearPinOutput(IoVccEn);
-	GPIO_DRV_ClearPinOutput(IoVccOcf);
-	GPIO_DRV_ClearPinOutput(ModbusPsuOcp);
-	GPIO_DRV_ClearPinOutput(ModbusPsuEn);
 }
 
 /*!

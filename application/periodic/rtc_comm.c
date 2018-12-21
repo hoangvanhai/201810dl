@@ -7,6 +7,7 @@
 
 
 #include <rtc_comm.h>
+#include <pin_mux.h>
 
 
 static int cmd_read_date_time(uint8_t *recvData);
@@ -32,7 +33,9 @@ static i2c_device_t slave =
  */
 int RTC_InitDateTime(SDateTime *time) {
 
-	i2c_status_t retVal =  I2C_DRV_MasterInit(I2C_RTOS_MASTER_INSTANCE, &master);
+	configure_i2c_pins(BOARD_I2C_RTC_INSTANCE);
+
+	i2c_status_t retVal =  I2C_DRV_MasterInit(BOARD_I2C_RTC_INSTANCE, &master);
 	if(retVal != kStatus_I2C_Success)
 		return retVal;
 
@@ -61,7 +64,7 @@ int RTC_InitDateTime(SDateTime *time) {
  *  @note
  */
 int RTC_GetTimeDate(SDateTime *time) {
-	return 0;
+	//return 0;
 	if(time) {
 		uint8_t recvData[7];
 		memset(recvData, 0, 7);
@@ -117,7 +120,7 @@ int RTC_SetTimeDate(SDateTime *time) {
 	DateTime[5] = DEC_TO_HEX_1BYTE(time->tm_mon);
 	DateTime[6] = DEC_TO_HEX_1BYTE(time->tm_year);
 
-	i2c_ret = I2C_DRV_MasterSendDataBlocking(I2C_RTOS_MASTER_INSTANCE, &slave, cmd, 1, DateTime, 7, 20);
+	i2c_ret = I2C_DRV_MasterSendDataBlocking(BOARD_I2C_RTC_INSTANCE, &slave, cmd, 1, DateTime, 7, 20);
 
 	if(i2c_ret != kStatus_I2C_Success) {
 		ASSERT(FALSE);
@@ -162,7 +165,7 @@ static int cmd_read_date_time(uint8_t *recvData)
     uint8_t cmd[1];
     cmd[0] = 0x00;
     // read from slave
-    i2c_ret = I2C_DRV_MasterReceiveDataBlocking(I2C_RTOS_MASTER_INSTANCE,
+    i2c_ret = I2C_DRV_MasterReceiveDataBlocking(BOARD_I2C_RTC_INSTANCE,
                                       &slave, cmd, 1, recvData, 7, 20);
     if(i2c_ret != kStatus_I2C_Success) {
     	ASSERT(FALSE);

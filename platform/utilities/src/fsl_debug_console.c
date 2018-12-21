@@ -137,7 +137,7 @@ debug_console_status_t DbgConsole_Init( uint32_t uartInstance, uint32_t baudRate
 
 			 LPUART_DRV_Init(LPUART0_IDX, &debug_uart_state, &lpuartConfig);
 			 s_debugConsole.base = base;
-			 UART_DRV_InstallRxCallback(uartInstance, debug_rx_handle, &rx_char, NULL, true);
+			 LPUART_DRV_InstallRxCallback(uartInstance, debug_rx_handle, &rx_char, NULL, true);
 			 s_debugConsole.ops.tx_union.UART_Send = LPUART_HAL_SendDataPolling;
 
 #else

@@ -1148,7 +1148,7 @@ sdhc_status_t SDHC_DRV_Init(uint32_t instance, sdhc_host_t *host,
 	CLOCK_SYS_EnableSdhcClock(instance);
 	SDHC_DRV_SetClock(instance, false);
 
-	LREP("set clock source = %d\r\n", CLOCK_SYS_GetPllFllClockFreq());
+
 
 	CLOCK_SYS_SetSdhcSrc(instance, kClockSdhcSrcPllFllSel);
 
@@ -1173,6 +1173,8 @@ sdhc_status_t SDHC_DRV_Init(uint32_t instance, sdhc_host_t *host,
 	SDHC_DRV_GetCaps(instance, host);
 
 	LREP("pass SDHC_DRV_GetCaps \r\n");
+
+	LREP("set clock source = %d\r\n", CLOCK_SYS_GetSdhcFreq(instance));
 
 	if (!host->maxBlockSize) {
 		CLOCK_SYS_DisableSdhcClock(instance);

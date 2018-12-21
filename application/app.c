@@ -533,7 +533,7 @@ void App_TaskPeriodic(task_param_t parg) {
 	int last_min = 0;
 	bool logged = false;
 
-	/*
+
 	ASSERT(RTC_InitDateTime(&pApp->sDateTime) == 0);
 	OSA_SleepMs(100);
 
@@ -547,7 +547,7 @@ void App_TaskPeriodic(task_param_t parg) {
 	}
 
 	//FM_Init(0);
-	*/
+
 
 
 	rnga_user_config_t rngaConfig;
@@ -571,10 +571,10 @@ void App_TaskPeriodic(task_param_t parg) {
 	while(1) {
 		OSA_SleepMs(1000);
 		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-			 /*LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
+			 LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
 					pApp->sDateTime.tm_year, pApp->sDateTime.tm_mon,
 					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_hour,
-					pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec); */
+					pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec);
 			//LREP(".");
 			//GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
 

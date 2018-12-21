@@ -14,7 +14,6 @@
 
 
 #define I2C_RTOS_SLAVE_ADDRESS    	(0x68)
-#define I2C_RTOS_MASTER_INSTANCE	1
 #define RTC_START_REG				0
 #define RTC_NUM_REG					7
 

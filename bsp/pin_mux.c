@@ -187,16 +187,22 @@ void configure_i2c_pins(uint32_t instance)
 {
   switch(instance) {
     case I2C0_IDX:                       /* I2C0 */
-      PORT_HAL_SetMuxMode(PORTE,10u,kPortMuxAlt2);
-      PORT_HAL_SetOpenDrainCmd(PORTE,10u,true);
-      PORT_HAL_SetMuxMode(PORTE,11u,kPortMuxAlt2);
-      PORT_HAL_SetOpenDrainCmd(PORTE,11u,true);
+//      PORT_HAL_SetMuxMode(PORTE,10u,kPortMuxAlt2);
+//      PORT_HAL_SetOpenDrainCmd(PORTE,10u,true);
+//      PORT_HAL_SetMuxMode(PORTE,11u,kPortMuxAlt2);
+//      PORT_HAL_SetOpenDrainCmd(PORTE,11u,true);
       break;
     case I2C1_IDX:                       /* I2C1 */
       PORT_HAL_SetMuxMode(PORTC,10u,kPortMuxAlt2);
       PORT_HAL_SetOpenDrainCmd(PORTC,10u,true);
       PORT_HAL_SetMuxMode(PORTC,11u,kPortMuxAlt2);
       PORT_HAL_SetOpenDrainCmd(PORTC,11u,true);
+      break;
+    case I2C3_IDX:                       /* I2C0 */
+      PORT_HAL_SetMuxMode(PORTE,10u,kPortMuxAlt2);
+      PORT_HAL_SetOpenDrainCmd(PORTE,10u,true);
+      PORT_HAL_SetMuxMode(PORTE,11u,kPortMuxAlt2);
+      PORT_HAL_SetOpenDrainCmd(PORTE,11u,true);
       break;
     default:
       break;
@@ -351,7 +357,11 @@ void configure_uart_pins(uint32_t instance)
 
 	case 5:		// DBG
 		PORT_HAL_SetMuxMode(PORTD,9u,kPortMuxAlt5);		//
+		PORT_HAL_SetDriveStrengthMode(PORTD,9u,kPortLowDriveStrength);
 		PORT_HAL_SetMuxMode(PORTD,8u,kPortMuxAlt5);		//
+
+//		PORT_HAL_SetMuxMode(PORTE,9u,kPortMuxAlt5);		//
+//		PORT_HAL_SetMuxMode(PORTE,8u,kPortMuxAlt5);		//
 	break;
 
     default:
