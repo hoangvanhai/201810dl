@@ -56,10 +56,8 @@ void Network_InitModule(SCommon *pCM) {
 	tcpip_init(NULL,NULL);
 
 	if(pCM->dev_dhcp == false) {
-		ip_addr_t eth0_gw;
-		IP4_ADDR(&eth0_gw, 		192,168,0,254);
 		netif_add(&eth0, &pCM->dev_ip,
-				&pCM->dev_netmask, &eth0_gw,
+				&pCM->dev_netmask, &pCM->dev_gw,
 				NULL, ethernetif_init, tcpip_input);
 
 		netif_set_default(&eth0);
@@ -211,18 +209,18 @@ int ftp_client_init(SCommon *pCM) {
 	server.enable = pCM->ftp_enable1;
 	server.ip = pCM->server_ftp_ip1;
 	server.port = pCM->server_ftp_port1;
-	server.username = pCM->ftp_usrname1;
-	server.passwd = pCM->ftp_passwd1;
-	server.prefix = pCM->ftp_prefix1;
+	server.username = (CPU_CHAR*)pCM->ftp_usrname1;
+	server.passwd = (CPU_CHAR*)pCM->ftp_passwd1;
+	server.prefix = (CPU_CHAR*)pCM->ftp_prefix1;
 
 	ftp_client_add_server(&ftpClient, &server, 0);
 
 	server.enable = 0;	//pCM->ftp_enable2;
 	server.ip = pCM->server_ftp_ip2;
 	server.port = pCM->server_ftp_port2;
-	server.username = pCM->ftp_usrname2;
-	server.passwd = pCM->ftp_passwd2;
-	server.prefix = pCM->ftp_prefix2;
+	server.username = (CPU_CHAR*)pCM->ftp_usrname2;
+	server.passwd = (CPU_CHAR*)pCM->ftp_passwd2;
+	server.prefix = (CPU_CHAR*)pCM->ftp_prefix2;
 
 	ftp_client_add_server(&ftpClient, &server, 1);
 

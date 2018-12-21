@@ -371,6 +371,7 @@ typedef struct STagVArray_ {
 typedef struct SCommon_ {
     ip_addr_t		dev_ip;
     ip_addr_t       dev_netmask;
+    ip_addr_t       dev_gw;
     uint8_t         dev_dhcp;
     uint8_t         ftp_enable1;
     uint8_t         ftp_enable2;

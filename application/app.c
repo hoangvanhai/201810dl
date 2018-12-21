@@ -234,7 +234,8 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	Str_Copy((CPU_CHAR*)pHandle->sAccount.rootpass, "123456a@");
 
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname1, "ftpuser1");
-	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd1, "ftppasswd1");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd1, "zxcvbnm@12");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_prefix1, "/home/ftpuser1/");
 
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname2, "ftpuser2");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd2, "ftppasswd2");
@@ -249,12 +250,15 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	pHandle->sCom.ftp_enable1 = TRUE;
 	pHandle->sCom.ftp_enable2 = FALSE;
 
-	IP4_ADDR(&pHandle->sCom.dev_ip, 192,168,1,2);
-	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 192,168,1,12);
+	IP4_ADDR(&pHandle->sCom.dev_ip, 192,168,0,105);
+	IP4_ADDR(&pHandle->sCom.dev_netmask, 255,255,255,0);
+	IP4_ADDR(&pHandle->sCom.dev_gw, 192,168,0,1);
+
+	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 27,118,20,209);
 	pHandle->sCom.server_ftp_port1 = 21;
 	IP4_ADDR(&pHandle->sCom.server_ftp_ip2, 192,168,1,12);
 	pHandle->sCom.server_ftp_port2 = 21;
-	IP4_ADDR(&pHandle->sCom.server_ctrl_ip, 192,168,1,22);
+	IP4_ADDR(&pHandle->sCom.server_ctrl_ip, 192,168,0,100);
 	pHandle->sCom.server_ctrl_port = 1186;
 
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
@@ -2322,7 +2326,7 @@ void Clb_NetTcpServerConnEvent(Network_Status event,
  */
 void Clb_NetTcpServerRecvData(const uint8_t* data, int length) {
 	LREP("server recv data len = %d\r\n", length);
-	//App_NetRecvHandle((uint8_t*)data);
+	App_NetRecvHandle((uint8_t*)data);
 }
 /*****************************************************************************/
 /** @brief
