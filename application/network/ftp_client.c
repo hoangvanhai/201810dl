@@ -11,6 +11,7 @@
 #include <filesystem.h>
 #include <checksum.h>
 #include <network.h>
+#include <ethernetif.h>
 
 CPU_CHAR buff[256];
 

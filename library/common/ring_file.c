@@ -245,7 +245,7 @@ BOOL        	ring_file_pop_front(ring_file_handle_t* handle, void* data)
 	/* Nothing to pop */
 	if ((handle->header.u16_record_count == 0) )
 	{
-		MODEM_DEBUG_WARNING("Nothing to pop!");
+		WARN("Nothing to pop!");
 		return FALSE;
 	} 
 
@@ -373,7 +373,7 @@ uint8_t         ring_file_get_front(ring_file_handle_t* handle, void* data)
 	/* Nothing to pop */
 	if ((handle->header.u16_record_count == 0) )
 	{
-		MODEM_DEBUG_WARNING("Nothing to get!");
+		WARN("Nothing to get!");
 		return FALSE;
 	}
 

@@ -8,6 +8,7 @@
 
 #include <tcp_client.h>
 #include <string.h>
+#include <ethernetif.h>
 
 
 

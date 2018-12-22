@@ -84,7 +84,7 @@ void Network_InitModule(SCommon *pCM) {
 
 	tcp_client_init(pCM->server_ctrl_ip, pCM->server_ctrl_port);
 	tcp_server_init(12345);
-	ftp_client_init(pCM);
+//	ftp_client_init(pCM);
 
 
 }
