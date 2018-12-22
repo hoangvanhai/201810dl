@@ -1,136 +1,54 @@
-/**
- * @file Network.h
- * @author ThinhNT (tienthinh@gmail.com)
- * @brief Module Network 
- * @version 0.1
- * @date 2018-10-17
- * 
- * @copyright Copyright (c) 2018
- * 
- */
-#include "NetCommon.h"
-#include "Network_LWIP.h"
-#include "Network_LWFTP.h"
-#include "Network_LWTCP.h"
-
-#include "Network_MDMFTP.h"
-
-/**
- * Split a string
- * @param a_str pointer to string
- * @param a_delim delimeter to split
- * @return
- */
-char** str_split(char* a_str, const char a_delim);
-/**
- * @brief Khoi tao module SIM + Ethernet, Enable DHCP
- * 
- * @return int 
- */
-int Net_ModuleInitHw();
-/**
- * @brief Start 2 TCP Server SIMCOM + LWIP 
- * Allow maximum 5 connection
- * @param port 
- * @return NetStatus 
- */
-NetStatus Net_TCPServerStart(int port);
-
-/**
- * @brief Start TCP Client connect to a server SIMCOM + LWIP
- * @param port
- * @return NetStatus
- */
-NetStatus Net_TCPClientStart(ip_addr_t ip, int port);
-
-/**
- * Set the client callback for each client connect
- * @param fn the soket id
- * @return
- */
-//NetStatus Net_TCPServerSetCallback(ClientThread fn);
-//NetStatus Net_TCPServerSetCallback(NetTcpServerEventType_t type, NetTcpServerEvent fcn);
-/**
- * Example callback function for connected client
- * @param fd
- */
-void Net_TCP_Echo_ClientCallback(int fd);
-
-/**
- * @brief Return Netstatus of IF & connection status
- * 
- * @return SNetStt 
- */
-SNetStt Net_ModuleGetStatus();
-/**
- * @brief Open FTP Client via Ethernet, 
- * Step 1: If not success retry 10 times for each second
- * Step 2: If still failed open via Wireless 10 times for each second
- * Step 3: If still failed retry step 1 & 2 until
- * @param ip Ip address of server
- * @param port port of cmd connection
- * @param usrname username of ftp
- * @param passwd password of ftp
- * @return NetStatus 
- */
-NetStatus Net_FTPClientStart(ip_addr_t ip, int port, const char* usrname, const char* passwd);
-/**
- * @brief If connected then send file.
- * If file send failed retry 3 times
- * 
- * @param dirPath 
- * @param fileName 
- * @return NetStatus 
- */
-NetStatus Net_FTPClientSendFile(const char *dirPath, const char *fileName);
-/**
- * @brief Delete file in FTP Server
+/*
+ * network.h
  *
- * @param dirPath
- * @param fileName
- * @return NetStatus
+ *  Created on: Dec 19, 2018
+ *      Author: PC
  */
-NetStatus Net_FTPClientDeleteFile(const char *path);
-/**
- *
- * @return NET_ERR_NONE if Ethernet is up or SIMCOM is up
- */
-bool Net_Is_Up();
 
-/**
- * @brief Send data to server 
- * 
- * @param data 
- * @param length 
- * @return NetStatus 
- */
-NetStatus Net_TCPClientSendData(const uint8_t *data, uint32_t length);
-/**
- * @brief Send data to all client
- * 
- * @param data 
- * @param length 
- * @return NetStatus 
- */
-NetStatus Net_TCPServerSendDataToAllClient(const uint8_t *data, uint32_t length);
+#ifndef APPLICATION_NETWORK_H_
+#define APPLICATION_NETWORK_H_
 
-/**
- * Register Connection Event callback
- * @param func
- */
-void Net_RegisterConnEvent(NetworkConnEvent func);
-/**
- * Register Net DataEvent callback function
- * @param event
- * @param func
- */
-void Net_RegisterTcpClientDataEvent(Network_DataEvent event, NetworkDataEvent func);
-
-/**
- * Register TCP Server DataEvent Callback
- * @param event
- * @param func
- */
-void Net_RegisterTcpServerDataEvent(Network_DataEvent event, NetworkDataEvent func);
+#include "lwip/netif.h"
+#include "lwip/sys.h"
+#include "lwip/arch.h"
+#include "lwip/api.h"
+#include "lwip/tcpip.h"
+#include "netif/etharp.h"
+#include "definition.h"
+#include <tcp_client.h>
+#include <tcp_server.h>
+#include <ftp_client.h>
+#include <network_cfg.h>
+#include <common/ring_file.h>
 
 
+
+
+
+void Network_InitModule(SCommon *pCM);
+void tcp_client_init(ip_addr_t ip, int port);
+void tcp_server_init(int port);
+
+void Network_Register_TcpClient_Notify(NetworkConnNotify func);
+void Network_Register_TcpClient_DataEvent(Network_DataEvent evt, NetworkDataEvent func);
+void Network_Register_TcpServer_Notify(NetworkConnNotify func);
+void Network_Register_TcpServer_DataEvent(Network_DataEvent evt, NetworkDataEvent func);
+
+
+int Network_TcpClient_Send(const uint8_t *data, int len);
+int Network_TcpServer_Send(const uint8_t *data, int len);
+
+int Network_FtpClient_Send(const uint8_t *local_path,
+		const uint8_t *filename);
+
+int ftp_client_init(SCommon *pCM);
+
+
+
+
+extern TcpClient	 		tcpClient;
+extern TcpServer 	 		tcpServer;
+extern ring_file_handle_t 	g_retryTable;
+
+
+#endif /* APPLICATION_NETWORK_H_ */

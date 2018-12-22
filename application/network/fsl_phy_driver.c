@@ -30,6 +30,7 @@
 
 #include "fsl_phy_driver.h"
 #include "fsl_enet_hal.h"
+#include "fsl_debug_console.h"
 
 /*******************************************************************************
  * Variables
@@ -248,6 +249,8 @@ enet_status_t PHY_DRV_Autodiscover(uint32_t instance, uint32_t *phyAddr)
         {
             *phyAddr = addrIdx;
             return kStatus_ENET_Success;
+        } else {
+        	LREP("PHY %d data = %d\r\n", addrIdx, data);
         }
     }
     return result;
@@ -308,6 +311,7 @@ enet_status_t PHY_DRV_GetLinkStatus(uint32_t instance, uint32_t phyAddr, bool *s
     }
 
     result = PHY_DRV_Read(instance, phyAddr, kEnetPhyCR, &data);
+    LREP("result = %d\r\n", result);
     if ((result == kStatus_ENET_Success) && (!(data & kEnetPhyReset)))
     {
         data = 0;

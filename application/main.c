@@ -99,6 +99,12 @@ int main(void)
 
 	LREP("sysclock = %d\r\n", SystemCoreClock);
 
+	LREP("CLOCK_SYS_GetEnetTimeStampFreq %d\r\n",
+			CLOCK_SYS_GetEnetTimeStampFreq(0));
+	LREP("CLOCK_SYS_GetEnetRmiiFreq %d\r\n",
+			CLOCK_SYS_GetEnetRmiiFreq(0));
+
+
     OSA_Init();
 
     App_InitTaskHandle(&sApp);

@@ -370,7 +370,7 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
     taskHandler = (task_handler_t)OSA_MemAlloc(sizeof(OS_TCB));
     if(!taskHandler)
     {
-    	PRINTF("OSA_MemAlloc taskHandler failed\r\n");
+    	PRINTF("malloc task handle failed\r\n");
         return NULL;
     }
 #endif
@@ -379,17 +379,22 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
     stackMem =  (task_stack_t *)OSA_MemAlloc((size_t)stacksize);
     if(!stackMem)
     {
-    	PRINTF("OSA_MemAlloc stackMem failed\r\n");
+    	PRINTF("malloc task stack failed\r\n");
         return NULL;
     }
 #else
     stackMem = NULL;
 #endif
     error = OSA_TaskCreate((task_t)thread ,(uint8_t*) name,(uint16_t) stacksize, stackMem,prio,(task_param_t)arg,false,&taskHandler);
-    if(error == kStatus_OSA_Success)
+    if(error == kStatus_OSA_Success) {
+
+    	PRINTF("create task successful\r\n");
         return taskHandler;
-    else
+    }
+    else {
+    	PRINTF("create task failed\r\n");
         return (sys_thread_t)0;
+    }
 }
 
 

@@ -79,7 +79,7 @@
 /* The CMP channel used for board. */
 #define BOARD_CMP_CHANNEL               	0
 /* The SW name for CMP example */
-#define BOARD_I2C_RTC_INSTANCE				3
+#define BOARD_I2C_RTC_INSTANCE				1
 
 
 

@@ -41,7 +41,7 @@ void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type);
 void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type);
 
 
-void Clb_NetStatus(Network_ConnEvent event, Network_Interface interface);
+//void Clb_NetStatus(Network_ConnEvent event, Network_Interface interface);
 
 void Clb_NetTcpClientReceivedData(const char* data, int length);
 void Clb_NetTcpClientSentData(const char* data, int length);
@@ -567,6 +567,8 @@ void App_TaskPeriodic(task_param_t parg) {
 #if NETWORK_MODULE_EN > 0
 	App_InitNetworkModule(pApp);
 #endif
+
+	Network_InitModule(&pApp->sCfg.sCom);
 
 	while(1) {
 		OSA_SleepMs(1000);
@@ -1736,7 +1738,7 @@ inline int	App_SendPCNetworkClient(uint8_t subctrl, uint8_t *data, uint8_t len) 
 			memcpy(&sdata[2], data, len);
 
 		//TODO send data to tcpclient
-		Net_TCPServerSendDataToAllClient(sdata, len + 2);
+//		Net_TCPServerSendDataToAllClient(sdata, len + 2);
 		OSA_FixedMemFree(sdata);
 	}
 	return ret;
@@ -2019,7 +2021,7 @@ int App_GenerateLogFile(SApp *pApp) {
 							memset(filename, 0, sizeof(filename));
 							sprintf((char*)filename, "%s_%s_%s_%s.txt", pApp->sCfg.sCom.tinh,
 									pApp->sCfg.sCom.coso, pApp->sCfg.sCom.tram, time);
-							NET_DEBUG("Send file %s/%s\r\n", dirPath, filename);
+//							NET_DEBUG("Send file %s/%s\r\n", dirPath, filename);
 #if NETWORK_MODULE_EN > 0
 							Net_FTPClientSendFile(dirPath, filename);
 #endif
@@ -2276,54 +2278,54 @@ void sdhc_card_detection(void)
  *  @return Void.
  *  @note
  */
-int	App_InitNetworkModule(SApp *pApp) {
-
-	Net_ModuleInitHw();
-
-	Net_RegisterConnEvent(Clb_NetStatus);
-	Net_RegisterTcpClientDataEvent(NetData_Received, Clb_NetTcpClientReceivedData);
-	Net_RegisterTcpClientDataEvent(NetData_SendDone, Clb_NetTcpClientSentData);
-	Net_RegisterTcpClientDataEvent(NetData_Error, Clb_NetTcpClientError);
-
-	/**
-	 * Setup a TCP Server & Set example echo callback function
-	 */
-	NetStatus status =	Net_TCPServerStart(TCP_SERVER_PORT);
-	if (status == NET_ERR_NONE)
-	{
-		Net_RegisterTcpServerDataEvent(NetData_Received, 	Clb_NetTcpServerReceivedData);
-		Net_RegisterTcpServerDataEvent(NetData_SendDone, 	Clb_NetTcpServerSendDone);
-		Net_RegisterTcpServerDataEvent(NetData_Error, 		Clb_NetTcpServerError);
-	}
-
-	/**
-	 * Start TCP Client
-	 */
-	LREP("TCP client config: %x:%d\r\n", pApp->sCfg.sCom.server_ctrl_ip,
-								pApp->sCfg.sCom.server_ctrl_port);
-	status = Net_TCPClientStart(pApp->sCfg.sCom.server_ctrl_ip,
-								pApp->sCfg.sCom.server_ctrl_port);
-
-	/**
-	 * Start FTP client
-	 */
-
-
-
-	LREP("FTP client config: %x %d %s %s\r\n", pApp->sCfg.sCom.server_ftp_ip1.addr,
-						pApp->sCfg.sCom.server_ftp_port1,
-						(const char*)pApp->sCfg.sCom.ftp_usrname1,
-						(const char*)pApp->sCfg.sCom.ftp_passwd1);
-
-	Net_FTPClientStart( pApp->sCfg.sCom.server_ftp_ip1,
-						pApp->sCfg.sCom.server_ftp_port1,
-						(const char*)pApp->sCfg.sCom.ftp_usrname1,
-						(const char*)pApp->sCfg.sCom.ftp_passwd1);
-
-	return 0;
-
-
-}
+//int	App_InitNetworkModule(SApp *pApp) {
+//
+//	Net_ModuleInitHw();
+//
+//	Net_RegisterConnEvent(Clb_NetStatus);
+//	Net_RegisterTcpClientDataEvent(NetData_Received, Clb_NetTcpClientReceivedData);
+//	Net_RegisterTcpClientDataEvent(NetData_SendDone, Clb_NetTcpClientSentData);
+//	Net_RegisterTcpClientDataEvent(NetData_Error, Clb_NetTcpClientError);
+//
+//	/**
+//	 * Setup a TCP Server & Set example echo callback function
+//	 */
+//	NetStatus status =	Net_TCPServerStart(TCP_SERVER_PORT);
+//	if (status == NET_ERR_NONE)
+//	{
+//		Net_RegisterTcpServerDataEvent(NetData_Received, 	Clb_NetTcpServerReceivedData);
+//		Net_RegisterTcpServerDataEvent(NetData_SendDone, 	Clb_NetTcpServerSendDone);
+//		Net_RegisterTcpServerDataEvent(NetData_Error, 		Clb_NetTcpServerError);
+//	}
+//
+//	/**
+//	 * Start TCP Client
+//	 */
+//	LREP("TCP client config: %x:%d\r\n", pApp->sCfg.sCom.server_ctrl_ip,
+//								pApp->sCfg.sCom.server_ctrl_port);
+//	status = Net_TCPClientStart(pApp->sCfg.sCom.server_ctrl_ip,
+//								pApp->sCfg.sCom.server_ctrl_port);
+//
+//	/**
+//	 * Start FTP client
+//	 */
+//
+//
+//
+//	LREP("FTP client config: %x %d %s %s\r\n", pApp->sCfg.sCom.server_ftp_ip1.addr,
+//						pApp->sCfg.sCom.server_ftp_port1,
+//						(const char*)pApp->sCfg.sCom.ftp_usrname1,
+//						(const char*)pApp->sCfg.sCom.ftp_passwd1);
+//
+//	Net_FTPClientStart( pApp->sCfg.sCom.server_ftp_ip1,
+//						pApp->sCfg.sCom.server_ftp_port1,
+//						(const char*)pApp->sCfg.sCom.ftp_usrname1,
+//						(const char*)pApp->sCfg.sCom.ftp_passwd1);
+//
+//	return 0;
+//
+//
+//}
 /*****************************************************************************/
 /** @brief
  *
@@ -2332,10 +2334,10 @@ int	App_InitNetworkModule(SApp *pApp) {
  *  @return Void.
  *  @note
  */
-void Clb_NetStatus(Network_ConnEvent event, Network_Interface interface) {
-	NET_DEBUG_WARNING("Event client %d, interface = %d\r\n",
-			event, interface);
-}
+//void Clb_NetStatus(Network_ConnEvent event, Network_Interface interface) {
+//	NET_DEBUG_WARNING("Event client %d, interface = %d\r\n",
+//			event, interface);
+//}
 
 /*****************************************************************************/
 /** @brief
@@ -2345,10 +2347,10 @@ void Clb_NetStatus(Network_ConnEvent event, Network_Interface interface) {
  *  @return Void.
  *  @note
  */
-void Clb_NetTcpClientReceivedData(const char* data, int length) {
-	NET_DEBUG_WARNING("Event client received length = %d\r\n", length);
-	Net_TCPClientSendData((uint8_t*)data, length);
-}
+//void Clb_NetTcpClientReceivedData(const char* data, int length) {
+//	NET_DEBUG_WARNING("Event client received length = %d\r\n", length);
+//	Net_TCPClientSendData((uint8_t*)data, length);
+//}
 
 
 /*****************************************************************************/

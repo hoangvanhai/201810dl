@@ -96,6 +96,9 @@ void configure_enet_pins(uint32_t instance)
   PORT_HAL_SetMuxMode(PORTA,15u,kPortMuxAlt4);		// RMII TxEN
   /* Affects PORTA_PCR28 register */
   //PORT_HAL_SetMuxMode(PORTA,28u,kPortMuxAlt4);		// MII Tx ER
+
+  PORT_HAL_SetMuxMode(PORTE,26u,kPortMuxAlt2);		// RMII TxEN
+
 }
 
 //void configure_ftm_pins(uint32_t instance)

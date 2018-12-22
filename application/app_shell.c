@@ -674,7 +674,7 @@ void control(int32_t argc, char**argv) {
 	} else if(strcmp(argv[1], "client") == 0) {
 		for(int i = 0; i < 1000; i++)
 		{
-			Net_TCPClientSendData(data, 100);
+//			Net_TCPClientSendData(data, 100);
 			OSA_SleepMs(100);
 		}
 	} else if(strcmp(argv[1], "don") == 0) {

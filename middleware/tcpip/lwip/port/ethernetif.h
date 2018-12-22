@@ -81,7 +81,7 @@
 #define ENET_IPV4_VERSION              (4)
 #endif
 /* MAC address configuration. */
-#define configMAC_ADDR0	0x20
+#define configMAC_ADDR0	0x00
 #define configMAC_ADDR1	0xCF
 #define configMAC_ADDR2	0x52
 #define configMAC_ADDR3	0x35
@@ -98,6 +98,5 @@ extern enet_dev_if_t enetDevIf[];
 err_t ethernetif_init(struct netif *netif);
 uint32_t ethernetif_input(void *enetPtr, enet_mac_packet_buffer_t *packetBuffer);
 void ENET_receive(task_param_t param);
-bool PHY_Get_Initialized_LinkStatus();
 
 #endif
