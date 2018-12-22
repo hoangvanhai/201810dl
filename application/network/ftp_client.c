@@ -9,6 +9,8 @@
 #include <lib_str.h>
 #include <string.h>
 #include <filesystem.h>
+#include <checksum.h>
+#include <network.h>
 
 CPU_CHAR buff[256];
 
@@ -613,7 +615,7 @@ void ftp_client_sender(void *arg) {
 					if(stat) {
 						CPU_CHAR temp_path[128];
 						Str_Copy_N(temp_path, (CPU_CHAR*)pMsg->local_path, 128);
-						do {
+						{
 							if(pFC->server_list[0].enable) {
 								retVal = ftp_remote_put(pFC, 0,
 										(char*)pMsg->file_name,
@@ -624,32 +626,105 @@ void ftp_client_sender(void *arg) {
 									LREP("put file server 0 err = %d\r\n", retVal);
 									ftp_print_err(retVal);
 									Str_Copy_N((CPU_CHAR*)pMsg->local_path, temp_path, 128);
-									OSA_SleepMs(1000);
+
+									// process send failed
+									ring_file_record_t *pRecord = (ring_file_record_t*)OSA_FixedMemMalloc(sizeof(ring_file_record_t));
+									if(pRecord)
+									{
+										memset(pRecord, 0, sizeof(ring_file_record_t));
+										memcpy(pRecord->dir_path, temp_path, strlen(temp_path));
+										memcpy((char*)pRecord->file_name, (char*)pMsg->file_name,
+												strlen((char*)pMsg->file_name));
+
+										//TODO: mark which FTP server to send by Flag
+										pRecord->flag = 1;
+
+										//TODO: calculate CRC of record.
+										pRecord->crc = crc_16((const unsigned char*)pRecord, sizeof(ring_file_record_t) - 2);
+										// Push to Retry-table
+										ring_file_push_back(&g_retryTable, pRecord);
+
+										OSA_FixedMemFree((uint8_t*)pRecord);
+									}
+									else
+									{
+										WARN("Unable to allocate memory!!!\r\n");
+									}
 								}
+
 								ftp_destroy_channel(pFC);
 							}
 
-							if(pFC->server_list[1].enable) {
-								retVal = ftp_remote_put(pFC, 1,
-										(char*)pMsg->file_name,
-										(char*)pMsg->local_path,
-										(char*)pMsg->local_path);
+							//if(pFC->server_list[1].enable) {
+							//	retVal = ftp_remote_put(pFC, 1,
+							//			(char*)pMsg->file_name,
+							//			(char*)pMsg->local_path,
+							//			(char*)pMsg->local_path);
+							//
+							//	if(retVal != FTP_ERR_NONE) {
+							//		LREP("put file server 1 err = %d\r\n", retVal);
+							//		ftp_print_err(retVal);
+							//		Str_Copy_N((CPU_CHAR*)pMsg->local_path, temp_path, 128);
+							//		OSA_SleepMs(1000);
+							//	}
+							//	ftp_destroy_channel(pFC);
+							//}
 
-								if(retVal != FTP_ERR_NONE) {
-									LREP("put file server 1 err = %d\r\n", retVal);
-									ftp_print_err(retVal);
-									Str_Copy_N((CPU_CHAR*)pMsg->local_path, temp_path, 128);
-									OSA_SleepMs(1000);
-								}
-								ftp_destroy_channel(pFC);
-							}
-						} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE);
+
+
+
+
+						}
 					} else {
 						ASSERT(FALSE);
 					}
 				}
 				OSA_FixedMemFree((uint8_t*)pMsg);
 
+			} // if msg pointer not null
+		} else if(err == OS_ERR_TIMEOUT) { // if not message in queue
+
+			// TODO [manhbt] No new file arrived, process retry table
+			if(ring_file_get_count(&g_retryTable) > 0) {
+
+				ring_file_record_t *pRecord = (ring_file_record_t *)OSA_FixedMemMalloc(sizeof(ring_file_record_t));
+				if(!pRecord) {
+					WARN("Unable to allocate memory for temporarily buffer !!!\r\n");
+					continue;
+				}
+
+				memset(pRecord, 0, sizeof(ring_file_record_t));
+
+				if(ring_file_get_front(&g_retryTable, pRecord) != TRUE) {
+					WARN("Unable to GET record from Retry table");
+					OSA_FixedMemFree((uint8_t*)pRecord);
+					continue;
+				}
+
+				// TODO: [manhbt] verify Record (check CRC)
+				uint16_t calc_checksum = crc_16((const unsigned char*)pRecord, sizeof(ring_file_record_t)-2);
+				if(calc_checksum != pRecord->crc)
+				{
+					WARN("CRC not matched, cal: %.2x, got: %.2x", calc_checksum, pRecord->crc);
+					OSA_FixedMemFree((uint8_t*)pRecord);
+					continue;
+				}
+
+				// TODO: [manhbt] Re-send File
+				LREP("Trying to re-send file %s/%s", pRecord->dir_path, pRecord->file_name);
+
+				//retVal = net_ftp_client_send_file(pRecord->dir_path, pRecord->file_name);
+
+				if(retVal == FTP_ERR_NONE) {
+					//TODO: [manhbt] Pop out & erase record from retry table
+					LREP("Re-send file OK, pop out and delete record from retry table");
+					ring_file_pop_front(&g_retryTable, pRecord);
+				} else {
+					WARN("Re-send file FAILED, retry table remains unchanged");
+				}
+				OSA_FixedMemFree((uint8_t*)pRecord);
+			} else {
+				LREP(".");//("No new file arrived, process retry table!!!");
 			}
 		}
 	}

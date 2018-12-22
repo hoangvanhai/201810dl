@@ -19,6 +19,7 @@
 #include <tcp_server.h>
 #include <ftp_client.h>
 #include <network_cfg.h>
+#include <common/ring_file.h>
 
 
 
@@ -45,8 +46,9 @@ int ftp_client_init(SCommon *pCM);
 
 
 
-extern TcpClient	 tcpClient;
-extern TcpServer 	 tcpServer;
+extern TcpClient	 		tcpClient;
+extern TcpServer 	 		tcpServer;
+extern ring_file_handle_t 	g_retryTable;
 
 
 #endif /* APPLICATION_NETWORK_H_ */
