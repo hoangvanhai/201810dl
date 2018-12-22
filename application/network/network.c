@@ -9,6 +9,7 @@
 #include "ethernetif.h"
 #include "netif.h"
 #include <app.h>
+#include <common/ring_file.h>
 
 TcpClient	 tcpClient;
 uint8_t		 tcpclient_recv_buff[TCP_CLIENT_BUFF_SIZE];
@@ -21,6 +22,7 @@ uint8_t 	ftpclient_rx_ctrl_buf[FTP_CLIENT_BUFF_SIZE];
 uint8_t 	ftpclient_tx_ctrl_buf[FTP_CLIENT_BUFF_SIZE];
 uint8_t 	ftpclient_tx_data_buf[FTP_CLIENT_BUFF_SIZE];
 
+ring_file_handle_t g_retryTable;
 
 APP_TASK_DEFINE(tcp_client_sender, 		TASK_TCP_CLIENT_SENDER_PRIO);
 APP_TASK_DEFINE(tcp_client_listen, 		TASK_TCP_CLIENT_LISTEN_PRIO);
@@ -80,10 +82,11 @@ void Network_InitModule(SCommon *pCM) {
 		netif_set_link_callback(&eth0, netif_link_changed_callback);
 	}
 
-
 	tcp_client_init(pCM->server_ctrl_ip, pCM->server_ctrl_port);
 	tcp_server_init(12345);
 	ftp_client_init(pCM);
+
+
 }
 
 
@@ -240,6 +243,11 @@ int ftp_client_init(SCommon *pCM) {
     }
 
     ftpClient.send_thread = ftp_client_sender_task_handler;
+
+	ring_file_init(&g_retryTable, "/conf", "retrytable.dat", 5000,
+			sizeof(ring_file_record_t));
+	LREP("Ring file Init Done!!!\r\n");
+	ring_file_print(&g_retryTable);
 
     return result;
 }
