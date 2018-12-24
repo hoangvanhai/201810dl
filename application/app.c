@@ -39,17 +39,16 @@ void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type);
 void Clb_TransPC_SentEvent(void *pDatam, uint8_t u8Type);
 void Clb_TransUI_RecvEvent(void *pData, uint8_t u8Type);
 void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type);
-
-
-//void Clb_NetStatus(Network_ConnEvent event, Network_Interface interface);
-
-void Clb_NetTcpClientReceivedData(const char* data, int length);
-void Clb_NetTcpClientSentData(const char* data, int length);
-void Clb_NetTcpClientError(const char* data, int length);
-
-void Clb_NetTcpServerReceivedData(const char* data, int length);
-void Clb_NetTcpServerSendDone(const char* data, int length);
-void Clb_NetTcpServerError(const char* data, int length);
+void Clb_NetTcpClientConnEvent(Network_Status event,
+		Network_Interface interface);
+void Clb_NetTcpClientRecvData(const uint8_t* data, int length);
+void Clb_NetTcpClientSentData(const uint8_t* data, int length);
+void Clb_NetTcpClientError(const uint8_t* data, int length);
+void Clb_NetTcpServerConnEvent(Network_Status event,
+		Network_Interface interface);
+void Clb_NetTcpServerRecvData(const uint8_t* data, int length);
+void Clb_NetTcpServerSentData(const uint8_t* data, int length);
+void Clb_NetTcpServerError(const uint8_t* data, int length);
 
 /************************** Variable Definitions *****************************/
 SApp sApp;
@@ -129,7 +128,7 @@ void App_Init(SApp *pApp) {
  */
 
 void	App_InitTaskHandle(SApp *pApp) {
-
+	//memset(&pApp, 0, sizeof(SApp));
 }
 
 /*****************************************************************************/
@@ -246,10 +245,18 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 
 	Str_Copy((CPU_CHAR*)pHandle->sAccount.rootname, "root");
 	Str_Copy((CPU_CHAR*)pHandle->sAccount.rootpass, "123456a@");
-
+#if 1
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname1, "ftpuser1");
-	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd1, "ftppasswd1");
-
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd1, "zxcvbnm@12");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_prefix1, "/home/ftpuser1/");
+	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 27,118,20,209);
+#else
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname1, "win7");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd1, "123456a@");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_prefix1, "/home/");
+	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 192,168,0,102);
+#endif
+	pHandle->sCom.server_ftp_port1 = 21;
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname2, "ftpuser2");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd2, "ftppasswd2");
 
@@ -263,12 +270,14 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	pHandle->sCom.ftp_enable1 = TRUE;
 	pHandle->sCom.ftp_enable2 = FALSE;
 
-	IP4_ADDR(&pHandle->sCom.dev_ip, 192,168,1,2);
-	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 192,168,1,12);
-	pHandle->sCom.server_ftp_port1 = 21;
+	IP4_ADDR(&pHandle->sCom.dev_ip, 192,168,0,105);
+	IP4_ADDR(&pHandle->sCom.dev_netmask, 255,255,255,0);
+	IP4_ADDR(&pHandle->sCom.dev_gw, 192,168,0,1);
+
+
 	IP4_ADDR(&pHandle->sCom.server_ftp_ip2, 192,168,1,12);
 	pHandle->sCom.server_ftp_port2 = 21;
-	IP4_ADDR(&pHandle->sCom.server_ctrl_ip, 192,168,1,22);
+	IP4_ADDR(&pHandle->sCom.server_ctrl_ip, 192,168,0,100);
 	pHandle->sCom.server_ctrl_port = 1186;
 
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
@@ -532,8 +541,12 @@ void App_TaskPeriodic(task_param_t parg) {
 	bool logged = false;
 
 
+	pApp->sDateTime.tm_mday = 1;
+	pApp->sDateTime.tm_mon = 1;
+	pApp->sDateTime.tm_year = 2018;
+
 	ASSERT(RTC_InitDateTime(&pApp->sDateTime) == 0);
-	OSA_SleepMs(100);
+	OSA_SleepMs(10);
 
 	if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
 		if(pApp->sDateTime.tm_year == 1990) {
@@ -546,8 +559,6 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	//FM_Init(0);
 
-
-
 	rnga_user_config_t rngaConfig;
 
 	// Initialize RNGA
@@ -556,53 +567,56 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	RNGA_DRV_Init(0, &rngaConfig);
 
-	pApp->sDateTime.tm_mday = 1;
-	pApp->sDateTime.tm_mon = 1;
-	pApp->sDateTime.tm_year = 2018;
-
 	LREP("log min = %d\r\n", log_min);
 
 #if NETWORK_MODULE_EN > 0
-	App_InitNetworkModule(pApp);
+	Network_InitModule(&pApp->sCfg.sCom);
+
+	Network_Register_TcpClient_Notify(Clb_NetTcpClientConnEvent);
+	Network_Register_TcpClient_DataEvent(Event_DataReceived, Clb_NetTcpClientRecvData);
+	Network_Register_TcpClient_DataEvent(Event_DataSendDone, Clb_NetTcpClientSentData);
+	Network_Register_TcpClient_DataEvent(Event_DataError, Clb_NetTcpClientError);
+
+	Network_Register_TcpServer_Notify(Clb_NetTcpServerConnEvent);
+	Network_Register_TcpServer_DataEvent(Event_DataReceived, Clb_NetTcpServerRecvData);
+	Network_Register_TcpServer_DataEvent(Event_DataSendDone, Clb_NetTcpServerSentData);
+	Network_Register_TcpServer_DataEvent(Event_DataError, Clb_NetTcpServerError);
 #endif
 
-	//Network_InitModule(&pApp->sCfg.sCom);
-
-	static uint8_t test = 0;
 	while(1) {
 		OSA_SleepMs(1000);
-//		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
+
+		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
 //			 LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
 //					pApp->sDateTime.tm_year, pApp->sDateTime.tm_mon,
 //					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_hour,
 //					pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec);
-//			//LREP(".");
-//			//GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
-//
-//		}
+			//LREP(".");
+			//GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
+		}
 
 
 		App_DiReadAllPort(pApp);
 		App_UpdateTagContent(pApp);
 
-//        if(pApp->sDateTime.tm_min != last_min && logged) {
-//            logged = false;
-//        }
-//
-//		if((logged == false) && (pApp->sDateTime.tm_min % log_min == 0)) {
-//			if(pApp->sCfg.sCom.ftp_enable1 ||
-//					pApp->sCfg.sCom.ftp_enable2) {
-//				LREP("generate log file\r\n");
-//				ASSERT(App_GenerateLogFile(pApp) == FR_OK);
-//			} else {
-//				LREP("disabled generate log file\r\n");
-//			}
-//			last_min = pApp->sDateTime.tm_min;
-//			logged = true;
-//		}
+        if(pApp->sDateTime.tm_min != last_min && logged) {
+            logged = false;
+        }
 
-		if(test++ % 5 == 0) {
-			App_GenerateLogFile(pApp);
+
+		if((logged == false) && (pApp->sDateTime.tm_min % log_min == 0)) {
+			// To ensure has valid data before log to file
+			if(pApp->aiReadCount > 0 && pApp->mbReadCount > 0) {
+				if(pApp->sCfg.sCom.ftp_enable1 ||
+						pApp->sCfg.sCom.ftp_enable2) {
+					LREP("generate log file\r\n");
+					ASSERT(App_GenerateLogFile(pApp) == FR_OK);
+				} else {
+					LREP("disabled generate log file\r\n");
+				}
+				last_min = pApp->sDateTime.tm_min;
+				logged = true;
+			}
 		}
 
 	}
@@ -920,7 +934,6 @@ void App_CommRecvHandle(const uint8_t *data) {
 		if(data[2] & STREAM_VALUE) {
 			STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
 			if(pMem != NULL) {
-				memset(pMem, 0, sizeof(STagVArray));
 				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 					pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
 					pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
@@ -956,6 +969,7 @@ void App_CommRecvHandle(const uint8_t *data) {
 		break;
 	}
 }
+
 /*****************************************************************************/
 /** @brief
  *
@@ -1025,16 +1039,20 @@ void App_NetRecvHandle(const uint8_t *data) {
 	{
 
 		if(data[2] & STREAM_AI) {
-			App_SendPCNetworkClient(LOGGER_GET | LOGGER_STREAM_AI,
+			int ret = App_SendPCNetworkClient(LOGGER_GET | LOGGER_STREAM_AI,
 							(uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput));
+			LREP("send stream ai %d \r\n", ret);
 		}
 
 		if(data[2] & STREAM_MB) {
-			App_SendPCNetworkClient(LOGGER_GET | LOGGER_STREAM_MB,
+
+			int ret = App_SendPCNetworkClient(LOGGER_GET | LOGGER_STREAM_MB,
 							(uint8_t*)&pAppObj->sMB, sizeof(SModbusValue));
+			LREP("send stream mb %d\r\n", ret);
 		}
 
 		if(data[2] & STREAM_VALUE) {
+
 			STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
 			if(pMem != NULL) {
 				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
@@ -1046,7 +1064,7 @@ void App_NetRecvHandle(const uint8_t *data) {
 				}
 				App_SendPCNetworkClient(LOGGER_GET | LOGGER_STREAM_VALUE,
 						(uint8_t*)pMem, sizeof(STagVArray));
-
+				LREP("send stream value \r\n");
 				OSA_FixedMemFree((uint8_t*)pMem);
 			}
 		}
@@ -1072,7 +1090,6 @@ void App_NetRecvHandle(const uint8_t *data) {
 		break;
 	}
 }
-
 /*****************************************************************************/
 /** @brief
  *
@@ -1165,7 +1182,7 @@ void Clb_TransPC_SentEvent(void *pData, uint8_t u8Type) {
 
 	SFrameInfo *pFrame = (SFrameInfo*)MEM_BODY((SMem*)pData);
 
-
+	//LREP("Sent done event 0x%x\r\n", u8Type);
 	if(App_IsCtrlCodePending(pAppObj, CTRL_SEND_HEADER)) {
 		if(pAppObj->pcCounter < SYSTEM_NUM_TAG) {
 			uint8_t *mem = OSA_FixedMemMalloc(sizeof(STagHeader) + 1);
@@ -1214,9 +1231,6 @@ void Clb_TransPC_SentEvent(void *pData, uint8_t u8Type) {
 	default:
 		break;
 	}
-
-
-
 }
 
 /*****************************************************************************/
@@ -1265,7 +1279,7 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 					(uint8_t*)pSys, sizeof(SSystemStatus), false);
 			OSA_FixedMemFree((uint8_t*)pSys);
 		}
-		//LREP("send system status\r\n");
+		LREP("send system status\r\n");
 	}
 
 	if(pAppObj->uiCounter < SYSTEM_NUM_TAG) {
@@ -1376,7 +1390,7 @@ int	App_ModbusDoRead(SApp *pApp){
 
 			if(retVal != MB_SUCCESS) {
 				pApp->sMB.Node[i].status = TAG_STT_MB_FAILED;
-				LREP("MBT ");
+//				LREP("MBT ");
 			} else {
 				pApp->sMB.Node[i].status = TAG_STT_OK;
 				switch(pApp->sMB.Node[i].data_format) {
@@ -1407,6 +1421,7 @@ int	App_ModbusDoRead(SApp *pApp){
 			}
 		}
 	}
+	pApp->mbReadCount++;
 
 	return 0;
 }
@@ -1755,23 +1770,20 @@ inline int	App_SendPC(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, b
  *  @return Void.
  *  @note
  */
-inline int	App_SendPCNetworkClient(uint8_t subctrl, uint8_t *data, uint8_t len) {
-	bool ret = false;
+int	App_SendPCNetworkClient(uint8_t subctrl, uint8_t *data, uint8_t len) {
+	int ret = 0;
 	uint8_t *sdata = OSA_FixedMemMalloc(len + 2);
 	if(sdata != NULL) {
 		sdata[0] = subctrl;
 		sdata[1] = len;
 		if(len > 0 && data != NULL)
 			memcpy(&sdata[2], data, len);
-
 		//TODO send data to tcpclient
-//		Net_TCPServerSendDataToAllClient(sdata, len + 2);
+		ret = Network_TcpServer_Send(sdata, len + 2);
 		OSA_FixedMemFree(sdata);
 	}
 	return ret;
 }
-
-
 /*****************************************************************************/
 /** @brief
  *
@@ -1878,6 +1890,7 @@ void App_AiReadAllPort(SApp *pApp) {
 			}
 		}
 	}
+	pApp->aiReadCount++;
 #else
 
 	uint32_t randout;
@@ -2048,19 +2061,9 @@ int App_GenerateLogFile(SApp *pApp) {
 					retVal = f_close(&file);
 					if(retVal == FR_OK){
 						// TODO: send file name to Net module
-						uint8_t* dirPath = OSA_FixedMemMalloc(128);
-						if(dirPath)
-						{
-							sprintf(dirPath, "/%s", day);
-							memset(filename, 0, sizeof(filename));
-							sprintf((char*)filename, "%s_%s_%s_%s.txt", pApp->sCfg.sCom.tinh,
-									pApp->sCfg.sCom.coso, pApp->sCfg.sCom.tram, time);
-//							NET_DEBUG("Send file %s/%s\r\n", dirPath, filename);
 #if NETWORK_MODULE_EN > 0
-							Net_FTPClientSendFile(dirPath, filename);
+						Network_FtpClient_Send((uint8_t*)day, (uint8_t*)filename);
 #endif
-							OSA_FixedMemFree(dirPath);
-						}
 					}
 				}
 			}
@@ -2205,23 +2208,10 @@ int App_GenerateLogFileByName(SApp *pApp, const char *name) {
 				OSA_FixedMemFree((uint8_t*)row);
 
 				if(retVal == FR_OK && rowCount > 0) {
-					retVal = f_close(&file);
-					if(retVal == FR_OK){
-						// TODO: send file name to Net module
-						uint8_t* dirPath = OSA_FixedMemMalloc(128);
-						if(dirPath)
-						{
-							sprintf(dirPath, "/%s", day);
-							memset(filename, 0, sizeof(filename));
-							sprintf((char*)filename, "%s_%s_%s_%s.txt", pApp->sCfg.sCom.tinh,
-									pApp->sCfg.sCom.coso, pApp->sCfg.sCom.tram, time);
-							NET_DEBUG("Send file %s/%s\r\n", dirPath, filename);
+					// TODO: send file name to Net module
 #if NETWORK_MODULE_EN > 0
-							Net_FTPClientSendFile(dirPath, filename);
+						Network_FtpClient_Send((uint8_t*)day, (uint8_t*)filename);
 #endif
-							OSA_FixedMemFree(dirPath);
-						}
-					}
 				}
 			}
 		}
@@ -2286,17 +2276,6 @@ void sdhc_card_detection(void)
 }
 
 /*****************************************************************************/
-
-//#define FTP_SERVER_IP 			"27.118.20.209"
-//#define FTP_SERVER_PORT 		21
-//#define FTP_USER_NAME 			"ftpuser1"
-//#define FTP_PASSWORD 			"zxcvbnm@12"
-//
-////#define TCP_SERVER_IP 		"10.2.82.61"
-////#define TCP_SERVER_IP 		"192.168.1.116"
-#define TCP_SERVER_PORT 		12345
-//#define TCP_CLIENT_SERVER_IP 	"192.168.0.101"
-//#define TCP_CLIENT_SERVER_PORT 	12345
 /** @brief
  *
  *
@@ -2304,93 +2283,25 @@ void sdhc_card_detection(void)
  *  @return Void.
  *  @note
  */
-//int	App_InitNetworkModule(SApp *pApp) {
-//
-//	Net_ModuleInitHw();
-//
-//	Net_RegisterConnEvent(Clb_NetStatus);
-//	Net_RegisterTcpClientDataEvent(NetData_Received, Clb_NetTcpClientReceivedData);
-//	Net_RegisterTcpClientDataEvent(NetData_SendDone, Clb_NetTcpClientSentData);
-//	Net_RegisterTcpClientDataEvent(NetData_Error, Clb_NetTcpClientError);
-//
-//	/**
-//	 * Setup a TCP Server & Set example echo callback function
-//	 */
-//	NetStatus status =	Net_TCPServerStart(TCP_SERVER_PORT);
-//	if (status == NET_ERR_NONE)
-//	{
-//		Net_RegisterTcpServerDataEvent(NetData_Received, 	Clb_NetTcpServerReceivedData);
-//		Net_RegisterTcpServerDataEvent(NetData_SendDone, 	Clb_NetTcpServerSendDone);
-//		Net_RegisterTcpServerDataEvent(NetData_Error, 		Clb_NetTcpServerError);
-//	}
-//
-//	/**
-//	 * Start TCP Client
-//	 */
-//	LREP("TCP client config: %x:%d\r\n", pApp->sCfg.sCom.server_ctrl_ip,
-//								pApp->sCfg.sCom.server_ctrl_port);
-//	status = Net_TCPClientStart(pApp->sCfg.sCom.server_ctrl_ip,
-//								pApp->sCfg.sCom.server_ctrl_port);
-//
-//	/**
-//	 * Start FTP client
-//	 */
-//
-//
-//
-//	LREP("FTP client config: %x %d %s %s\r\n", pApp->sCfg.sCom.server_ftp_ip1.addr,
-//						pApp->sCfg.sCom.server_ftp_port1,
-//						(const char*)pApp->sCfg.sCom.ftp_usrname1,
-//						(const char*)pApp->sCfg.sCom.ftp_passwd1);
-//
-//	Net_FTPClientStart( pApp->sCfg.sCom.server_ftp_ip1,
-//						pApp->sCfg.sCom.server_ftp_port1,
-//						(const char*)pApp->sCfg.sCom.ftp_usrname1,
-//						(const char*)pApp->sCfg.sCom.ftp_passwd1);
-//
-//	return 0;
-//
-//
-//}
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-//void Clb_NetStatus(Network_ConnEvent event, Network_Interface interface) {
-//	NET_DEBUG_WARNING("Event client %d, interface = %d\r\n",
-//			event, interface);
-//}
-
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-//void Clb_NetTcpClientReceivedData(const char* data, int length) {
-//	NET_DEBUG_WARNING("Event client received length = %d\r\n", length);
-//	Net_TCPClientSendData((uint8_t*)data, length);
-//}
-
-
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
-void Clb_NetTcpClientSentData(const char* data, int length) {
-	NET_DEBUG_WARNING("Event client send done\r\n");
+void Clb_NetTcpClientConnEvent(Network_Status event,
+		Network_Interface interface) {
+	switch(event) {
+	case Status_Connected:
+		LREP("Event connected\r\n");
+		break;
+	case Status_Disconnected:
+		LREP("Event disconnected\r\n");
+		break;
+	case Status_Network_Down:
+		LREP("Event network down\r\n");
+		break;
+	case Status_Connecting:
+		LREP("Event connecting\r\n");
+		break;
+	default:
+		break;
+	}
 }
-
 /*****************************************************************************/
 /** @brief
  *
@@ -2399,10 +2310,11 @@ void Clb_NetTcpClientSentData(const char* data, int length) {
  *  @return Void.
  *  @note
  */
-void Clb_NetTcpClientError(const char* data, int length) {
-	NET_DEBUG_WARNING("Event client error\r\n");
+void Clb_NetTcpClientRecvData(const uint8_t* data, int length) {
+
+	LREP("client recv data len = %d \r\n", length);
+	//Network_TcpClient_Send(data, length);
 }
-
 /*****************************************************************************/
 /** @brief
  *
@@ -2411,15 +2323,59 @@ void Clb_NetTcpClientError(const char* data, int length) {
  *  @return Void.
  *  @note
  */
-
-void Clb_NetTcpServerReceivedData(const char* data, int length) {
-
-	NET_DEBUG_WARNING("Event server received\r\n");
+void Clb_NetTcpClientSentData(const uint8_t* data, int length) {
+	LREP("client send done len = %d\r\n", length);
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_NetTcpClientError(const uint8_t* data, int length) {
+	LREP("client send error len = %d\r\n", length);
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_NetTcpServerConnEvent(Network_Status event,
+		Network_Interface interface) {
+	switch(event) {
+	case Status_Connected:
+		LREP("Event connected\r\n");
+		break;
+	case Status_Disconnected:
+		LREP("Event disconnected\r\n");
+		break;
+	case Status_Network_Down:
+		LREP("Event network down\r\n");
+		break;
+	case Status_Connecting:
+		LREP("Event connecting\r\n");
+		break;
+	default:
+		break;
+	}
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Clb_NetTcpServerRecvData(const uint8_t* data, int length) {
+	LREP("server recv data len = %d\r\n", length);
 	App_NetRecvHandle((uint8_t*)data);
 }
-
-
-
 /*****************************************************************************/
 /** @brief
  *
@@ -2428,10 +2384,8 @@ void Clb_NetTcpServerReceivedData(const char* data, int length) {
  *  @return Void.
  *  @note
  */
-
-void Clb_NetTcpServerSendDone(const char* data, int length) {
-
-	NET_DEBUG_WARNING("Event server send done\r\n");
+void Clb_NetTcpServerSentData(const uint8_t* data, int length) {
+	LREP("server send done len = %d\r\n", length);
 	if(App_IsCtrlCodePending(pAppObj, CTRL_SEND_HEADER)) {
 		if(pAppObj->pcCounter < SYSTEM_NUM_TAG) {
 			uint8_t *mem = OSA_FixedMemMalloc(sizeof(STagHeader) + 1);
@@ -2467,7 +2421,6 @@ void Clb_NetTcpServerSendDone(const char* data, int length) {
 		}
 	}
 }
-
 /*****************************************************************************/
 /** @brief
  *
@@ -2476,10 +2429,8 @@ void Clb_NetTcpServerSendDone(const char* data, int length) {
  *  @return Void.
  *  @note
  */
+void Clb_NetTcpServerError(const uint8_t* data, int length) {
 
-void Clb_NetTcpServerError(const char* data, int length) {
-
-	NET_DEBUG_WARNING("Event server error\r\n");
 }
 /*****************************************************************************/
 /** @brief

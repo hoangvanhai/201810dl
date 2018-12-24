@@ -11,6 +11,8 @@
 #include <filesystem.h>
 #include <checksum.h>
 #include <network.h>
+#include <ethernetif.h>
+#include "modem_ftp_client.h"
 
 CPU_CHAR buff[256];
 
@@ -588,18 +590,220 @@ int ftp_recv_ctrl_msg(FtpClient *pFC, int timeout) {
 	return rlen;
 }
 
-
+#if 0
 void ftp_client_sender(void *arg) {
 
+	FtpClient *pFC = (FtpClient*)arg;
+	ASSERT_VOID(pFC);
+	OS_MSG_SIZE msg_size;
+	CPU_TS ts;
+	OS_ERR err;
+	FtpMsg *pMsg;
+	int retVal;
 	bool stat;
 	while(1) {
-		OSA_SleepMs(1000);
-		bool get = Network_GetLinkStatus(&stat);
-		LREP("get status = %d - %d\r\n", get, stat );
-		//Network_GetLinkSpeed();
+		pMsg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
+		if(err == OS_ERR_NONE) {
+			if(pMsg) {
+				LREP("SENDER PROCSESSING: [%s%s]\r\n", pMsg->local_path, pMsg->file_name);
+				ftp_client_process_send_file(pFC, (char*)pMsg->file_name, (char*)pMsg->local_path, (char*)pMsg->local_path);
+				OSA_FixedMemFree((uint8_t*)pMsg);
+
+			} // if msg pointer not null
+		} else if(err == OS_ERR_TIMEOUT) { // if not message in queue
+#if 1
+			// Process Resend
+			ftp_client_process_resend(pFC);
+#endif
+		}
 	}
 }
+#else
+void ftp_client_sender(void *arg) {
 
+	FtpClient *pFC = (FtpClient*)arg;
+	ASSERT_VOID(pFC);
+	OS_MSG_SIZE msg_size;
+	CPU_TS ts;
+	OS_ERR err;
+	FtpMsg *pMsg;
+	int retVal;
+	bool stat;
+	while(1) {
+		pMsg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
+		if(err == OS_ERR_NONE) {
+			if(pMsg) {
+				LREP("SENDER PROCSESSING: [%s%s]\r\n", pMsg->local_path, pMsg->file_name);
+				uint8_t *temp = OSA_FixedMemMalloc(256);
+				if(temp != NULL) {
+					memset(temp, 0, 256);
+					Str_Copy_N((CPU_CHAR*)temp, (CPU_CHAR*)pMsg->local_path,
+							FTP_CLIENT_BUFF_SIZE);
+					Str_Cat_N((CPU_CHAR*)temp, (CPU_CHAR*)pMsg->file_name,
+							FTP_CLIENT_BUFF_SIZE);
+					stat = check_obj_existed((char*)temp);
+					OSA_FixedMemFree(temp);
+					if(stat) {
+						CPU_CHAR temp_path[128];
+						Str_Copy_N(temp_path, (CPU_CHAR*)pMsg->local_path, 128);
+
+						if (g_netStat.u8ActiveIf & NET_IF_ETHERNET) {
+							if(pFC->server_list[0].enable) {
+								int err_count = 0;
+								do {
+									retVal = ftp_remote_put(pFC, 0,
+											(char*)pMsg->file_name,
+											(char*)pMsg->local_path,
+											(char*)pMsg->local_path);
+
+									//
+
+									if(retVal != FTP_ERR_NONE) {
+										LREP("put file server 0 err = %d\r\n", retVal);
+										ftp_print_err(retVal);
+
+										OSA_SleepMs(1000);
+									}
+									err_count ++;
+								} while( retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE && err_count < 10);
+
+								// Send file error, push back to retry table
+								if(err_count == 10) {
+									Str_Copy_N((CPU_CHAR*)pMsg->local_path, temp_path, 128);
+									// process send failed
+									ring_file_record_t *pRecord = (ring_file_record_t*)OSA_FixedMemMalloc(sizeof(ring_file_record_t));
+									if(pRecord) {
+										memset(pRecord, 0, sizeof(ring_file_record_t));
+										memcpy(pRecord->dir_path, temp_path, strlen(temp_path));
+										memcpy((char*)pRecord->file_name, (char*)pMsg->file_name,
+												strlen((char*)pMsg->file_name));
+
+										// Mark which FTP server to send by Flag
+										pRecord->flag = 1;
+
+										// Calculate CRC of record.
+										pRecord->crc = crc_16((const unsigned char*)pRecord, sizeof(ring_file_record_t) - 2);
+										// Push to Retry-table
+										ring_file_push_back(&g_retryTable, pRecord);
+
+										OSA_FixedMemFree((uint8_t*)pRecord);
+									} else {
+										WARN("Unable to allocate memory!!!\r\n");
+									}
+								}
+								ftp_destroy_channel(pFC);
+							}
+
+							//if(pFC->server_list[1].enable) {
+							//	retVal = ftp_remote_put(pFC, 1,
+							//			(char*)pMsg->file_name,
+							//			(char*)pMsg->local_path,
+							//			(char*)pMsg->local_path);
+							//
+							//	if(retVal != FTP_ERR_NONE) {
+							//		LREP("put file server 1 err = %d\r\n", retVal);
+							//		ftp_print_err(retVal);
+							//		Str_Copy_N((CPU_CHAR*)pMsg->local_path, temp_path, 128);
+							//		OSA_SleepMs(1000);
+							//	}
+							//	ftp_destroy_channel(pFC);
+							//}
+						}
+
+						if (g_netStat.u8ActiveIf & NET_IF_WIRELESS) {
+							// Send file via 3G modem
+							if(pFC->server_list[0].enable) {
+								retVal = modem_ftp_put_file_from_local(pFC, 0,
+										(char*)pMsg->file_name,
+										(char*)pMsg->local_path,
+										(char*)pMsg->local_path);
+
+								if(retVal != FTP_ERR_NONE) {
+									LREP("put file server 0 err = %d\r\n", retVal);
+									ftp_print_err(retVal);
+									Str_Copy_N((CPU_CHAR*)pMsg->local_path, temp_path, 128);
+									// process send failed
+									ring_file_record_t *pRecord = (ring_file_record_t*)OSA_FixedMemMalloc(sizeof(ring_file_record_t));
+									if(pRecord) {
+										memset(pRecord, 0, sizeof(ring_file_record_t));
+										memcpy(pRecord->dir_path, temp_path, strlen(temp_path));
+										memcpy((char*)pRecord->file_name, (char*)pMsg->file_name,
+												strlen((char*)pMsg->file_name));
+
+										//Mark which FTP server to send by Flag
+										pRecord->flag = 1;
+
+										// Calculate CRC of record.
+										pRecord->crc = crc_16((const unsigned char*)pRecord, sizeof(ring_file_record_t) - 2);
+										// Push to Retry-table
+										ring_file_push_back(&g_retryTable, pRecord);
+
+										OSA_FixedMemFree((uint8_t*)pRecord);
+									} else {
+										WARN("Unable to allocate memory!!!\r\n");
+									}
+									OSA_SleepMs(1000);
+								}
+
+								modem_ftp_disconnect(pFC);
+							}
+						}
+					} else {
+						ASSERT(FALSE);
+					}
+				}
+				OSA_FixedMemFree((uint8_t*)pMsg);
+
+			} // if msg pointer not null
+		} else if(err == OS_ERR_TIMEOUT) { // if not message in queue
+#if 1
+			// TODO [manhbt] No new file arrived, process retry table
+			if(ring_file_get_count(&g_retryTable) > 0) {
+
+				ring_file_record_t *pRecord = (ring_file_record_t *)OSA_FixedMemMalloc(sizeof(ring_file_record_t));
+				if(!pRecord) {
+					WARN("Unable to allocate memory for temporarily buffer !!!\r\n");
+					continue;
+				}
+
+				memset(pRecord, 0, sizeof(ring_file_record_t));
+
+				if(ring_file_get_front(&g_retryTable, pRecord) != TRUE) {
+					WARN("Unable to GET record from Retry table");
+					OSA_FixedMemFree((uint8_t*)pRecord);
+					continue;
+				}
+
+				// TODO: [manhbt] verify Record (check CRC)
+				uint16_t calc_checksum = crc_16((const unsigned char*)pRecord, sizeof(ring_file_record_t)-2);
+				if(calc_checksum != pRecord->crc) {
+					WARN("CRC not matched, cal: %.2x, got: %.2x", calc_checksum, pRecord->crc);
+					OSA_FixedMemFree((uint8_t*)pRecord);
+					continue;
+				}
+
+				// TODO: [manhbt] Re-send File
+				LREP("Trying to re-send file %s/%s", pRecord->dir_path, pRecord->file_name);
+
+//				retVal = net_ftp_client_send_file(pRecord->dir_path, pRecord->file_name);
+
+
+				if(retVal == FTP_ERR_NONE) {
+					//TODO: [manhbt] Pop out & erase record from retry table
+					LREP("Re-send file OK, pop out and delete record from retry table");
+					ring_file_pop_front(&g_retryTable, pRecord);
+				} else {
+					WARN("Re-send file FAILED, retry table remains unchanged");
+				}
+				OSA_FixedMemFree((uint8_t*)pRecord);
+			} else {
+				//LREP(".");
+			}
+#endif
+		}
+	}
+}
+#endif
 
 int	ftp_add_filename(FtpClient *pFC, const uint8_t *local_path, const uint8_t *file_name) {
 	int retVal = 0;
@@ -656,5 +860,154 @@ void ftp_print_err(int err) {
 		break;
 	}
 }
+
+int ftp_client_process_send_file(FtpClient *pFC, char *file_name, char *local_path, char *remote_path)
+{
+
+	uint8_t *temp = OSA_FixedMemMalloc(256);
+
+	ASSERT_NONVOID(temp != NULL, -1);
+
+	memset(temp, 0, 256);
+	Str_Copy_N((CPU_CHAR*)temp, (CPU_CHAR*)local_path,
+			FTP_CLIENT_BUFF_SIZE);
+	Str_Cat_N((CPU_CHAR*)temp, (CPU_CHAR*)file_name,
+			FTP_CLIENT_BUFF_SIZE);
+	bool stat = check_obj_existed((char*)temp);
+	OSA_FixedMemFree(temp);
+
+	ASSERT_NONVOID(stat, -2);
+
+	CPU_CHAR temp_path[128];
+	Str_Copy_N(temp_path, (CPU_CHAR*)local_path, 128);
+
+	uint8_t retry_flag = 0;
+	int retVal = 0;
+
+	for (uint8_t srv_idx = 0; srv_idx < sizeof(pFC->server_list)/sizeof(ServerInfo); srv_idx++)
+	{
+
+		if(pFC->server_list[srv_idx].enable == false)
+			continue;
+
+		// Send file via Ethernet
+		if(g_netStat.u8ActiveIf & NET_IF_ETHERNET)
+		{
+			uint8_t err_count = 0;
+			do {
+				retVal = ftp_remote_put(pFC, 0,
+						(char*)file_name,
+						(char*)local_path,
+						(char*)remote_path);
+
+				//
+
+				if(retVal != FTP_ERR_NONE) {
+					LREP("put file server 0 err = %d\r\n", retVal);
+					ftp_print_err(retVal);
+					err_count ++;
+					OSA_SleepMs(1000);
+				}
+			} while (retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE && err_count < 10);
+
+			// Send failed
+			if(err_count == 10) {
+				LREP("Send file via ethernet, srv_idx %d FAILED", srv_idx);
+				retry_flag |= (1<<srv_idx);
+			}
+			ftp_destroy_channel(pFC);
+		}
+
+		// Send file via 3G
+		if (g_netStat.u8ActiveIf & NET_IF_WIRELESS)
+		{
+			retVal = ftp_remote_put(pFC, 0,
+					(char*)file_name,
+					(char*)local_path,
+					(char*)remote_path);
+			// Send Failed
+			if(retVal != FTP_ERR_NONE) {
+				LREP("Send file via 3G, srv_idx %d FAILED", srv_idx);
+				ftp_print_err(retVal);
+				retry_flag |= (1<<srv_idx);
+			}
+
+			modem_ftp_disconnect(pFC);
+		}
+	} // End for
+
+	// Process send fail
+	if (retry_flag != 0) {
+		CPU_CHAR temp_path[128];
+		Str_Copy_N((CPU_CHAR*)local_path, temp_path, 128);
+		// process send failed
+		ring_file_record_t *pRecord = (ring_file_record_t*)OSA_FixedMemMalloc(sizeof(ring_file_record_t));
+		if(pRecord) {
+			memset(pRecord, 0, sizeof(ring_file_record_t));
+			memcpy(pRecord->dir_path, temp_path, strlen(temp_path));
+			memcpy((char*)pRecord->file_name, (char*)file_name,
+					strlen((char*)file_name));
+
+			// Mark which FTP server to send by Flag
+			pRecord->flag = retry_flag;
+
+			// Calculate CRC of record.
+			pRecord->crc = crc_16((const unsigned char*)pRecord, sizeof(ring_file_record_t) - 2);
+			// Push to Retry-table
+			ring_file_push_back(&g_retryTable, pRecord);
+
+			OSA_FixedMemFree((uint8_t*)pRecord);
+		}
+	}
+
+	return retry_flag;
+}
+
+
+void ftp_client_process_resend(FtpClient *pFC)
+{
+	// TODO [manhbt] No new file arrived, process retry table
+	if(ring_file_get_count(&g_retryTable) > 0) {
+
+		ring_file_record_t *pRecord = (ring_file_record_t *)OSA_FixedMemMalloc(sizeof(ring_file_record_t));
+		if(!pRecord) {
+			WARN("Unable to allocate memory for temporarily buffer !!!\r\n");
+			return;
+		}
+
+		memset(pRecord, 0, sizeof(ring_file_record_t));
+
+		if(ring_file_get_front(&g_retryTable, pRecord) != TRUE) {
+			WARN("Unable to GET record from Retry table");
+			OSA_FixedMemFree((uint8_t*)pRecord);
+			return;
+		}
+
+		// TODO: [manhbt] verify Record (check CRC)
+		uint16_t calc_checksum = crc_16((const unsigned char*)pRecord, sizeof(ring_file_record_t)-2);
+		if(calc_checksum != pRecord->crc) {
+			WARN("CRC not matched, cal: %.2x, got: %.2x", calc_checksum, pRecord->crc);
+			OSA_FixedMemFree((uint8_t*)pRecord);
+			return;
+		}
+
+		// TODO: [manhbt] Re-send File
+		LREP("Trying to re-send file %s/%s", pRecord->dir_path, pRecord->file_name);
+
+//				retVal = net_ftp_client_send_file(pRecord->dir_path, pRecord->file_name);
+		int retVal = ftp_client_process_send_file(pFC, pRecord->file_name, pRecord->dir_path, pRecord->dir_path);
+
+		if(retVal == 0) {
+			//TODO: [manhbt] Pop out & erase record from retry table
+			LREP("Re-send file OK, pop out and delete record from retry table");
+			ring_file_pop_front(&g_retryTable, pRecord);
+		} else {
+			WARN("Re-send file FAILED, retry table remains unchanged");
+		}
+		OSA_FixedMemFree((uint8_t*)pRecord);
+	}
+}
+
+
 
 

@@ -93,26 +93,3 @@ bool Network_GetLinkStatus(bool *status) {
 			0, enetDevIf[0].phyAddr, status)
 			== kStatus_ENET_Success);
 }
-
-
-
-int Network_GetLinkSpeed() {
-	LREP("discover = %d\r\n", PHY_DRV_Autodiscover(0, &enetDevIf[0].phyAddr));
-	return 0;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

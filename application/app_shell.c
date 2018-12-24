@@ -690,7 +690,7 @@ void control(int32_t argc, char**argv) {
 			OSA_SleepMs(100);
 		}
 	} else if(strcmp(argv[1], "log") == 0) {
-		App_GenerateLogFile(&pAppObj);
+		App_GenerateLogFile(pAppObj);
 	} else if(strcmp(argv[1], "don") == 0) {
 		LREP("control don\r\n");
 

@@ -28,23 +28,32 @@
 
 
 // task prio
-#define TASK_MODBUS_PRIO          		3U
-#define TASK_PERIODIC_PRIO				4U
-#define TASK_SERIALCOMM_PRIO			5U
-#define TASK_UI_PRIO         			6U
-#define TASK_AI_PRIO         			7U
-#define TASK_STARTUP_PRIO				10U
-#define TASK_SHELL_PRIO         		11U
+#define TASK_MODBUS_PRIO          			3U
+#define TASK_PERIODIC_PRIO					4U
+#define TASK_SERIALCOMM_PRIO				5U
+#define TASK_UI_PRIO         				6U
+#define TASK_AI_PRIO         				7U
+#define TASK_STARTUP_PRIO					10U
+#define TASK_SHELL_PRIO         			11U
+#define TASK_TCP_CLIENT_SENDER_PRIO			11U
+#define TASK_TCP_CLIENT_LISTEN_PRIO			12U
+#define TASK_TCP_SERVER_SENDER_PRIO			13U
+#define TASK_TCP_SERVER_LISTEN_PRIO			14U
+#define TASK_FTP_CLIENT_SENDER_PRIO			10U
 
 // task size
-#define TASK_STARTUP_STACK_SIZE   		2048U
-#define TASK_AI_STACK_SIZE   			2048U
-#define TASK_SHELL_STACK_SIZE   		2048U
-#define TASK_MODBUS_STACK_SIZE    		2048U
-#define TASK_UI_STACK_SIZE   			2048U
-#define TASK_SERIAL_COMM_STACK_SIZE		2048U
-#define TASK_PERIODIC_STACK_SIZE		4096U
-
+#define TASK_STARTUP_STACK_SIZE   			2048U
+#define TASK_AI_STACK_SIZE   				2048U
+#define TASK_SHELL_STACK_SIZE   			2048U
+#define TASK_MODBUS_STACK_SIZE    			2048U
+#define TASK_UI_STACK_SIZE   				2048U
+#define TASK_SERIAL_COMM_STACK_SIZE			2048U
+#define TASK_PERIODIC_STACK_SIZE			4096U
+#define TASK_TCP_CLIENT_SENDER_SIZE			2048U
+#define TASK_TCP_CLIENT_LISTEN_SIZE			2048U
+#define TASK_TCP_SERVER_SENDER_SIZE			2048U
+#define TASK_TCP_SERVER_LISTEN_SIZE			2048U
+#define TASK_FTP_CLIENT_SENDER_SIZE			2048U
 
 // COMUNICATION
 #define TRANS_RX_PRIO						2
@@ -59,10 +68,12 @@
 #define BOARD_VERSION_2						2
 
 
-#define BOARD_USE_VERSION					BOARD_FRDM_K64F
-
+#define BOARD_USE_VERSION					BOARD_VERSION_1
 
 #define NETWORK_MODULE_EN					0
+
+
+
 
 /**************************** Type Definitions *******************************/
 

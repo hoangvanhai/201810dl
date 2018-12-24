@@ -37,34 +37,37 @@
 #include "fsl_rnga_driver.h"
 #include "fsl_rcm_hal.h"
 
-/* Configuration for enter VLPR mode. Core clock = 4MHz. */
-const clock_manager_user_config_t g_defaultClockConfigVlpr =
+
+#if BOARD_USE_VERSION == BOARD_FRDM_K64F
+/* Configuration for enter RUN mode. Core clock = 120MHz. */
+const clock_manager_user_config_t g_defaultClockConfigRun =
 {
     .mcgConfig =
     {
-        .mcg_mode           = kMcgModeBLPI,   // Work in BLPI mode.
+        .mcg_mode           = kMcgModePEE,   // Work in PEE mode.
         .irclkEnable        = true,  // MCGIRCLK enable.
         .irclkEnableInStop  = false, // MCGIRCLK disable in STOP mode.
-        .ircs               = kMcgIrcFast, // Select IRC4M.
+        .ircs               = kMcgIrcSlow, // Select IRC32k.
         .fcrdiv             = 0U,    // FCRDIV is 0.
 
-        .frdiv   = 0U,
+        .frdiv   = 7U,
         .drs     = kMcgDcoRangeSelLow,  // Low frequency range
         .dmx32   = kMcgDmx32Default,    // DCO has a default range of 25%
         .oscsel  = kMcgOscselOsc,       // Select OSC
 
         .pll0EnableInFllMode = false,  // PLL0 disable
         .pll0EnableInStop    = false,  // PLL0 disalbe in STOP mode
-        .prdiv0              = 0U,
-        .vdiv0               = 0U,
+        .prdiv0              = 0x13U,
+        .vdiv0               = 0x18U,
     },
+
     .simConfig =
     {
-        .pllFllSel = kClockPllFllSelIrc48M, // PLLFLLSEL select IRC48MCLK.
+        .pllFllSel = kClockPllFllSelPll,    // PLLFLLSEL select PLL.
         .er32kSrc  = kClockEr32kSrcRtc,     // ERCLK32K selection, use RTC.
         .outdiv1   = 0U,
-        .outdiv2   = 0U,
-        .outdiv3   = 0U,
+        .outdiv2   = 1U,
+        .outdiv3   = 1U,
         .outdiv4   = 4U,
     },
     .oscerConfig =
@@ -74,88 +77,19 @@ const clock_manager_user_config_t g_defaultClockConfigVlpr =
     }
 };
 
-#if 0
-///* Configuration for enter RUN mode. Core clock = 120MHz. */
-//const clock_manager_user_config_t g_defaultClockConfigRun =
-//{
-//    .mcgConfig =
-//    {
-//        .mcg_mode           = kMcgModePEE,   // Work in PEE mode.
-//        .irclkEnable        = true,  // MCGIRCLK enable.
-//        .irclkEnableInStop  = false, // MCGIRCLK disable in STOP mode.
-//        .ircs               = kMcgIrcSlow, // Select IRC32k.
-//        .fcrdiv             = 0U,    // FCRDIV is 0.
-//
-//        .frdiv   = 7U,
-//        .drs     = kMcgDcoRangeSelLow,  // Low frequency range
-//        .dmx32   = kMcgDmx32Default,    // DCO has a default range of 25%
-//        .oscsel  = kMcgOscselOsc,       // Select OSC
-//
-//        .pll0EnableInFllMode = false,  // PLL0 disable
-//        .pll0EnableInStop    = false,  // PLL0 disalbe in STOP mode
-//        .prdiv0              = 0x13U,
-//        .vdiv0               = 0x18U,
-//    },
-//
-//    .simConfig =
-//    {
-//        .pllFllSel = kClockPllFllSelPll,    // PLLFLLSEL select PLL.
-//        .er32kSrc  = kClockEr32kSrcRtc,     // ERCLK32K selection, use RTC.
-//        .outdiv1   = 0U,
-//        .outdiv2   = 1U,
-//        .outdiv3   = 1U,
-//        .outdiv4   = 4U,
-//    },
-//    .oscerConfig =
-//    {
-//        .enable       = true,  // OSCERCLK enable.
-//        .enableInStop = false, // OSCERCLK disable in STOP mode.
-//    }
-//};
-
-
-
-/* Configuration for enter RUN mode. Core clock = 180MHz. */
-const clock_manager_user_config_t g_defaultClockConfigRun =
+osc_user_config_t osc_user_config_t osc0Config =
 {
-    .mcgConfig =
-    {
-        .mcg_mode           = kMcgModePEE,   // Work in PEE mode.
-        .irclkEnable        = true,  		 // MCGIRCLK enable.
-        .irclkEnableInStop  = false, 		 // MCGIRCLK disable in STOP mode.
-        .ircs               = kMcgIrcSlow, 	 // Select IRC32k.
-        .fcrdiv             = 0U,    		 // FCRDIV is 0.
-
-        .frdiv   = 0U,
-        .drs     = kMcgDcoRangeSelLow,  // Low frequency range
-        .dmx32   = kMcgDmx32Default,    // DCO has a default range of 25%
-        .oscsel  = kMcgOscselIrc,       // Select OSC
-
-        .pll0EnableInFllMode = false,  // PLL0 disable
-        .pll0EnableInStop    = false,  // PLL0 disalbe in STOP mode
-        .prdiv0              = 0x3U,
-        .vdiv0               = 0xeU,
-		.pllcs				 = kMcgPllClkSelPll0,
-    },
-
-    .simConfig =
-    {
-        .pllFllSel = kClockPllFllSelIrc48M,    // PLLFLLSEL select PLL.
-        .er32kSrc  = kClockEr32kSrcRtc,        // ERCLK32K selection, use RTC.
-        .outdiv1   = 0U,
-        .outdiv2   = 1U,
-        .outdiv3   = 1U,
-        .outdiv4   = 6U,
-    },
-    .oscerConfig =
-    {
-        .enable       = true,  // OSCERCLK enable.
-        .enableInStop = false, // OSCERCLK disable in STOP mode.
-    }
+    .freq                = OSC0_XTAL_FREQ,
+    .hgo                 = MCG_HGO0,
+    .range               = MCG_RANGE0,
+    .erefs               = MCG_EREFS0,
+    .enableCapacitor2p   = OSC0_SC2P_ENABLE_CONFIG,
+    .enableCapacitor4p   = OSC0_SC4P_ENABLE_CONFIG,
+    .enableCapacitor8p   = OSC0_SC8P_ENABLE_CONFIG,
+    .enableCapacitor16p  = OSC0_SC16P_ENABLE_CONFIG,
 };
 
-
-#else
+#elif BOARD_USE_VERSION == BOARD_VERSION_1
 
 /* Configuration for enter RUN mode. Core clock = 180MHz. */
 const clock_manager_user_config_t g_defaultClockConfigRun =
@@ -195,23 +129,25 @@ const clock_manager_user_config_t g_defaultClockConfigRun =
         .enableInStop = true, // OSCERCLK disable in STOP mode.
     }
 };
+
+osc_user_config_t osc0Config =
+{
+    .freq                = OSC0_XTAL_FREQ,
+    .hgo                 = kOscGainLow,
+    .range               = kOscRangeVeryHigh,
+    .erefs               = kOscSrcOsc,
+    .enableCapacitor2p   = false,
+    .enableCapacitor4p   = false,
+    .enableCapacitor8p   = false,
+    .enableCapacitor16p  = true,
+};
+
+#else
+#error MUST DEFINE VALID HW VERSSION
 #endif
 /* Function to initialize OSC0 base on board configuration. */
 void BOARD_InitOsc0(void)
 {
-    // OSC0 configuration.
-    osc_user_config_t osc0Config =
-    {
-        .freq                = OSC0_XTAL_FREQ,
-        .hgo                 = kOscGainLow,
-        .range               = kOscRangeVeryHigh,
-        .erefs               = kOscSrcOsc,
-        .enableCapacitor2p   = false,
-        .enableCapacitor4p   = false,
-        .enableCapacitor8p   = false,
-        .enableCapacitor16p  = true,
-    };
-
     CLOCK_SYS_OscInit(0U, &osc0Config);
 }
 
@@ -219,37 +155,18 @@ void BOARD_InitOsc0(void)
 static void CLOCK_SetBootConfig(clock_manager_user_config_t const* config)
 {
     CLOCK_SYS_SetSimConfigration(&config->simConfig);
-
     CLOCK_SYS_SetOscerConfigration(0, &config->oscerConfig);
-
-#if (CLOCK_INIT_CONFIG == CLOCK_VLPR)
-    CLOCK_SYS_BootToBlpi(&config->mcgConfig);
- #else
     CLOCK_SYS_BootToPee(&config->mcgConfig);
- #endif
-
     SystemCoreClock = CORE_CLOCK_FREQ;
 }
 
 /* Initialize clock. */
 void BOARD_ClockInit(void)
 {
-    /* Set allowed power mode, allow all. */
-//    SMC_HAL_SetProtection(SMC, kAllowPowerModeAll);
-
-    /* Setup board clock source. */
-    // Setup OSC0 if used.
-    // Configure OSC0 pin mux.
     PORT_HAL_SetMuxMode(EXTAL0_PORT, EXTAL0_PIN, EXTAL0_PINMUX);
     PORT_HAL_SetMuxMode(XTAL0_PORT, XTAL0_PIN, XTAL0_PINMUX);
     BOARD_InitOsc0();
-
-    /* Set system clock configuration. */
-#if (CLOCK_INIT_CONFIG == CLOCK_VLPR)
-    CLOCK_SetBootConfig(&g_defaultClockConfigVlpr);
-#else
     CLOCK_SetBootConfig(&g_defaultClockConfigRun);
-#endif
 }
 
 /* The function to indicate whether a card is detected or not */
@@ -289,6 +206,7 @@ void HardFault_Handler(void) {
 	LREP("SCB->SHCSR = 0x%x SCB->CFSR = 0x%x\r\n", SCB->SHCSR, SCB->CFSR);
 	LREP("HARD FAULT ADDRESS 0x%x\r\n", SCB->HFSR);
 	BOARD_GetFaultType();
+	for(;;);
 }
 /*****************************************************************************/
 /** @brief
@@ -302,6 +220,7 @@ void BusFault_Handler(void) {
 	LREP("SCB->SHCSR = 0x%x SCB->CFSR = 0x%x\r\n", SCB->SHCSR, SCB->CFSR);
 	LREP("BUS FAULT ADDRESS: 0x%x\r\n", SCB->BFAR);
 	BOARD_GetFaultType();
+	for(;;);
 }
 /*****************************************************************************/
 /** @brief
@@ -326,6 +245,7 @@ void MemManage_Handler(void) {
 	LREP("SCB->SHCSR = 0x%x SCB->CFSR = 0x%x\r\n", SCB->SHCSR, SCB->CFSR);
 	LREP("MEMMAN FAULT ADDRESS 0x%x\r\n", SCB->MMFAR);
 	BOARD_GetFaultType();
+	for(;;);
 }
 /*****************************************************************************/
 /** @brief

@@ -214,30 +214,74 @@ void  App_OS_StatTaskHook (void)
 {
 	if(pAppObj->stat) {
 
-		LREP("\r\nstat cpu %5.2f\r\n", (float)OSStatTaskCPUUsage / (float)100);
-
-		LREP("%10s used %4d free %4d\r\n", "ui",
-				TCB_task_ui.StkUsed,
-				TCB_task_ui.StkFree);
-
-		LREP("%10s used %4d free %4d\r\n", "modbus",
-				TCB_task_modbus.StkUsed,
-				TCB_task_modbus.StkFree);
-
-		LREP("%10s used %4d free %4d\r\n", "serialcomm",
-				TCB_task_serialcomm.StkUsed,
-				TCB_task_serialcomm.StkFree);
-
-		LREP("%10s used %4d free %4d\r\n", "periodic",
-				TCB_task_periodic.StkUsed,
-				TCB_task_periodic.StkFree);
-
-		LREP("%10s used %4d free %4d\r\n", "startup",
-				TCB_task_startup.StkUsed,
-				TCB_task_startup.StkFree);
+		LREP("\rcpu usage %d", OSStatTaskCPUUsage);
+//		LREP("%10s used %4d free %4d\r\n", "ui",
+//				TCB_task_ui.StkUsed,
+//				TCB_task_ui.StkFree);
+//
+//		LREP("%10s used %4d free %4d\r\n", "modbus",
+//				TCB_task_modbus.StkUsed,
+//				TCB_task_modbus.StkFree);
+//
+//		LREP("%10s used %4d free %4d\r\n", "serialcomm",
+//				TCB_task_serialcomm.StkUsed,
+//				TCB_task_serialcomm.StkFree);
+//
+//		LREP("%10s used %4d free %4d\r\n", "periodic",
+//				TCB_task_periodic.StkUsed,
+//				TCB_task_periodic.StkFree);
+//
+//		LREP("%10s used %4d free %4d\r\n", "startup",
+//				TCB_task_startup.StkUsed,
+//				TCB_task_startup.StkFree);
 
 	}
 
+	/*
+	if(pAppObj->stat) {
+		OS_ERR err;
+		CPU_STK_SIZE free, used;
+		LREP("stat cpu %5.2f\r\n", (float)OSStatTaskCPUUsage / (float)100);
+		OSTaskStkChk(&TCB_task_ui, &free, &used, &err);
+		if(err == OS_ERR_NONE) {
+			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "ui", used, free,
+					(float)TCB_task_ui.CPUUsage / (float)100);
+		} else {
+			LREP("ui err = %d\r\n", err);
+		}
+
+		OSTaskStkChk(&TCB_task_modbus, &free, &used, &err);
+		if(err == OS_ERR_NONE) {
+			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "modbus", used, free,
+					(float)TCB_task_modbus.CPUUsage / (float)100);
+		} else {
+			LREP("modbus err = %d\r\n", err);
+		}
+		OSTaskStkChk(&TCB_task_serialcomm, &free, &used, &err);
+		if(err == OS_ERR_NONE) {
+			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "serialcomm", used, free,
+					(float)TCB_task_serialcomm.CPUUsage / (float)100);
+		} else {
+			LREP("serialcomm err = %d\r\n", err);
+		}
+
+		OSTaskStkChk(&TCB_task_periodic, &free, &used, &err);
+		if(err == OS_ERR_NONE) {
+			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "periodic", used, free,
+					(float)TCB_task_periodic.CPUUsage / (float)100);
+		} else {
+			LREP("periodic err = %d\r\n", err);
+		}
+
+		OSTaskStkChk(&TCB_task_startup, &free, &used, &err);
+		if(err == OS_ERR_NONE) {
+			LREP("%10s used %4d free %4d cpu %5.2f\r\n", "startup", used, free,
+					(float)TCB_task_startup.CPUUsage / (float)100);
+		} else {
+			LREP("startup\t err = %d\r\n", err);
+		}
+	}
+		*/
 }
 
 
@@ -280,20 +324,8 @@ void  App_OS_TimeTickHook (void)
 	static uint32_t count = 0;
 	if(count++ >= 1000) {
 		//LREP("app tick hook on\r\n");
-		//GPIO_DRV_TogglePinOutput(kGpioLEDBLUE);
-//		GPIO_DRV_TogglePinOutput(LanPsuEn);
-//		GPIO_DRV_TogglePinOutput(LanPsuOcp);
-//		GPIO_DRV_TogglePinOutput(LanPsuEn);
-//		GPIO_DRV_TogglePinOutput(IoVccEn);
-//		GPIO_DRV_TogglePinOutput(IoVccOcf);
-//		GPIO_DRV_TogglePinOutput(ModbusPsuOcp);
-//		GPIO_DRV_TogglePinOutput(ModbusPsuEn);
-//		GPIO_DRV_TogglePinOutput(LcdGpio2);
+//		GPIO_DRV_TogglePinOutput(kGpioLEDBLUE);
 		count = 0;
 	}
 //	WDOG_DRV_Refresh();
 }
-
-
-
-

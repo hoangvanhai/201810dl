@@ -16,27 +16,11 @@
 #endif
 
 /* The board name */
-#define BOARD_NAME                      "DATA_LOGGER"
+#define BOARD_NAME                      	"DATA_LOGGER"
 
-#define CLOCK_VLPR 						1U
-#define CLOCK_RUN  						2U
-#define CLOCK_NUMBER_OF_CONFIGURATIONS 	3U
-
-#define CLOCK_SETUP						1
-
-#ifndef CLOCK_INIT_CONFIG
-#define CLOCK_INIT_CONFIG CLOCK_RUN
-#endif
-
-#if (CLOCK_INIT_CONFIG == CLOCK_RUN)
-#define CORE_CLOCK_FREQ 180000000U
-#else
-#define CORE_CLOCK_FREQ 4000000U
-#endif
-
-/* HARDWARE CORE CONFIG */
-/* OSC0 configuration. */
-#define OSC0_XTAL_FREQ 						8000000U
+#if BOARD_USE_VERSION == BOARD_FRDM_K64F
+#define CORE_CLOCK_FREQ 120000000U
+#define OSC0_XTAL_FREQ 						50000000U
 #define OSC0_SC2P_ENABLE_CONFIG  			false
 #define OSC0_SC4P_ENABLE_CONFIG  			false
 #define OSC0_SC8P_ENABLE_CONFIG  			false
@@ -44,6 +28,17 @@
 #define MCG_HGO0   							kOscGainLow
 #define MCG_RANGE0 							kOscRangeVeryHigh
 #define MCG_EREFS0 							kOscSrcExt
+#elif BOARD_USE_VERSION == BOARD_VERSION_1
+#define CORE_CLOCK_FREQ 180000000U
+#define OSC0_XTAL_FREQ 						8000000U
+#define OSC0_SC2P_ENABLE_CONFIG  			false
+#define OSC0_SC4P_ENABLE_CONFIG  			false
+#define OSC0_SC8P_ENABLE_CONFIG  			false
+#define OSC0_SC16P_ENABLE_CONFIG 			true
+#define MCG_HGO0   							kOscGainLow
+#define MCG_RANGE0 							kOscRangeVeryHigh
+#define MCG_EREFS0 							kOscSrcExt
+#endif
 
 /* EXTAL0 PTA18 */
 #define EXTAL0_PORT   						PORTA
@@ -57,7 +52,21 @@
 
 
 
-
+#if BOARD_USE_VERSION == BOARD_FRDM_K64F
+#define BOARD_ANALOG_UART_INSTANCE			0
+#define BOARD_ANALOG_UART_BAUD				9600
+/* debug */
+#define BOARD_DEBUG_UART_INSTANCE   		1
+#define BOARD_DEBUG_UART_BAUD       		115200	//921600	//115200
+/* communication */
+#define BOARD_TRANSPC_UART_INSTANCE   		2
+#define BOARD_TRANSPC_UART_BAUD       		115200
+#define BOARD_TRANSUI_UART_INSTANCE   		3
+#define BOARD_TRANSUI_UART_BAUD       		115200
+#define BOARD_MODBUS_UART_INSTANCE   		4
+#define BOARD_MODBUS_UART_BAUD       		115200
+#define BOARD_SIM_UART_INSTANCE				0
+#define BOARD_SIM_UART_BAUD					115200
 
 /* analog measurement */
 /* The Flextimer instance/channel used for board */
@@ -82,8 +91,7 @@
 #define BOARD_I2C_RTC_INSTANCE				1
 
 
-
-#if BOARD_USE_VERSION == BOARD_FRDM_K64F
+#elif BOARD_USE_VERSION == BOARD_VERSION_1
 #define BOARD_ANALOG_UART_INSTANCE			0
 #define BOARD_ANALOG_UART_BAUD				9600
 /* debug */
@@ -96,9 +104,31 @@
 #define BOARD_TRANSUI_UART_BAUD       		115200
 #define BOARD_MODBUS_UART_INSTANCE   		4
 #define BOARD_MODBUS_UART_BAUD       		115200
-#define BOARD_MODEM_UART_INSTANCE			1
-#define BOARD_MODEM_UART_BAUD				115200
-#elif BOARD_USE_VERSION == BOARD_VERSION_1
+#define BOARD_SIM_UART_INSTANCE				0
+#define BOARD_SIM_UART_BAUD					115200
+
+
+/* analog measurement */
+/* The Flextimer instance/channel used for board */
+#define BOARD_FTM_INSTANCE					FTM0_IDX
+#define BOARD_FTM_CHANNEL               	CHAN0_IDX
+/* spi for sdcard2 */
+#define BOARD_DSPI_INSTANCE             	0
+/* The Enet instance used for board */
+#define BOARD_ENET_INSTANCE             	0
+/* The FlexBus instance used for board.*/
+#define BOARD_FLEXBUS_INSTANCE          	0
+/* The ENET instance/channel used for board */
+#define BOARD_ENET_INSTANCE             	0
+/* The SDHC instance/channel used for board */
+#define BOARD_SDHC_INSTANCE             	0
+#define BOARD_SDHC_CD_GPIO_IRQ_HANDLER  	PORTD_IRQHandler
+/* The CMP instance used for board. */
+#define BOARD_CMP_INSTANCE              	0
+/* The CMP channel used for board. */
+#define BOARD_CMP_CHANNEL               	0
+/* The SW name for CMP example */
+#define BOARD_I2C_RTC_INSTANCE				1
 
 #endif
 

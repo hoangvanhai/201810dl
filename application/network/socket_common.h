@@ -55,6 +55,5 @@ int set_blocking(int fd);
 int wait_event(int fd, int timeout, bool r, bool w);
 int set_buffer_size(int fd, int tx_size, int rx_size);
 bool Network_GetLinkStatus(bool *status);
-int Network_GetLinkSpeed();
 
 #endif /* APPLICATION_SOCKET_COMMON_H_ */

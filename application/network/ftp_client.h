@@ -30,7 +30,12 @@ enum FtpCode {
 	FTP_ERR_SEND_DATA_MSG,	//13
 	FTP_ERR_AUTHEN,			//14
 	FTP_ERR_PASV,			//15
-	FTP_ERR_CODE			//16
+	FTP_ERR_CODE,			//16
+	// manhbt added here
+	FTP_ERR_MEM,
+	FTP_ERR_INVALID_PARAM,
+	FTP_ERR_TIMEOUT,
+	FTP_ERR_UNKNOWN,
 };
 
 typedef struct ServerInfo_ {
@@ -95,4 +100,19 @@ void 	ftp_client_sender(void *arg);
 int		ftp_add_filename(FtpClient *pFC, const uint8_t * local_path, const uint8_t* file_name);
 void 	ftp_print_err(int err);
 
+/**
+ *	Send a File from SD card to all server instances
+ * @param pFC
+ * @param file_name
+ * @param local_path
+ * @param remote_path
+ * @return
+ */
+int 	ftp_client_process_send_file(FtpClient *pFC, char *file_name, char *local_path, char *remote_path);
+
+/**
+ * Check the retry table and resend file if need
+ * @param pFC
+ */
+void 	ftp_client_process_resend(FtpClient *pFC);
 #endif /* APPLICATION_FTP_CLIENT_H_ */

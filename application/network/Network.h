@@ -22,8 +22,17 @@
 #include <common/ring_file.h>
 
 
+#define NET_IF_ETHERNET 	0x01
+#define NET_IF_WIRELESS 	0x02
+#define NET_IF_ALL			(NET_IF_ETHERNET | NET_IF_ETHERNET)
 
-
+typedef struct {
+    SCommon 	sCommSettings;
+    uint8_t		u8ActiveIf;
+    TcpClient	sTcpClientInstance;
+    TcpServer	sTcpServerInstance;
+    FtpClient	sFtpClientInstance;
+}SNetStatus;
 
 void Network_InitModule(SCommon *pCM);
 void tcp_client_init(ip_addr_t ip, int port);
@@ -49,6 +58,7 @@ int ftp_client_init(SCommon *pCM);
 extern TcpClient	 		tcpClient;
 extern TcpServer 	 		tcpServer;
 extern ring_file_handle_t 	g_retryTable;
+extern SNetStatus			g_netStat;
 
 
 #endif /* APPLICATION_NETWORK_H_ */

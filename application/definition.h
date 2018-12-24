@@ -14,6 +14,7 @@
 #include <lwip/netif.h>
 #include <time.h>
 
+
 #define LOGGER_DEV_ID             			0x02
 #define LOGGER_PC_ID         				0x01
 #define LOGGER_UI_ID         				0x01
@@ -141,7 +142,7 @@ enum MbDataType {
 };
 
 typedef enum ESysStatus_ {
-    SYS_ERR_NONE		= 1 << 0,
+    SYS_ERR_NONE		= 0 << 0,
     SYS_ERR_RTC			= 1 << 1,
     SYS_ERR_SDCARD_1	= 1 << 2,
     SYS_ERR_SDCARD_2	= 1 << 3,
@@ -370,6 +371,7 @@ typedef struct STagVArray_ {
 typedef struct SCommon_ {
     ip_addr_t		dev_ip;
     ip_addr_t       dev_netmask;
+    ip_addr_t       dev_gw;
     uint8_t         dev_dhcp;
     uint8_t         ftp_enable1;
     uint8_t         ftp_enable2;

@@ -72,6 +72,8 @@ typedef struct SApp_ {
 	bool				stat;
 	bool				reboot;
 	semaphore_t			hSem;
+	uint32_t			aiReadCount;
+	uint32_t			mbReadCount;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
