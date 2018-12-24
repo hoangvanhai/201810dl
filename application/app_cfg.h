@@ -75,8 +75,8 @@
 
 #define NETWORK_MODULE_EN					1
 #define NETWORK_FTP_CLIENT_EN				1
-#define NETWORK_TCP_CLIENT_EN				0
-#define NETWORK_TCP_SERVER_EN				0
+#define NETWORK_TCP_CLIENT_EN				1
+#define NETWORK_TCP_SERVER_EN				1
 
 
 

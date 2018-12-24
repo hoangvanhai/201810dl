@@ -9,10 +9,8 @@
 #include <lib_str.h>
 #include <string.h>
 #include <filesystem.h>
-#include <checksum.h>
-#include <network.h>
-#include <ethernetif.h>
 #include "modem_ftp_client.h"
+#include "network.h"
 
 CPU_CHAR buff[256];
 
@@ -22,11 +20,6 @@ int ftp_client_init_handle(FtpClient *pFC, uint8_t *tx_ctrl_buff,
 	pFC->tx_buff_ctrl = tx_ctrl_buff;
 	pFC->rx_buff_ctrl = rx_ctrl_buff;
 	pFC->tx_buff_data = tx_data_buff;
-
-	LREP("ftp client buffer:\r\n");
-	LREP("tx_buff_ctrl: %x\r\n", pFC->tx_buff_ctrl);
-	LREP("rx_buff_ctrl: %x\r\n", pFC->rx_buff_ctrl);
-	LREP("tx_buff_data: %x\r\n", pFC->tx_buff_data);
 	return 0;
 }
 
@@ -385,21 +378,19 @@ int ftp_remote_mkd_recursive(FtpClient *pFC, char* remote_path) {
 
     // start make new folder
     CPU_CHAR *path = (CPU_CHAR*)OSA_FixedMemMalloc(128);
-
     if(path == NULL)
     	return FTP_ERR_CD;
 
     CPU_CHAR *temp_path = (CPU_CHAR*)OSA_FixedMemMalloc(128);
-
     if(temp_path == NULL) {
-    	OSA_FixedMemFree(path);
+    	OSA_FixedMemFree((uint8_t*)path);
     	return FTP_ERR_CD;
     }
 
-    memset(path, 0, 128);
-
+    memset(temp_path, 0, 128);
     Str_Copy_N(temp_path, remote_path, 128);
 
+    memset(path, 0, 128);
 	char *pch;
 	pch = strtok((char*)temp_path, "/");
 
@@ -435,22 +426,21 @@ int ftp_remote_put(FtpClient *pFC, uint8_t index,
 
 	int retVal;
 	int err = FTP_ERR_PUT;
-	LREP("local path = %x %x\r\n", local_path, remote_path);
+	CPU_CHAR data[128];
+	memset(data, 0, 128);
+	Str_Copy_N(data, local_path, 128);
+	LREP("local path = %s \r\n", data);
 
 	err = ftp_setup_channel(pFC, index);
 	if(err != FTP_ERR_NONE) {
 		ERR("setup channel failed \r\n");
 		return err;
-	} else {
-		LREP("setup channel done\r\n");
 	}
 
 	err = ftp_remote_mkd_recursive(pFC, (char*)remote_path);
 	if(err != FTP_ERR_NONE) {
 		WARN_LINE("make folder recuresive error = %d\r\n", err);
 		return err;
-	} else {
-		LREP("cwd done\r\n");
 	}
 
 
@@ -462,21 +452,18 @@ int ftp_remote_put(FtpClient *pFC, uint8_t index,
 	if(err != FTP_ERR_NONE) {
 		WARN_LINE("STOR command failed\r\n");
 		return err;
-	} else {
-		LREP("stor done\r\n");
 	}
 
 	int code = ftp_get_code(pFC);
+	LREP("get code %d \r\n", code);
 	if(code != 125 && code != 150) {
 		err = FTP_ERR_CODE;
 		WARN_LINE("get invalid code %d\r\n", code);
 		return err;
-	} else {
-		LREP("get success code %d\r\n", code);
 	}
 
 	memset(pFC->tx_buff_data, 0, 256);
-	Str_Copy_N((CPU_CHAR*)pFC->tx_buff_data, local_path, FTP_CLIENT_BUFF_SIZE);
+	Str_Copy_N((CPU_CHAR*)pFC->tx_buff_data, data, FTP_CLIENT_BUFF_SIZE);
 	Str_Cat_N((CPU_CHAR*)pFC->tx_buff_data, filename, FTP_CLIENT_BUFF_SIZE);
 
 	// ensure the file is existed before use STOR command
@@ -499,7 +486,7 @@ int ftp_remote_put(FtpClient *pFC, uint8_t index,
 					err = FTP_ERR_SEND_DATA_MSG;
 					break;
 				}
-				OSA_SleepMs(1000);
+				OSA_SleepMs(100);
 			}
 		} while(fr == FR_OK && read > 0);
 	} else {
@@ -602,14 +589,10 @@ int ftp_send_ctrl_msg(FtpClient *pFC, const char *msg) {
 int ftp_recv_ctrl_msg(FtpClient *pFC, int timeout) {
 	int rlen = -1;
 	OSA_SleepMs(timeout);
-	LREP("start wait event\r\n");
 	int event = wait_event(pFC->fd_ctrl, 100, true, false);
-	LREP("event = %d\r\n", event);
 	if(event & Event_Readable) {
 		memset(pFC->rx_buff_ctrl, 0, 256);
-		LREP("start recv buff = %x\r\n", pFC->rx_buff_ctrl);
 		rlen = recv(pFC->fd_ctrl, pFC->rx_buff_ctrl, 256, 0);
-		LREP("recv len = %d\r\n", rlen);
 	}
 
 	return rlen;
@@ -619,7 +602,6 @@ int ftp_recv_ctrl_msg(FtpClient *pFC, int timeout) {
 void ftp_client_sender(void *arg) {
 
 	FtpClient *pFC = (FtpClient*)arg;
-	ASSERT_VOID(pFC);
 	OS_MSG_SIZE msg_size;
 	CPU_TS ts;
 	OS_ERR err;
@@ -630,51 +612,54 @@ void ftp_client_sender(void *arg) {
 		pMsg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
 		if(err == OS_ERR_NONE) {
 			if(pMsg) {
-				LREP("\r\nSENDER PROCSESSING: [%s%s]\r\n", pMsg->local_path, pMsg->file_name);
+				LREP("SENDER PROCSESSING: [%s%s]\r\n", pMsg->local_path, pMsg->file_name);
 				uint8_t *temp = OSA_FixedMemMalloc(256);
 				if(temp != NULL) {
-					// check if file exist on card
+					// check file exist
 					memset(temp, 0, 256);
 					Str_Copy_N((CPU_CHAR*)temp, (CPU_CHAR*)pMsg->local_path,
 							FTP_CLIENT_BUFF_SIZE);
 					Str_Cat_N((CPU_CHAR*)temp, (CPU_CHAR*)pMsg->file_name,
 							FTP_CLIENT_BUFF_SIZE);
-					//
 					stat = check_obj_existed((char*)temp);
 					OSA_FixedMemFree(temp);
+
 					if(stat) {
-						WARN("check file existed is ok\r\n");
-						if (g_network.u8ActiveIf & NET_IF_ETHERNET) {
+						do {
 							if(pFC->server_list[0].enable) {
-								int err_count = 0;
-								do {
-									retVal = ftp_remote_put(pFC, 0, (char*)pMsg->file_name,
-											(char*)pMsg->local_path, (char*)pMsg->local_path);
+								retVal = ftp_remote_put(pFC, 0,
+										(char*)pMsg->file_name,
+										(char*)pMsg->local_path,
+										(char*)pMsg->local_path);
 
-									if(retVal != FTP_ERR_NONE) {
-										LREP("put file server 0 err = %d\r\n", retVal);
-										ftp_print_err(retVal);
-										OSA_SleepMs(1000);
-									}
-									ftp_destroy_channel(pFC);
-
-									err_count++;
-								} while( retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE);
+								if(retVal != FTP_ERR_NONE) {
+									LREP("put file server 0 err = %d\r\n", retVal);
+									ftp_print_err(retVal);
+									OSA_SleepMs(1000);
+								}
+								ftp_destroy_channel(pFC);
 							}
-						}
-					} else { // file not existed
+
+							if(pFC->server_list[1].enable) {
+								retVal = ftp_remote_put(pFC, 1,
+										(char*)pMsg->file_name,
+										(char*)pMsg->local_path,
+										(char*)pMsg->local_path);
+
+								if(retVal != FTP_ERR_NONE) {
+									LREP("put file server 1 err = %d\r\n", retVal);
+									ftp_print_err(retVal);
+									OSA_SleepMs(1000);
+								}
+								ftp_destroy_channel(pFC);
+							}
+						} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE);
+					} else {
 						ASSERT(FALSE);
 					}
-
-				} else { // message is NULL
-					ASSERT(FALSE);
 				}
-
 				OSA_FixedMemFree((uint8_t*)pMsg);
-
-			} // if msg pointer not null
-		} else if(err == OS_ERR_TIMEOUT) { // if not message in queue
-
+			}
 		}
 	}
 }
@@ -736,6 +721,8 @@ void ftp_print_err(int err) {
 	}
 }
 
+
+
 int ftp_client_process_send_file(FtpClient *pFC, char *file_name, char *local_path, char *remote_path)
 {
 
@@ -766,7 +753,7 @@ int ftp_client_process_send_file(FtpClient *pFC, char *file_name, char *local_pa
 			continue;
 
 		// Send file via Ethernet
-		if(g_network.u8ActiveIf & NET_IF_ETHERNET)
+		if(nwkStt.activeIf & NET_IF_ETHERNET)
 		{
 			uint8_t err_count = 0;
 			do {
@@ -794,7 +781,7 @@ int ftp_client_process_send_file(FtpClient *pFC, char *file_name, char *local_pa
 		}
 
 		// Send file via 3G
-		if (g_network.u8ActiveIf & NET_IF_WIRELESS)
+		if (nwkStt.activeIf  & NET_IF_WIRELESS)
 		{
 			retVal = ftp_remote_put(pFC, 0,
 					(char*)file_name,
@@ -829,7 +816,7 @@ int ftp_client_process_send_file(FtpClient *pFC, char *file_name, char *local_pa
 			// Calculate CRC of record.
 			pRecord->crc = crc_16((const unsigned char*)pRecord, sizeof(ring_file_record_t) - 2);
 			// Push to Retry-table
-			ring_file_push_back(&g_network.retryTable, pRecord);
+			ring_file_push_back(&g_retryTable, pRecord);
 
 			OSA_FixedMemFree((uint8_t*)pRecord);
 		}
@@ -842,7 +829,7 @@ int ftp_client_process_send_file(FtpClient *pFC, char *file_name, char *local_pa
 void ftp_client_process_resend(FtpClient *pFC)
 {
 	// TODO [manhbt] No new file arrived, process retry table
-	if(ring_file_get_count(&g_network.retryTable) > 0) {
+	if(ring_file_get_count(&g_retryTable) > 0) {
 
 		ring_file_record_t *pRecord = (ring_file_record_t *)OSA_FixedMemMalloc(sizeof(ring_file_record_t));
 		if(!pRecord) {
@@ -852,7 +839,7 @@ void ftp_client_process_resend(FtpClient *pFC)
 
 		memset(pRecord, 0, sizeof(ring_file_record_t));
 
-		if(ring_file_get_front(&g_network.retryTable, pRecord) != TRUE) {
+		if(ring_file_get_front(&g_retryTable, pRecord) != TRUE) {
 			WARN("Unable to GET record from Retry table");
 			OSA_FixedMemFree((uint8_t*)pRecord);
 			return;
@@ -875,14 +862,11 @@ void ftp_client_process_resend(FtpClient *pFC)
 		if(retVal == 0) {
 			//TODO: [manhbt] Pop out & erase record from retry table
 			LREP("Re-send file OK, pop out and delete record from retry table");
-			ring_file_pop_front(&g_network.retryTable, pRecord);
+			ring_file_pop_front(&g_retryTable, pRecord);
 		} else {
 			WARN("Re-send file FAILED, retry table remains unchanged");
 		}
 		OSA_FixedMemFree((uint8_t*)pRecord);
 	}
 }
-
-
-
 

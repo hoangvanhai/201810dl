@@ -907,6 +907,9 @@ void App_CommRecvHandle(const uint8_t *data) {
 				 pAppObj->sDateTime.tm_year, pAppObj->sDateTime.tm_mon,
 				 pAppObj->sDateTime.tm_mday, pAppObj->sDateTime.tm_hour,
 				 pAppObj->sDateTime.tm_min,  pAppObj->sDateTime.tm_sec);
+
+		 App_SetDateTime(pAppObj, pAppObj->sDateTime);
+
 		 App_SendPC(pAppObj, LOGGER_SET | LOGGER_TIME, NULL, 0, false);
 		break;
 	case LOGGER_CHANGE_PASSWD:
@@ -1024,6 +1027,8 @@ void App_NetRecvHandle(const uint8_t *data) {
 				 pAppObj->sDateTime.tm_year, pAppObj->sDateTime.tm_mon,
 				 pAppObj->sDateTime.tm_mday, pAppObj->sDateTime.tm_hour,
 				 pAppObj->sDateTime.tm_min,  pAppObj->sDateTime.tm_sec);
+		 App_SetDateTime(pAppObj, pAppObj->sDateTime);
+
 		 App_SendPCNetworkClient(LOGGER_SET | LOGGER_TIME, NULL, 0);
 		break;
 	case LOGGER_CHANGE_PASSWD:
@@ -2433,6 +2438,11 @@ void Clb_NetTcpServerSentData(const uint8_t* data, int length) {
 			pAppObj->pcCounter = 0;
 		}
 	}
+
+	if(pAppObj->reboot) {
+		NVIC_SystemReset();
+	}
+
 }
 /*****************************************************************************/
 /** @brief

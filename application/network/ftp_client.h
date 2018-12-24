@@ -11,9 +11,7 @@
 #include <socket_common.h>
 #include <lib_str.h>
 #include <network_cfg.h>
-
-#define NETWORK_FTP_MODEM_EN		0
-
+#include <common/ring_file.h>
 
 enum FtpCode {
 	FTP_ERR_NONE = 0,
@@ -103,6 +101,7 @@ void 	ftp_client_sender(void *arg);
 int		ftp_add_filename(FtpClient *pFC, const uint8_t * local_path, const uint8_t* file_name);
 void 	ftp_print_err(int err);
 
+
 /**
  *	Send a File from SD card to all server instances
  * @param pFC
@@ -118,4 +117,5 @@ int 	ftp_client_process_send_file(FtpClient *pFC, char *file_name, char *local_p
  * @param pFC
  */
 void 	ftp_client_process_resend(FtpClient *pFC);
+
 #endif /* APPLICATION_FTP_CLIENT_H_ */

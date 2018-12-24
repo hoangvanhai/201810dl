@@ -29,7 +29,7 @@ typedef struct TcpServer_ {
 	Network_Status		status;
 	sys_thread_t		send_thread;
 	sys_thread_t		recv_thread;
-	bool				active;
+	bool 				active;
 }TcpServer;
 
 int tcp_server_config(TcpServer *pHandle, int port,
