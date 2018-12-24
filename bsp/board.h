@@ -71,6 +71,7 @@ int BOARD_GetFaultType(void);
 void BOARD_CreateWDG(void);
 int BOARD_GenerateRandom(int min, int max);
 void BOARD_CheckResetCause(void);
+void BOARD_GpioWritePin(uint32_t pinName, bool value);
 
 #if defined(__cplusplus)
 }

@@ -568,38 +568,43 @@ void App_TaskPeriodic(task_param_t parg) {
 	App_InitNetworkModule(pApp);
 #endif
 
-	Network_InitModule(&pApp->sCfg.sCom);
+	//Network_InitModule(&pApp->sCfg.sCom);
 
+	static uint8_t test = 0;
 	while(1) {
 		OSA_SleepMs(1000);
-		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-			 LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
-					pApp->sDateTime.tm_year, pApp->sDateTime.tm_mon,
-					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_hour,
-					pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec);
-			//LREP(".");
-			//GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
-
-		}
+//		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
+//			 LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
+//					pApp->sDateTime.tm_year, pApp->sDateTime.tm_mon,
+//					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_hour,
+//					pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec);
+//			//LREP(".");
+//			//GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
+//
+//		}
 
 
 		App_DiReadAllPort(pApp);
 		App_UpdateTagContent(pApp);
 
-        if(pApp->sDateTime.tm_min != last_min && logged) {
-            logged = false;
-        }
+//        if(pApp->sDateTime.tm_min != last_min && logged) {
+//            logged = false;
+//        }
+//
+//		if((logged == false) && (pApp->sDateTime.tm_min % log_min == 0)) {
+//			if(pApp->sCfg.sCom.ftp_enable1 ||
+//					pApp->sCfg.sCom.ftp_enable2) {
+//				LREP("generate log file\r\n");
+//				ASSERT(App_GenerateLogFile(pApp) == FR_OK);
+//			} else {
+//				LREP("disabled generate log file\r\n");
+//			}
+//			last_min = pApp->sDateTime.tm_min;
+//			logged = true;
+//		}
 
-		if((logged == false) && (pApp->sDateTime.tm_min % log_min == 0)) {
-			if(pApp->sCfg.sCom.ftp_enable1 ||
-					pApp->sCfg.sCom.ftp_enable2) {
-				LREP("generate log file\r\n");
-				ASSERT(App_GenerateLogFile(pApp) == FR_OK);
-			} else {
-				LREP("disabled generate log file\r\n");
-			}
-			last_min = pApp->sDateTime.tm_min;
-			logged = true;
+		if(test++ % 60 == 0) {
+			App_GenerateLogFile(pApp);
 		}
 
 	}
@@ -805,7 +810,7 @@ void App_TaskStartup(task_param_t arg) {
 			//LEP("Feed dog \r\n");
 			/* Feed dog to prevent WDG reset */
 			//WDOG_DRV_Refresh();
-			//App_AiReadAllPort(pApp);
+			App_AiReadAllPort(pApp);
 		}
 
 
@@ -1803,33 +1808,40 @@ void App_DiReadAllPort(SApp *pApp) {
  *  @return Void.
  *  @note
  */
+typedef struct AnalogChannel_ {
+	float vref;
+	float vsen;
+	float diff;
+}SAnalogChannel;
+
 void App_AiReadAllPort(SApp *pApp) {
 
 #if 1
-	uint8_t data[10];
-	uint16_t adc_value, adc_value2;
+	uint8_t data[15];
+	SAnalogChannel adcValue;
 	uint8_t recvLen;
+	uint8_t dataSize = sizeof(SAnalogChannel);
 	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
 		if(pApp->sAI.Node[i].enable)
 		{
 			Analog_RecvFF_Reset(&pApp->sAnalogReader);
-			Analog_SelectChannel(&pApp->sAnalogReader, i);
+			Analog_SelectChannel(i);
 			OSA_SleepMs(1500); // wait enough for slave mcu wakup and send data
-			recvLen = Analog_RecvData(&pApp->sAnalogReader, data, 10);
+			recvLen = Analog_RecvData(&pApp->sAnalogReader, data, 15);
 			if(recvLen > 0) {
 				uint8_t crc8 = crc_8((const uint8_t*)data, recvLen - 1);
 				if(crc8 == data[recvLen-1])
 				{
 					if(data[0] == 0x55) {
-						adc_value = data[1] << 8 | data[2];
-						adc_value2 = data[3] << 8 | data[4];
-						pApp->sCfg.sAiCalib.calib[i].raw = (float)(adc_value - adc_value2);
+						memcpy(&adcValue, &data[1], dataSize);
+						pApp->sCfg.sAiCalib.calib[i].raw = adcValue.diff;
 						pApp->sAI.Node[i].value = pApp->sCfg.sAiCalib.calib[i].offset +
 										(pApp->sCfg.sAiCalib.calib[i].raw *
 										pApp->sCfg.sAiCalib.calib[i].coefficient);
 
-						//LREP("value1: %d - value2: %d - diff %d\r\n", adc_value, adc_value2,
-						//		adc_value - adc_value2);
+						LREP("vref: %.2f - vsen: %.2f - diff %.2f\r\n",
+								adcValue.vref, adcValue.vsen, adcValue.diff);
+
 						pApp->sAI.Node[i].status = TAG_STT_OK;
 					} else {
 						LREP("not recv header\r\n");

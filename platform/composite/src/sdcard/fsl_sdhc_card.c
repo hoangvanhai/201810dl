@@ -832,6 +832,8 @@ static sdhc_status_t SDCARD_DRV_InitSd(sdhc_card_t *card)
         return kStatus_SDHC_SetClockFailed;
     }
 
+    LREP("config 25Mhz\r\n");
+
     if (DOES_HOST_SUPPORT_4BITS(card->host) && DOES_CARD_SUPPORT_4BITS(card))
     {
         if (kStatus_SDHC_NoError != SDCARD_DRV_SetBusWidth(card, kSdBusWidth4Bit))
@@ -849,25 +851,26 @@ static sdhc_status_t SDCARD_DRV_InitSd(sdhc_card_t *card)
 
     if (DOES_HOST_SUPPORT_HIGHSPEED(card->host))
     {
-        err = SDCARD_DRV_SwitchHighspeed(card);
-        if ((err != kStatus_SDHC_NoError) && (kStatus_SDHC_CardNotSupport != err))
-        {
-        	ASSERT(FALSE);
-            return kStatus_SDHC_SwitchHighSpeedFailed;
-        }
-        else if (err == kStatus_SDHC_NoError)
-        {
-            if (kStatus_SDHC_NoError !=
-                    SDHC_DRV_ConfigClock(card->hostInstance, SDMMC_CLK_50MHZ))
-            {
-            	ASSERT(FALSE);
-                return kStatus_SDHC_SetClockFailed;
-            }
-        }
-        else
-        {
-            err = kStatus_SDHC_NoError;
-        }
+//        err = SDCARD_DRV_SwitchHighspeed(card);
+//        if ((err != kStatus_SDHC_NoError) && (kStatus_SDHC_CardNotSupport != err))
+//        {
+//        	ASSERT(FALSE);
+//            return kStatus_SDHC_SwitchHighSpeedFailed;
+//        }
+//        else if (err == kStatus_SDHC_NoError)
+//        {
+//            if (kStatus_SDHC_NoError !=
+//                    SDHC_DRV_ConfigClock(card->hostInstance, SDMMC_CLK_50MHZ))
+//            {
+//            	ASSERT(FALSE);
+//                return kStatus_SDHC_SetClockFailed;
+//            }
+//            LREP("config 50Mhz\r\n");
+//        }
+//        else
+//        {
+//            err = kStatus_SDHC_NoError;
+//        }
     }
 
     if (SDCARD_DRV_SetBlockSize(card, FSL_SDHC_CARD_DEFAULT_BLOCK_SIZE))
@@ -1425,7 +1428,7 @@ sdhc_status_t SDCARD_DRV_Init(sdhc_host_t *host, sdhc_card_t *card)
     {
         /* SDSC card */
         err = SDCARD_DRV_GoIdle(card);
-        //LREP("3.Check card interface condition failed, set card to idle\r\n");
+        LREP("3.Check card interface condition failed, set card to idle\r\n");
         if (err)
         {
             return kStatus_SDHC_SetCardToIdle;

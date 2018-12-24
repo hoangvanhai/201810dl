@@ -1358,6 +1358,8 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
 			kSdhcHalGetDataLine0Level)) {
 	}
 
+	//LREP("get curr state done\r\n");
+
 	host = g_hosts[instance];
 	ret = kStatus_SDHC_NoError;
 	req->error = 0;
@@ -1505,7 +1507,10 @@ sdhc_status_t SDHC_DRV_IssueRequestBlocking(uint32_t instance,
 	}
 
 	if (req->error) {
-		LREP("blocking error = %x\r\n", req->error);
+		LREP("blocking error = %x %d %d\r\n",
+				req->error,
+				(req->error & FSL_SDHC_REQ_ERR_DATA_CRC) > 0,
+				(req->error & FSL_SDHC_REQ_ERR_DATA_END_BIT) > 0);
 		ret = kStatus_SDHC_RequestFailed;
 	}
 

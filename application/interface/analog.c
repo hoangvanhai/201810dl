@@ -106,11 +106,166 @@ int Analog_RecvData(SAnalogReader *pAR, uint8_t* pData, uint16_t u16Size)
  *  @return actual number of received bytes
  *  @note
  */
-int Analog_SelectChannel (SAnalogReader *pAR, uint8_t channel) {
+int Analog_SelectChannel (uint8_t channel) {
+
+	LREP("select ai %d\r\n", channel);
+	switch(channel) {
+	case 0:
+		BOARD_GpioWritePin(SelectAnalog0, 0);
+		BOARD_GpioWritePin(SelectAnalog1, 0);
+		BOARD_GpioWritePin(SelectAnalog2, 0);
+		BOARD_GpioWritePin(SelectAnalog3, 0);
+
+		BOARD_GpioWritePin(SelectTrigger0, 0);
+		BOARD_GpioWritePin(SelectTrigger1, 0);
+		BOARD_GpioWritePin(SelectTrigger2, 0);
+		BOARD_GpioWritePin(SelectTrigger3, 0);
+
+		break;
+
+	case 1:
+		BOARD_GpioWritePin(SelectAnalog0, 1);
+		BOARD_GpioWritePin(SelectAnalog1, 0);
+		BOARD_GpioWritePin(SelectAnalog2, 0);
+		BOARD_GpioWritePin(SelectAnalog3, 0);
+
+		BOARD_GpioWritePin(SelectTrigger0, 1);
+		BOARD_GpioWritePin(SelectTrigger1, 0);
+		BOARD_GpioWritePin(SelectTrigger2, 0);
+		BOARD_GpioWritePin(SelectTrigger3, 0);
+		break;
+
+	case 2:
+		BOARD_GpioWritePin(SelectAnalog0, 0);
+		BOARD_GpioWritePin(SelectAnalog1, 1);
+		BOARD_GpioWritePin(SelectAnalog2, 0);
+		BOARD_GpioWritePin(SelectAnalog3, 0);
+
+		BOARD_GpioWritePin(SelectTrigger0, 0);
+		BOARD_GpioWritePin(SelectTrigger1, 1);
+		BOARD_GpioWritePin(SelectTrigger2, 0);
+		BOARD_GpioWritePin(SelectTrigger3, 0);
+		break;
+
+	case 3:
+		BOARD_GpioWritePin(SelectAnalog0, 1);
+		BOARD_GpioWritePin(SelectAnalog1, 1);
+		BOARD_GpioWritePin(SelectAnalog2, 0);
+		BOARD_GpioWritePin(SelectAnalog3, 0);
+
+		BOARD_GpioWritePin(SelectTrigger0, 1);
+		BOARD_GpioWritePin(SelectTrigger1, 1);
+		BOARD_GpioWritePin(SelectTrigger2, 0);
+		BOARD_GpioWritePin(SelectTrigger3, 0);
+		break;
+
+	case 4:
+		BOARD_GpioWritePin(SelectAnalog0, 0);
+		BOARD_GpioWritePin(SelectAnalog1, 0);
+		BOARD_GpioWritePin(SelectAnalog2, 1);
+		BOARD_GpioWritePin(SelectAnalog3, 0);
+
+		BOARD_GpioWritePin(SelectTrigger0, 0);
+		BOARD_GpioWritePin(SelectTrigger1, 0);
+		BOARD_GpioWritePin(SelectTrigger2, 1);
+		BOARD_GpioWritePin(SelectTrigger3, 0);
+		break;
+
+	case 5:
+		BOARD_GpioWritePin(SelectAnalog0, 1);
+		BOARD_GpioWritePin(SelectAnalog1, 0);
+		BOARD_GpioWritePin(SelectAnalog2, 1);
+		BOARD_GpioWritePin(SelectAnalog3, 0);
+
+		BOARD_GpioWritePin(SelectTrigger0, 1);
+		BOARD_GpioWritePin(SelectTrigger1, 0);
+		BOARD_GpioWritePin(SelectTrigger2, 1);
+		BOARD_GpioWritePin(SelectTrigger3, 0);
+		break;
+
+	case 6: // 8
+		BOARD_GpioWritePin(SelectAnalog0, 0);
+		BOARD_GpioWritePin(SelectAnalog1, 0);
+		BOARD_GpioWritePin(SelectAnalog2, 0);
+		BOARD_GpioWritePin(SelectAnalog3, 1);
+
+		BOARD_GpioWritePin(SelectTrigger0, 0);
+		BOARD_GpioWritePin(SelectTrigger1, 0);
+		BOARD_GpioWritePin(SelectTrigger2, 0);
+		BOARD_GpioWritePin(SelectTrigger3, 1);
+		break;
+
+	case 7: //9
+		BOARD_GpioWritePin(SelectAnalog0, 1);
+		BOARD_GpioWritePin(SelectAnalog1, 0);
+		BOARD_GpioWritePin(SelectAnalog2, 0);
+		BOARD_GpioWritePin(SelectAnalog3, 1);
+
+		BOARD_GpioWritePin(SelectTrigger0, 1);
+		BOARD_GpioWritePin(SelectTrigger1, 0);
+		BOARD_GpioWritePin(SelectTrigger2, 0);
+		BOARD_GpioWritePin(SelectTrigger3, 1);
+		break;
+
+	case 8: //10
+		BOARD_GpioWritePin(SelectAnalog0, 0);
+		BOARD_GpioWritePin(SelectAnalog1, 1);
+		BOARD_GpioWritePin(SelectAnalog2, 0);
+		BOARD_GpioWritePin(SelectAnalog3, 1);
+
+		BOARD_GpioWritePin(SelectTrigger0, 0);
+		BOARD_GpioWritePin(SelectTrigger1, 1);
+		BOARD_GpioWritePin(SelectTrigger2, 0);
+		BOARD_GpioWritePin(SelectTrigger3, 1);
+		break;
+
+
+	case 9: //11
+		BOARD_GpioWritePin(SelectAnalog0, 1);
+		BOARD_GpioWritePin(SelectAnalog1, 1);
+		BOARD_GpioWritePin(SelectAnalog2, 0);
+		BOARD_GpioWritePin(SelectAnalog3, 1);
+
+		BOARD_GpioWritePin(SelectTrigger0, 1);
+		BOARD_GpioWritePin(SelectTrigger1, 1);
+		BOARD_GpioWritePin(SelectTrigger2, 0);
+		BOARD_GpioWritePin(SelectTrigger3, 1);
+		break;
+
+	case 10: //12
+		BOARD_GpioWritePin(SelectAnalog0, 0);
+		BOARD_GpioWritePin(SelectAnalog1, 0);
+		BOARD_GpioWritePin(SelectAnalog2, 1);
+		BOARD_GpioWritePin(SelectAnalog3, 1);
+
+		BOARD_GpioWritePin(SelectTrigger0, 0);
+		BOARD_GpioWritePin(SelectTrigger1, 0);
+		BOARD_GpioWritePin(SelectTrigger2, 1);
+		BOARD_GpioWritePin(SelectTrigger3, 1);
+		break;
+
+
+	case 11: //13
+		BOARD_GpioWritePin(SelectAnalog0, 1);
+		BOARD_GpioWritePin(SelectAnalog1, 0);
+		BOARD_GpioWritePin(SelectAnalog2, 1);
+		BOARD_GpioWritePin(SelectAnalog3, 1);
+
+		BOARD_GpioWritePin(SelectTrigger0, 1);
+		BOARD_GpioWritePin(SelectTrigger1, 0);
+		BOARD_GpioWritePin(SelectTrigger2, 1);
+		BOARD_GpioWritePin(SelectTrigger3, 1);
+		break;
+
+	default:
+		ASSERT(FALSE);
+		break;
+	}
 
 	GPIO_DRV_SetPinOutput(TriggerAnalog);
 	OSA_SleepMs(10);
 	GPIO_DRV_ClearPinOutput(TriggerAnalog);
+
 	return 0;
 }
 

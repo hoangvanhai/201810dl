@@ -281,7 +281,14 @@ void  App_OS_TimeTickHook (void)
 	if(count++ >= 1000) {
 		//LREP("app tick hook on\r\n");
 		//GPIO_DRV_TogglePinOutput(kGpioLEDBLUE);
-		GPIO_DRV_TogglePinOutput(LanPsuEn);
+//		GPIO_DRV_TogglePinOutput(LanPsuEn);
+//		GPIO_DRV_TogglePinOutput(LanPsuOcp);
+//		GPIO_DRV_TogglePinOutput(LanPsuEn);
+//		GPIO_DRV_TogglePinOutput(IoVccEn);
+//		GPIO_DRV_TogglePinOutput(IoVccOcf);
+//		GPIO_DRV_TogglePinOutput(ModbusPsuOcp);
+//		GPIO_DRV_TogglePinOutput(ModbusPsuEn);
+//		GPIO_DRV_TogglePinOutput(LcdGpio2);
 		count = 0;
 	}
 //	WDOG_DRV_Refresh();

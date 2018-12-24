@@ -43,10 +43,8 @@ void hardware_init(void) {
 	CLOCK_SYS_EnablePortClock(PORTD_IDX);
 	CLOCK_SYS_EnablePortClock(PORTE_IDX);
 
-//	CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
-//	CLOCK_SYS_EnableLpuartClock(0);
-
-	//CLOCK_SYS_SetEnetTimeStampSrc(0, kClockTimeSrcOsc0erClk);
+	CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
+	CLOCK_SYS_EnableEnetClock(BOARD_ENET_INSTANCE);
 
 //	configure_sdhc_pins(BOARD_SDHC_INSTANCE);
 	configure_enet_pins(BOARD_ENET_INSTANCE);
@@ -64,20 +62,22 @@ void hardware_init(void) {
 #endif
 
     CLOCK_SYS_SetEnetExternalFreq(0, 	50000000U);
-	CLOCK_SYS_SetEnetTimeStampSrc(0, 	kClockTimeSrcExt);
+	CLOCK_SYS_SetEnetTimeStampSrc(0, 	kClockTimeSrcCoreSysClk);
 	CLOCK_SYS_SetEnetRmiiSrc(0, 		kClockRmiiSrcExt);
-	CLOCK_SYS_EnableEnetClock(BOARD_ENET_INSTANCE);
-
-
-
 
 	// Configure the power mode protection
 	SMC_HAL_SetProtection(SMC_BASE_PTR, kAllowPowerModeVlp);
 
+	CLOCK_SYS_SetSdhcSrc(0, kClockTimeSrcCoreSysClk);
+
+
 //	GPIO_DRV_Init(sdhcCdPin, NULL);
 //
 //    GPIO_DRV_Init(DigitalInputPin, NULL);
-//    GPIO_DRV_Init(NULL, DigitalOutputPin);
+    GPIO_DRV_Init(NULL, DigitalOutputPin);
+    GPIO_DRV_Init(NULL, SelectAnalogPin);
+
+    GPIO_DRV_SetPinOutput(SimVccEn);
 
 //	BOARD_EnableAllFault();
 //

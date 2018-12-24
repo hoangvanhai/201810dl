@@ -596,7 +596,7 @@ void ftp_client_sender(void *arg) {
 		OSA_SleepMs(1000);
 		bool get = Network_GetLinkStatus(&stat);
 		LREP("get status = %d - %d\r\n", get, stat );
-		Network_GetLinkSpeed();
+		//Network_GetLinkSpeed();
 	}
 }
 

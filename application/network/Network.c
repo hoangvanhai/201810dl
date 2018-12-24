@@ -55,6 +55,7 @@ void static netif_link_changed_callback(struct netif* netif);
  *  @note
  */
 void Network_InitModule(SCommon *pCM) {
+
 	tcpip_init(NULL,NULL);
 
 //	if(pCM->dev_dhcp == false) {
@@ -88,10 +89,11 @@ void Network_InitModule(SCommon *pCM) {
 	IP4_ADDR(&gw, 192,168,0,1);
 	netif_add(&eth0, &ipaddr, &netmask, &gw, NULL, ethernetif_init, tcpip_input);
 	netif_set_default(&eth0);
+	netif_set_up(&eth0);
 
 //	tcp_client_init(pCM->server_ctrl_ip, pCM->server_ctrl_port);
 //	tcp_server_init(12345);
-	ftp_client_init(pCM);
+//	ftp_client_init(pCM);
 
 
 }

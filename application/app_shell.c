@@ -61,6 +61,7 @@ void cwd(int32_t argc, char **argv);
 void cat_file(int32_t argc, char **argv);
 void stat(int32_t argc, char **argv);
 void modbus(int32_t argc, char **argv);
+void select_ai(int32_t argc, char **argv);
 
 void my_shell_init(void);
 
@@ -86,6 +87,7 @@ const shell_command_t cmd_table[] =
 	{"pwd", 	0u, 0u, cwd, 			"print work directory", ""},
 	{"stat", 	1u, 1u, stat, 			"check file status", "<file name>"},
 	{"mb", 		1u, 1u, modbus, 		"read mobus", "<reg addr>"},
+	{"select",	1u, 1u, select_ai, 		"select ai", "<ch>"},
 	{0, 0u, 0u, 0, 0, 0}
 };
 
@@ -612,6 +614,16 @@ void modbus(int32_t argc, char **argv) {
 		LREP("\r\n");
 	}
 }
+void select_ai(int32_t argc, char **argv) {
+	int idx = atoi(argv[1]);
+	if(idx < 0 || idx > 11) {
+		LREP("invalid index\r\n");
+		return;
+	}
+
+
+	Analog_SelectChannel(idx);
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -677,6 +689,8 @@ void control(int32_t argc, char**argv) {
 //			Net_TCPClientSendData(data, 100);
 			OSA_SleepMs(100);
 		}
+	} else if(strcmp(argv[1], "log") == 0) {
+		App_GenerateLogFile(&pAppObj);
 	} else if(strcmp(argv[1], "don") == 0) {
 		LREP("control don\r\n");
 
@@ -709,6 +723,7 @@ void control(int32_t argc, char**argv) {
     	GPIO_DRV_SetPinOutput(IoVccOcf);
     	GPIO_DRV_SetPinOutput(ModbusPsuOcp);
     	GPIO_DRV_SetPinOutput(ModbusPsuEn);
+    	GPIO_DRV_SetPinOutput(SimVccEn);
 
 	} else if(strcmp(argv[1], "doff") == 0) {
 		LREP("control doff\r\n");
@@ -742,6 +757,7 @@ void control(int32_t argc, char**argv) {
     	GPIO_DRV_ClearPinOutput(IoVccOcf);
     	GPIO_DRV_ClearPinOutput(ModbusPsuOcp);
     	GPIO_DRV_ClearPinOutput(ModbusPsuEn);
+    	GPIO_DRV_ClearPinOutput(SimVccEn);
 	}
 
 }

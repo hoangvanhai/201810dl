@@ -125,9 +125,11 @@ debug_console_status_t DbgConsole_Init( uint32_t uartInstance, uint32_t baudRate
 		{
 
 #if BOARD_DEBUG_UART_INSTANCE == 5
+
+
 			s_debugConsole.instance = LPUART0_IDX;
 			lpuart_user_config_t lpuartConfig;
-			 lpuartConfig.clockSource = kClockLpuartSrcPllFllSel;
+			 lpuartConfig.clockSource = kClockLpuartSrcOsc0erClk;
 			 lpuartConfig.baudRate = baudRate;
 			 lpuartConfig.bitCountPerChar = kLpuart8BitsPerChar;
 			 lpuartConfig.parityMode = kLpuartParityDisabled;

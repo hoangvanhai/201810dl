@@ -75,11 +75,11 @@ enum _gpio_pins_pinNames {
 	DigitalInput0				= GPIO_MAKE_PIN(GPIOB_IDX, 19U),
 	DigitalInput1				= GPIO_MAKE_PIN(GPIOB_IDX, 18U),
 	DigitalInput2				= GPIO_MAKE_PIN(GPIOB_IDX, 8U),
-	DigitalInput3				= GPIO_MAKE_PIN(GPIOC_IDX, 7U),
-	DigitalInput4				= GPIO_MAKE_PIN(GPIOC_IDX, 6U),
-	DigitalInput5				= GPIO_MAKE_PIN(GPIOC_IDX, 5U),
-	DigitalInput6				= GPIO_MAKE_PIN(GPIOC_IDX, 4U),
-	DigitalInput7				= GPIO_MAKE_PIN(GPIOC_IDX, 3U),
+	DigitalInput3				= GPIO_MAKE_PIN(GPIOB_IDX, 7U),
+	DigitalInput4				= GPIO_MAKE_PIN(GPIOB_IDX, 6U),
+	DigitalInput5				= GPIO_MAKE_PIN(GPIOB_IDX, 5U),
+	DigitalInput6				= GPIO_MAKE_PIN(GPIOB_IDX, 4U),
+	DigitalInput7				= GPIO_MAKE_PIN(GPIOB_IDX, 3U),
 
 	DigitalOutput0				= GPIO_MAKE_PIN(GPIOC_IDX, 1U),
 	DigitalOutput1				= GPIO_MAKE_PIN(GPIOC_IDX, 0U),
@@ -95,8 +95,8 @@ enum _gpio_pins_pinNames {
 
 	SelectTrigger0				= GPIO_MAKE_PIN(GPIOC_IDX, 7U),
 	SelectTrigger1				= GPIO_MAKE_PIN(GPIOC_IDX, 6U),
-	SelectTrigger2				= GPIO_MAKE_PIN(GPIOC_IDX, 12U),
-	SelectTrigger3				= GPIO_MAKE_PIN(GPIOC_IDX, 9U),
+	SelectTrigger2				= GPIO_MAKE_PIN(GPIOC_IDX, 9U),
+	SelectTrigger3				= GPIO_MAKE_PIN(GPIOC_IDX, 12U),
 
 	TriggerAnalog				= GPIO_MAKE_PIN(GPIOC_IDX, 8U),
 	RefCurrEn					= GPIO_MAKE_PIN(GPIOD_IDX, 3U),
@@ -114,9 +114,16 @@ enum _gpio_pins_pinNames {
 	IoVccOcf					= GPIO_MAKE_PIN(GPIOB_IDX, 2U),
 	ModbusPsuOcp				= GPIO_MAKE_PIN(GPIOB_IDX, 16U),
 	ModbusPsuEn					= GPIO_MAKE_PIN(GPIOB_IDX, 17U),
+	SimVccEn					= GPIO_MAKE_PIN(GPIOA_IDX, 6U),
 
-//	ModbusPsuOcp				= GPIO_MAKE_PIN(GPIOD_IDX, 8U),
-//	ModbusPsuEn					= GPIO_MAKE_PIN(GPIOD_IDX, 9U),
+
+//	LanPsuOcp					= GPIO_MAKE_PIN(GPIOA_IDX, 16U),
+//	LanPsuEn					= GPIO_MAKE_PIN(GPIOE_IDX, 17U),
+//	IoVccEn						= GPIO_MAKE_PIN(GPIOA_IDX, 15U),
+//	IoVccOcf					= GPIO_MAKE_PIN(GPIOA_IDX, 14),
+//	ModbusPsuOcp				= GPIO_MAKE_PIN(GPIOA_IDX, 5U),
+//	ModbusPsuEn					= GPIO_MAKE_PIN(GPIOA_IDX, 12U),
+//	LcdGpio2					= GPIO_MAKE_PIN(GPIOA_IDX, 13U),
 };
 
 

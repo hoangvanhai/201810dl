@@ -73,32 +73,29 @@
 
 void configure_enet_pins(uint32_t instance)
 {
+	PORT_HAL_SetMuxMode(PORTA,7u,kPortMuxAlt5);			// RMII MDIO
+	PORT_HAL_SetOpenDrainCmd(PORTA,7u,true);
+	PORT_HAL_SetPullMode(PORTA,7u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTA,7u,true);
 
-  PORT_HAL_SetMuxMode(PORTA,7u,kPortMuxAlt4);		// RMII MDIO
-  PORT_HAL_SetOpenDrainCmd(PORTA,7u,true);
-  PORT_HAL_SetPullMode(PORTA,7u,kPortPullUp);
-  PORT_HAL_SetPullCmd(PORTA,7u,true);
-
-  PORT_HAL_SetMuxMode(PORTA,8u,kPortMuxAlt4);		// RMII MDDC
-  /* Affects PORTA_PCR13 register */
-  PORT_HAL_SetMuxMode(PORTA,13u,kPortMuxAlt4);		// RMII RxD0
-  /* Affects PORTA_PCR12 register */
-  PORT_HAL_SetMuxMode(PORTA,12u,kPortMuxAlt4);		// RMII RxD1
-  /* Affects PORTA_PCR14 register */
-  PORT_HAL_SetMuxMode(PORTA,14u,kPortMuxAlt4);		// RMII CRS DV
-  /* Affects PORTA_PCR5 register */
-  PORT_HAL_SetMuxMode(PORTA,5u,kPortMuxAlt4);		// RMII RX ER
-  /* Affects PORTA_PCR16 register */
-  PORT_HAL_SetMuxMode(PORTA,16u,kPortMuxAlt4);		// RMII TxD0
-  /* Affects PORTA_PCR17 register */
-  PORT_HAL_SetMuxMode(PORTA,17u,kPortMuxAlt4);		// RMII TxD1
-  /* Affects PORTA_PCR15 register */
-  PORT_HAL_SetMuxMode(PORTA,15u,kPortMuxAlt4);		// RMII TxEN
-  /* Affects PORTA_PCR28 register */
-  //PORT_HAL_SetMuxMode(PORTA,28u,kPortMuxAlt4);		// MII Tx ER
-
-  PORT_HAL_SetMuxMode(PORTE,26u,kPortMuxAlt2);		// RMII TxEN
-
+	PORT_HAL_SetMuxMode(PORTA,8u,kPortMuxAlt5);			// RMII MDDC
+	/* Affects PORTA_PCR13 register */
+	PORT_HAL_SetMuxMode(PORTA,13u,kPortMuxAlt4);		// RMII RxD0
+	/* Affects PORTA_PCR12 register */
+	PORT_HAL_SetMuxMode(PORTA,12u,kPortMuxAlt4);		// RMII RxD1
+	/* Affects PORTA_PCR14 register */
+	PORT_HAL_SetMuxMode(PORTA,14u,kPortMuxAlt4);		// RMII CRS DV
+	/* Affects PORTA_PCR5 register */
+	PORT_HAL_SetMuxMode(PORTA,5u,kPortMuxAlt4);			// RMII RX ER
+	/* Affects PORTA_PCR16 register */
+	PORT_HAL_SetMuxMode(PORTA,16u,kPortMuxAlt4);		// RMII TxD0
+	/* Affects PORTA_PCR17 register */
+	PORT_HAL_SetMuxMode(PORTA,17u,kPortMuxAlt4);		// RMII TxD1
+	/* Affects PORTA_PCR15 register */
+	PORT_HAL_SetMuxMode(PORTA,15u,kPortMuxAlt4);		// RMII TxEN
+	/* Affects PORTA_PCR28 register */
+	//PORT_HAL_SetMuxMode(PORTA,28u,kPortMuxAlt4);		// MII Tx ER
+	PORT_HAL_SetMuxMode(PORTE,26u,kPortMuxAlt2);		// RMII TxEN
 }
 
 //void configure_ftm_pins(uint32_t instance)
@@ -360,11 +357,17 @@ void configure_uart_pins(uint32_t instance)
 
 	case 5:		// DBG
 		PORT_HAL_SetMuxMode(PORTD,9u,kPortMuxAlt5);		//
-		PORT_HAL_SetDriveStrengthMode(PORTD,9u,kPortLowDriveStrength);
 		PORT_HAL_SetMuxMode(PORTD,8u,kPortMuxAlt5);		//
 
-//		PORT_HAL_SetMuxMode(PORTE,9u,kPortMuxAlt5);		//
-//		PORT_HAL_SetMuxMode(PORTE,8u,kPortMuxAlt5);		//
+//		SIM_HAL_SetLpuartTxSrcMode(SIM, 0, kSimLpuartTxsrcPin);
+//		SIM_HAL_SetLpuartRxSrcMode(SIM, 0, kSimLpuartRxsrcPin);
+
+		SIM->SOPT5 = ((SIM->SOPT5 &
+	                   /* Mask bits to zero which are setting */
+	                   (~(SIM_SOPT5_LPUART0TXSRC_MASK)))
+
+	                  /* LPUART0 transmit data source select: LPUART0_TX pin. */
+	                  | SIM_SOPT5_LPUART0TXSRC(0));
 	break;
 
     default:

@@ -51,7 +51,7 @@ typedef struct _SAnalogReader
 void 		Analog_Uart_Init(uint32_t uartInstance, uint32_t u32Baudrate, uint8_t u8TxPrio, uint8_t u8RxPrio);
 uint8_t  	Analog_Init(SAnalogReader *pAR,  uint32_t uartInstance,
 							uint32_t u32BaudRate, uint8_t u8TxIntPrio, uint8_t u8RxIntPrio);
-int 		Analog_SelectChannel	(SAnalogReader *pAR, uint8_t channel);
+int 		Analog_SelectChannel	(uint8_t channel);
 int  		Analog_RecvData			(SAnalogReader *pAR, uint8_t* pData, uint16_t nSize);
 int	 		Analog_GetRecvCount		(SAnalogReader *pAR);
 void 		Analog_RecvFF_EnProtect	(SAnalogReader *pAR, BOOL bEn);

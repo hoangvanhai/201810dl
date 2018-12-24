@@ -75,48 +75,47 @@ const clock_manager_user_config_t g_defaultClockConfigVlpr =
 };
 
 #if 0
-/* Configuration for enter RUN mode. Core clock = 120MHz. */
-const clock_manager_user_config_t g_defaultClockConfigRun =
-{
-    .mcgConfig =
-    {
-        .mcg_mode           = kMcgModePEE,   // Work in PEE mode.
-        .irclkEnable        = true,  // MCGIRCLK enable.
-        .irclkEnableInStop  = false, // MCGIRCLK disable in STOP mode.
-        .ircs               = kMcgIrcSlow, // Select IRC32k.
-        .fcrdiv             = 0U,    // FCRDIV is 0.
-
-        .frdiv   = 7U,
-        .drs     = kMcgDcoRangeSelLow,  // Low frequency range
-        .dmx32   = kMcgDmx32Default,    // DCO has a default range of 25%
-        .oscsel  = kMcgOscselOsc,       // Select OSC
-
-        .pll0EnableInFllMode = false,  // PLL0 disable
-        .pll0EnableInStop    = false,  // PLL0 disalbe in STOP mode
-        .prdiv0              = 0x13U,
-        .vdiv0               = 0x18U,
-    },
-
-    .simConfig =
-    {
-        .pllFllSel = kClockPllFllSelPll,    // PLLFLLSEL select PLL.
-        .er32kSrc  = kClockEr32kSrcRtc,     // ERCLK32K selection, use RTC.
-        .outdiv1   = 0U,
-        .outdiv2   = 1U,
-        .outdiv3   = 1U,
-        .outdiv4   = 4U,
-    },
-    .oscerConfig =
-    {
-        .enable       = true,  // OSCERCLK enable.
-        .enableInStop = false, // OSCERCLK disable in STOP mode.
-    }
-};
-
-#endif
+///* Configuration for enter RUN mode. Core clock = 120MHz. */
+//const clock_manager_user_config_t g_defaultClockConfigRun =
+//{
+//    .mcgConfig =
+//    {
+//        .mcg_mode           = kMcgModePEE,   // Work in PEE mode.
+//        .irclkEnable        = true,  // MCGIRCLK enable.
+//        .irclkEnableInStop  = false, // MCGIRCLK disable in STOP mode.
+//        .ircs               = kMcgIrcSlow, // Select IRC32k.
+//        .fcrdiv             = 0U,    // FCRDIV is 0.
+//
+//        .frdiv   = 7U,
+//        .drs     = kMcgDcoRangeSelLow,  // Low frequency range
+//        .dmx32   = kMcgDmx32Default,    // DCO has a default range of 25%
+//        .oscsel  = kMcgOscselOsc,       // Select OSC
+//
+//        .pll0EnableInFllMode = false,  // PLL0 disable
+//        .pll0EnableInStop    = false,  // PLL0 disalbe in STOP mode
+//        .prdiv0              = 0x13U,
+//        .vdiv0               = 0x18U,
+//    },
+//
+//    .simConfig =
+//    {
+//        .pllFllSel = kClockPllFllSelPll,    // PLLFLLSEL select PLL.
+//        .er32kSrc  = kClockEr32kSrcRtc,     // ERCLK32K selection, use RTC.
+//        .outdiv1   = 0U,
+//        .outdiv2   = 1U,
+//        .outdiv3   = 1U,
+//        .outdiv4   = 4U,
+//    },
+//    .oscerConfig =
+//    {
+//        .enable       = true,  // OSCERCLK enable.
+//        .enableInStop = false, // OSCERCLK disable in STOP mode.
+//    }
+//};
 
 
-/* Configuration for enter RUN mode. Core clock = 120MHz. */
+
+/* Configuration for enter RUN mode. Core clock = 180MHz. */
 const clock_manager_user_config_t g_defaultClockConfigRun =
 {
     .mcgConfig =
@@ -155,6 +154,48 @@ const clock_manager_user_config_t g_defaultClockConfigRun =
     }
 };
 
+
+#else
+
+/* Configuration for enter RUN mode. Core clock = 180MHz. */
+const clock_manager_user_config_t g_defaultClockConfigRun =
+{
+    .mcgConfig =
+    {
+        .mcg_mode           = kMcgModePEE,   // Work in PEE mode.
+        .irclkEnable        =  true,  		 // MCGIRCLK enable.
+        .irclkEnableInStop  = false, 		 // MCGIRCLK disable in STOP mode.
+        .ircs               = kMcgIrcSlow, 	 // Select IRC32k.
+        .fcrdiv             = 0U,    		 // FCRDIV is 0.
+
+        .frdiv   = 0U,
+        .drs     = kMcgDcoRangeSelLow,  // Low frequency range
+        .dmx32   = kMcgDmx32Default,    // DCO has a default range of 25%
+        .oscsel  = kMcgOscselOsc,       // Select OSC
+
+        .pll0EnableInFllMode = false,  // PLL0 disable
+        .pll0EnableInStop    = false,  // PLL0 disalbe in STOP mode
+        .prdiv0              = 0x0U,
+        .vdiv0               = 0x1DU,
+		.pllcs				 = kMcgPllClkSelPll0,
+    },
+
+    .simConfig =
+    {
+        .pllFllSel = kClockPllFllSelPll,    // PLLFLLSEL select PLL.
+        .er32kSrc  = kClockEr32kSrcOsc0,        // ERCLK32K selection, use RTC.
+        .outdiv1   = 0U,
+        .outdiv2   = 1U,
+        .outdiv3   = 1U,
+        .outdiv4   = 6U,
+    },
+    .oscerConfig =
+    {
+        .enable       = true,  // OSCERCLK enable.
+        .enableInStop = true, // OSCERCLK disable in STOP mode.
+    }
+};
+#endif
 /* Function to initialize OSC0 base on board configuration. */
 void BOARD_InitOsc0(void)
 {
@@ -162,13 +203,13 @@ void BOARD_InitOsc0(void)
     osc_user_config_t osc0Config =
     {
         .freq                = OSC0_XTAL_FREQ,
-        .hgo                 = MCG_HGO0,
-        .range               = MCG_RANGE0,
-        .erefs               = MCG_EREFS0,
-        .enableCapacitor2p   = OSC0_SC2P_ENABLE_CONFIG,
-        .enableCapacitor4p   = OSC0_SC4P_ENABLE_CONFIG,
-        .enableCapacitor8p   = OSC0_SC8P_ENABLE_CONFIG,
-        .enableCapacitor16p  = OSC0_SC16P_ENABLE_CONFIG,
+        .hgo                 = kOscGainLow,
+        .range               = kOscRangeVeryHigh,
+        .erefs               = kOscSrcOsc,
+        .enableCapacitor2p   = false,
+        .enableCapacitor4p   = false,
+        .enableCapacitor8p   = false,
+        .enableCapacitor16p  = true,
     };
 
     CLOCK_SYS_OscInit(0U, &osc0Config);
@@ -194,7 +235,7 @@ static void CLOCK_SetBootConfig(clock_manager_user_config_t const* config)
 void BOARD_ClockInit(void)
 {
     /* Set allowed power mode, allow all. */
-    SMC_HAL_SetProtection(SMC, kAllowPowerModeAll);
+//    SMC_HAL_SetProtection(SMC, kAllowPowerModeAll);
 
     /* Setup board clock source. */
     // Setup OSC0 if used.
@@ -452,6 +493,15 @@ void BOARD_CheckResetCause(void) {
 	}
 	if(resetCause & kRcmStopModeAckErr) {
 		LREP("kRcmStopModeAckErr\r\n");
+	}
+}
+
+
+void BOARD_GpioWritePin(uint32_t pinName, bool value) {
+	if(value) {
+		GPIO_DRV_SetPinOutput(pinName);
+	} else {
+		GPIO_DRV_ClearPinOutput(pinName);
 	}
 }
 /*******************************************************************************
