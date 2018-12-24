@@ -96,7 +96,7 @@
 #define BOARD_ANALOG_UART_BAUD				9600
 /* debug */
 #define BOARD_DEBUG_UART_INSTANCE   		1
-#define BOARD_DEBUG_UART_BAUD       		115200	//921600	//115200
+#define BOARD_DEBUG_UART_BAUD       		1000000	//921600	//115200
 /* communication */
 #define BOARD_TRANSPC_UART_INSTANCE   		2
 #define BOARD_TRANSPC_UART_BAUD       		115200

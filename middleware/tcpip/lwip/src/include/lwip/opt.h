@@ -151,7 +151,7 @@
  *      memp_malloc() or memp_free() is called (useful but slow!)
  */
 #ifndef MEMP_OVERFLOW_CHECK
-#define MEMP_OVERFLOW_CHECK             0
+#define MEMP_OVERFLOW_CHECK             1
 #endif
 
 /**
@@ -159,7 +159,7 @@
  * sure that there are no cycles in the linked lists.
  */
 #ifndef MEMP_SANITY_CHECK
-#define MEMP_SANITY_CHECK               0
+#define MEMP_SANITY_CHECK               1
 #endif
 
 /**
@@ -321,7 +321,7 @@
  * (only needed if you use the sequential API, like api_lib.c)
  */
 #ifndef MEMP_NUM_NETBUF
-#define MEMP_NUM_NETBUF                 2
+#define MEMP_NUM_NETBUF                 6
 #endif
 
 /**
@@ -1114,7 +1114,7 @@
  * field.
  */
 #ifndef LWIP_NETIF_HOSTNAME
-#define LWIP_NETIF_HOSTNAME             0
+#define LWIP_NETIF_HOSTNAME             1
 #endif
 
 /**
@@ -1453,7 +1453,7 @@
  * in seconds. (does not require sockets.c, and will affect tcp.c)
  */
 #ifndef LWIP_TCP_KEEPALIVE
-#define LWIP_TCP_KEEPALIVE              0
+#define LWIP_TCP_KEEPALIVE              1
 #endif
 
 /**
@@ -1913,7 +1913,7 @@
  * PBUF_DEBUG: Enable debugging in pbuf.c.
  */
 #ifndef PBUF_DEBUG
-#define PBUF_DEBUG                      LWIP_DBG_ON
+#define PBUF_DEBUG                      LWIP_DBG_OFF
 #endif
 
 /**
@@ -1990,7 +1990,7 @@
  * MEMP_DEBUG: Enable debugging in memp.c.
  */
 #ifndef MEMP_DEBUG
-#define MEMP_DEBUG                      LWIP_DBG_ON
+#define MEMP_DEBUG                      LWIP_DBG_OFF
 #endif
 
 /**
@@ -2082,7 +2082,7 @@
  * TCPIP_DEBUG: Enable debugging in tcpip.c.
  */
 #ifndef TCPIP_DEBUG
-#define TCPIP_DEBUG                     LWIP_DBG_ON
+#define TCPIP_DEBUG                     LWIP_DBG_OFF
 #endif
 
 /**

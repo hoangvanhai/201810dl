@@ -659,7 +659,7 @@ void ftp_client_sender(void *arg) {
 									ftp_destroy_channel(pFC);
 
 									err_count++;
-								} while( retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE && err_count < 10);
+								} while( retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE);
 							}
 						}
 					} else { // file not existed
@@ -674,50 +674,7 @@ void ftp_client_sender(void *arg) {
 
 			} // if msg pointer not null
 		} else if(err == OS_ERR_TIMEOUT) { // if not message in queue
-#if 0
-			// TODO [manhbt] No new file arrived, process retry table
-			if(ring_file_get_count(&g_network.retryTable) > 0) {
 
-				ring_file_record_t *pRecord = (ring_file_record_t *)OSA_FixedMemMalloc(sizeof(ring_file_record_t));
-				if(!pRecord) {
-					WARN("Unable to allocate memory for temporarily buffer !!!\r\n");
-					continue;
-				}
-
-				memset(pRecord, 0, sizeof(ring_file_record_t));
-
-				if(ring_file_get_front(&g_network.retryTable, pRecord) != TRUE) {
-					WARN("Unable to GET record from Retry table");
-					OSA_FixedMemFree((uint8_t*)pRecord);
-					continue;
-				}
-
-				// TODO: [manhbt] verify Record (check CRC)
-				uint16_t calc_checksum = crc_16((const unsigned char*)pRecord, sizeof(ring_file_record_t)-2);
-				if(calc_checksum != pRecord->crc) {
-					WARN("CRC not matched, cal: %.2x, got: %.2x", calc_checksum, pRecord->crc);
-					OSA_FixedMemFree((uint8_t*)pRecord);
-					continue;
-				}
-
-				// TODO: [manhbt] Re-send File
-				LREP("Trying to re-send file %s/%s", pRecord->dir_path, pRecord->file_name);
-
-//				retVal = net_ftp_client_send_file(pRecord->dir_path, pRecord->file_name);
-
-
-				if(retVal == FTP_ERR_NONE) {
-					//TODO: [manhbt] Pop out & erase record from retry table
-					LREP("Re-send file OK, pop out and delete record from retry table");
-					ring_file_pop_front(&g_network.retryTable, pRecord);
-				} else {
-					WARN("Re-send file FAILED, retry table remains unchanged");
-				}
-				OSA_FixedMemFree((uint8_t*)pRecord);
-			} else {
-				//LREP(".");
-			}
-#endif
 		}
 	}
 }

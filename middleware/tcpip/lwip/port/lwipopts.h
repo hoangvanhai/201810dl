@@ -42,7 +42,7 @@
  * critical regions during buffer allocation, deallocation and memory
  * allocation and deallocation.
  */
-#define SYS_LIGHTWEIGHT_PROT    0
+#define SYS_LIGHTWEIGHT_PROT    1
 #if USE_RTOS
 
 /**
@@ -157,7 +157,7 @@
 
 
 /* ---------- Statistics options ---------- */
-#define LWIP_STATS 0
+#define LWIP_STATS 1
 #define LWIP_PROVIDE_ERRNO 1
 
 
@@ -224,7 +224,7 @@ Some MCU allow computing and verifying the IP, UDP, TCP and ICMP checksums by ha
 #endif 
 
 #define TCPIP_MBOX_SIZE                 32
-#define TCPIP_THREAD_STACKSIZE	        1024
+#define TCPIP_THREAD_STACKSIZE	        2048
 #define TCPIP_THREAD_PRIO	             2
 
 /**

@@ -609,9 +609,11 @@ void App_TaskPeriodic(task_param_t parg) {
 
 		if((logged == false) && (pApp->sDateTime.tm_min % log_min == 0)) {
 			// To ensure has valid data before log to file
-			if(pApp->aiReadCount > 0 && pApp->mbReadCount > 0) {
+			//if(pApp->aiReadCount > 0 && pApp->mbReadCount > 0)
+			{
 				if(pApp->sCfg.sCom.ftp_enable1 ||
-						pApp->sCfg.sCom.ftp_enable2) {
+						pApp->sCfg.sCom.ftp_enable2)
+				{
 					LREP("generate log file\r\n");
 					ASSERT(App_GenerateLogFile(pApp) == FR_OK);
 				} else {
@@ -2323,7 +2325,7 @@ void Clb_NetTcpClientConnEvent(Network_Status event,
  */
 void Clb_NetTcpClientRecvData(const uint8_t* data, int length) {
 
-	LREP("client recv data len = %d \r\n", length);
+	WARN("client recv data len = %d \r\n", length);
 	//Network_TcpClient_Send(data, length);
 }
 /*****************************************************************************/

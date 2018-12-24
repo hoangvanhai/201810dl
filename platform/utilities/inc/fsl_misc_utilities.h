@@ -74,7 +74,7 @@
 	#define ASSERT(con)				{if(!(con))	{LREP( COLOR_KYEL "\r\nASSERT in file " __FILE__ " at line "  TOSTRING(__LINE__) "\r\n" COLOR_KNRM);			 }	}
 	#define ERR_LINE(s, args...) 		LREP(COLOR_KRED "[ERROR]:%s:%d " s "\r\n" COLOR_KNRM, __FILE__, __LINE__, ##args)
 	#define ERR(s, args...)				LREP(COLOR_KRED "ERR " s "\r\n" COLOR_KNRM, ##args)
-	#define WARN(s, args...)			LREP(COLOR_KYEL "WARN " s "\r\n" COLOR_KNRM, ##args)
+	#define WARN(s, args...)			LREP(COLOR_KYEL s COLOR_KNRM, ##args)
 	#define WARN_LINE(s, args...)		LREP(COLOR_KYEL "[WARN]:%s:%d " s "\r\n" COLOR_KNRM, __FILE__, __LINE__, ##args)
 
 	#define RS485_DEBUG_TX_EN()		{_LATB8 = 1;}
