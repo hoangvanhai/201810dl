@@ -54,6 +54,7 @@ void Clb_NetTcpServerError(const char* data, int length);
 /************************** Variable Definitions *****************************/
 SApp sApp;
 SApp *pAppObj = &sApp;
+APP_TASK_DEFINE(task_ai, 			TASK_AI_STACK_SIZE);
 APP_TASK_DEFINE(task_shell, 		TASK_SHELL_STACK_SIZE);
 APP_TASK_DEFINE(task_ui, 			TASK_UI_STACK_SIZE);
 APP_TASK_DEFINE(task_modbus, 		TASK_MODBUS_STACK_SIZE);
@@ -61,6 +62,7 @@ APP_TASK_DEFINE(task_serialcomm,	TASK_SERIAL_COMM_STACK_SIZE);
 APP_TASK_DEFINE(task_periodic,		TASK_PERIODIC_STACK_SIZE);
 APP_TASK_DEFINE(task_startup,		TASK_STARTUP_STACK_SIZE);
 
+task_stack_t	task_ai_stack[TASK_AI_STACK_SIZE/ sizeof(task_stack_t)];
 task_stack_t	task_shell_stack[TASK_SHELL_STACK_SIZE/ sizeof(task_stack_t)];
 task_stack_t	task_ui_stack[TASK_UI_STACK_SIZE/ sizeof(task_stack_t)];
 task_stack_t	task_modbus_stack[TASK_MODBUS_STACK_SIZE/ sizeof(task_stack_t)];
@@ -83,9 +85,6 @@ void App_Init(SApp *pApp) {
 	pApp->eStatus = SYS_ERR_NONE;
 	pApp->stat = false;
 	pApp->reboot = false;
-	OS_ERR error;
-	OSSemCreate(&debug_sem, "debug", 0, &error);
-	ASSERT(error == OS_ERR_NONE);
 
 	err = App_InitFS(pApp);
 
@@ -111,7 +110,6 @@ void App_Init(SApp *pApp) {
 
 	App_InitDI(pApp);
 	App_InitDO(pApp);
-	App_InitAI(pApp);
 
     LREP("sizeof(SCommon) %d\r\n", 		sizeof(SCommon));
     LREP("sizeof(STag) %d\r\n", 		sizeof(STag));
@@ -603,7 +601,7 @@ void App_TaskPeriodic(task_param_t parg) {
 //			logged = true;
 //		}
 
-		if(test++ % 60 == 0) {
+		if(test++ % 5 == 0) {
 			App_GenerateLogFile(pApp);
 		}
 
@@ -655,6 +653,23 @@ void App_TaskModbus(task_param_t param)
 		WDOG_DRV_Refresh();
 	}
 
+}
+
+/*****************************************************************************/
+/** @brief do read all modubs channel with read rate = sCfg.sCom.scan_dur
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void App_TaskAnalogIn(task_param_t param) {
+	SApp *pApp = (SApp *)param;
+	App_InitAI(pApp);
+	while (1) {
+		App_AiReadAllPort(pApp);
+		//OSA_SleepMs(1000);
+	}
 }
 
 /*****************************************************************************/
@@ -770,19 +785,26 @@ void App_TaskStartup(task_param_t arg) {
 
 	while(1) {
 
-		OSTaskSemPend(1000, OS_OPT_PEND_BLOCKING, &ts, &err);
+		OSSemPend(&pApp->hSem, 1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
 
 			/* Check all pending command */
 			if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_1)) {
-				LREP("recv ctrl init sdcard 1\r\n");
-				int err = App_InitFS(pApp);
-				if(err != FR_OK) {
-					App_SetSysStatus(pApp, SYS_ERR_SDCARD_1);
-				} else {
-					App_ClearSysStatus(pApp, SYS_ERR_SDCARD_1);
-					ASSERT(App_LoadConfig(pApp, CONFIG_FILE_PATH) == FR_OK);
-				}
+			    pAppObj->sdhcPlugged = BOARD_IsSDCardDetected();
+			    LREP("card event = %d\r\n", pAppObj->sdhcPlugged);
+
+			    if(!pAppObj->sdhcPlugged) {
+			    	NVIC_SystemReset();
+			    } else {
+			    	LREP("recv ctrl init sdcard 1\r\n");
+					int err = App_InitFS(pApp);
+					if(err != FR_OK) {
+						App_SetSysStatus(pApp, SYS_ERR_SDCARD_1);
+					} else {
+						App_ClearSysStatus(pApp, SYS_ERR_SDCARD_1);
+						ASSERT(App_LoadConfig(pApp, CONFIG_FILE_PATH) == FR_OK);
+					}
+			    }
 
 				App_ClearCtrlCode(pApp, CTRL_INIT_SDCARD_1);
 			}
@@ -809,8 +831,8 @@ void App_TaskStartup(task_param_t arg) {
 		} else {
 			//LEP("Feed dog \r\n");
 			/* Feed dog to prevent WDG reset */
-			//WDOG_DRV_Refresh();
-			App_AiReadAllPort(pApp);
+			WDOG_DRV_Refresh();
+
 		}
 
 
@@ -2258,17 +2280,9 @@ int	App_GenerateFakeTime(SApp *pApp) {
  */
 void sdhc_card_detection(void)
 {
-    pAppObj->sdhcPlugged = BOARD_IsSDCardDetected();
-    if(!pAppObj->sdhcPlugged) {
-    	NVIC_SystemReset();
-    } else {
-    	if(App_IsSysStatus(pAppObj, SYS_ERR_SDCARD_1)) {
-			OS_ERR err;
-			App_SetCtrlCode(pAppObj, CTRL_INIT_SDCARD_1);
-			OSTaskSemPost(&TCB_task_startup, OS_OPT_NONE, &err);
-			ASSERT(err == OS_ERR_NONE);
-    	}
-    }
+	OS_ERR err;
+	App_SetCtrlCode(pAppObj, CTRL_INIT_SDCARD_1);
+    OSSemPost(&pAppObj->hSem, OS_OPT_POST_1, &err);
 }
 
 /*****************************************************************************/

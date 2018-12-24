@@ -71,6 +71,7 @@ typedef struct SApp_ {
 	bool				sdhcPlugged;
 	bool				stat;
 	bool				reboot;
+	semaphore_t			hSem;
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
@@ -110,6 +111,7 @@ int				App_CreateAppEvent(SApp *pApp);
 void 			App_TaskShell(task_param_t );
 void 			App_TaskUserInterface(task_param_t );
 void 			App_TaskModbus(task_param_t );
+void 			App_TaskAnalogIn(task_param_t );
 void 			App_TaskSerialcomm(task_param_t);
 void 			App_TaskPeriodic(task_param_t);
 void 			App_TaskStartup(task_param_t);
@@ -164,6 +166,10 @@ void Clb_TimerControl(void *p_tmr, void *p_arg);
 /************************** Variable Definitions *****************************/
 extern SApp		sApp;
 extern SApp 	*pAppObj;
+
+extern OS_TCB TCB_task_ai;
+extern task_handler_t task_ai_task_handler;
+extern task_stack_t	task_ai_stack[TASK_AI_STACK_SIZE/ sizeof(task_stack_t)];
 
 extern OS_TCB TCB_task_shell;
 extern task_handler_t task_shell_task_handler;

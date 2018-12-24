@@ -46,7 +46,7 @@ void hardware_init(void) {
 	CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
 	CLOCK_SYS_EnableEnetClock(BOARD_ENET_INSTANCE);
 
-//	configure_sdhc_pins(BOARD_SDHC_INSTANCE);
+	configure_sdhc_pins(BOARD_SDHC_INSTANCE);
 	configure_enet_pins(BOARD_ENET_INSTANCE);
 
 	/* Init board clock */
@@ -70,10 +70,9 @@ void hardware_init(void) {
 
 	CLOCK_SYS_SetSdhcSrc(0, kClockTimeSrcCoreSysClk);
 
+	GPIO_DRV_Init(sdhcCdPin, NULL);
 
-//	GPIO_DRV_Init(sdhcCdPin, NULL);
-//
-//    GPIO_DRV_Init(DigitalInputPin, NULL);
+    GPIO_DRV_Init(DigitalInputPin, NULL);
     GPIO_DRV_Init(NULL, DigitalOutputPin);
     GPIO_DRV_Init(NULL, SelectAnalogPin);
 
@@ -81,7 +80,7 @@ void hardware_init(void) {
 
 //	BOARD_EnableAllFault();
 //
-//	BOARD_CreateWDG();
+	BOARD_CreateWDG();
 }
 
 /*!

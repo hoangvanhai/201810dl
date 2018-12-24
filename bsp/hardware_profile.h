@@ -73,7 +73,7 @@
 #define BOARD_ENET_INSTANCE             	0
 /* The SDHC instance/channel used for board */
 #define BOARD_SDHC_INSTANCE             	0
-#define BOARD_SDHC_CD_GPIO_IRQ_HANDLER  	PORTE_IRQHandler
+#define BOARD_SDHC_CD_GPIO_IRQ_HANDLER  	PORTD_IRQHandler
 /* The CMP instance used for board. */
 #define BOARD_CMP_INSTANCE              	0
 /* The CMP channel used for board. */

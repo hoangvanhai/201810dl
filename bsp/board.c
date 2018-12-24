@@ -258,7 +258,7 @@ bool BOARD_IsSDCardDetected(void)
     GPIO_Type * gpioBase = g_gpioBase[GPIO_EXTRACT_PORT(kGpioSdhc0Cd)];
     uint32_t pin = GPIO_EXTRACT_PIN(kGpioSdhc0Cd);
 
-    if(GPIO_HAL_ReadPinInput(gpioBase, pin) == true)
+    if(GPIO_HAL_ReadPinInput(gpioBase, pin) == false)
     {
         return true;
     }

@@ -1152,29 +1152,29 @@ sdhc_status_t SDHC_DRV_Init(uint32_t instance, sdhc_host_t *host,
 
 	CLOCK_SYS_SetSdhcSrc(instance, kClockSdhcSrcPllFllSel);
 
-	LREP("set clock source done \r\n");
+	//LREP("set clock source done \r\n");
 
 	SDHC_DRV_SelectClock(instance);
 
-	LREP("pass SDHC_DRV_SelectClock\r\n");
+	//LREP("pass SDHC_DRV_SelectClock\r\n");
 
 	SDHC_DRV_SetClock(instance, true);
 
-	LREP("pass SDHC_DRV_SetClock \r\n");
+	//LREP("pass SDHC_DRV_SetClock \r\n");
 
 	SDHC_HAL_Init(g_sdhcBase[instance]);
 
-	LREP("pass SDHC_HAL_Init \r\n");
+	//LREP("pass SDHC_HAL_Init \r\n");
 
 	SDHC_DRV_Reset(instance, SDHC_RESET_ALL);
 
-	LREP("pass SDHC_DRV_Reset \r\n");
+	//LREP("pass SDHC_DRV_Reset \r\n");
 
 	SDHC_DRV_GetCaps(instance, host);
 
-	LREP("pass SDHC_DRV_GetCaps \r\n");
+	//LREP("pass SDHC_DRV_GetCaps \r\n");
 
-	LREP("set clock source = %d\r\n", CLOCK_SYS_GetSdhcFreq(instance));
+	//LREP("set clock source = %d\r\n", CLOCK_SYS_GetSdhcFreq(instance));
 
 	if (!host->maxBlockSize) {
 		CLOCK_SYS_DisableSdhcClock(instance);

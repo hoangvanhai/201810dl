@@ -43,15 +43,37 @@ extern void sdhc_card_detection(void);
 /*!
  * @brief gpio IRQ handler with the same name in startup code
  */
-void PORTE_IRQHandler(void)
+void PORTA_IRQHandler(void)
+{
+	LREP("PORTA_IRQHandler\r\n");
+}
+
+void PORTB_IRQHandler(void)
+{
+	LREP("PORTB_IRQHandler\r\n");
+}
+
+
+void PORTC_IRQHandler(void)
+{
+	LREP("PORTC_IRQHandler\r\n");
+}
+
+
+void PORTD_IRQHandler(void)
 {
     PORT_Type * gpioBase = g_portBase[GPIO_EXTRACT_PORT(kGpioSdhc0Cd)];
     uint32_t pin = GPIO_EXTRACT_PIN(kGpioSdhc0Cd);
 
     if(PORT_HAL_GetPortIntFlag(gpioBase) == (1 << pin)) {
-        //sdhc_card_detection();
+        sdhc_card_detection();
     }
     /* Clear interrupt flag.*/
     PORT_HAL_ClearPortIntFlag(gpioBase);
 }
 
+
+void PORTE_IRQHandler(void)
+{
+	LREP("PORTE_IRQHandler\r\n");
+}

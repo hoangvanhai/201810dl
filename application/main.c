@@ -78,9 +78,9 @@ int main(void)
     LREP("chip id = 0x%x\r\n", 		SIM_UIDL_UID(SIM_BASE_PTR));
     LREP("OS Tick rate = %d\r\n", 	OSCfg_TickRate_Hz);
 
-
     BOARD_CheckResetCause();
 
+#if 0
     LREP("MCG->C1 %x\r\n", 		MCG->C1);
 	LREP("MCG->C2 %x\r\n", 		MCG->C2);     /**< MCG Control 2 Register, offset: 0x1 */
 	LREP("MCG->C3 %x\r\n", 		MCG->C3);     /**< MCG Control 3 Register, offset: 0x2 */
@@ -103,6 +103,7 @@ int main(void)
 			CLOCK_SYS_GetEnetTimeStampFreq(0));
 	LREP("CLOCK_SYS_GetEnetRmiiFreq %d\r\n",
 			CLOCK_SYS_GetEnetRmiiFreq(0));
+#endif
 
 
     OSA_Init();
@@ -140,21 +141,21 @@ int main(void)
 int App_CreateAppTask(SApp *pApp) {
 
 	osa_status_t result;
-//	LREP("start create app task \r\n");
-//    result = OSA_TaskCreate(App_TaskModbus,
-//                    (uint8_t *)"modbus",
-//                    TASK_MODBUS_STACK_SIZE,
-//					task_modbus_stack,
-//                    TASK_MODBUS_PRIO,
-//                    (task_param_t)pApp,
-//                    false,
-//                    &task_modbus_task_handler);
-//    if(result != kStatus_OSA_Success)
-//    {
-//        LREP("Failed to create slave task\r\n\r\n");
-//        return -1;
-//    }
-//
+	LREP("start create app task \r\n");
+    result = OSA_TaskCreate(App_TaskModbus,
+                    (uint8_t *)"modbus",
+                    TASK_MODBUS_STACK_SIZE,
+					task_modbus_stack,
+                    TASK_MODBUS_PRIO,
+                    (task_param_t)pApp,
+                    false,
+                    &task_modbus_task_handler);
+    if(result != kStatus_OSA_Success)
+    {
+        LREP("Failed to create slave task\r\n\r\n");
+        return -1;
+    }
+
 //    result = OSA_TaskCreate(App_TaskSerialcomm,
 //                    (uint8_t *)"serialcomm",
 //                    TASK_SERIAL_COMM_STACK_SIZE,
@@ -182,9 +183,24 @@ int App_CreateAppTask(SApp *pApp) {
 //        LREP("Failed to create user interface task\r\n\r\n");
 //        return -1;
 //    }
-//
-//
-//      create app tasks
+
+
+
+    result = OSA_TaskCreate(App_TaskAnalogIn,
+					(uint8_t *)"ai",
+					TASK_AI_STACK_SIZE,
+					task_ai_stack,
+					TASK_AI_PRIO,
+					(task_param_t)pApp,
+					false,
+					&task_ai_task_handler);
+	if(result != kStatus_OSA_Success)
+	{
+		LREP("Failed to create ai task\r\n\r\n");
+		return -1;
+	}
+
+    // create app tasks
 	result = OSA_TaskCreate(App_TaskPeriodic,
 					(uint8_t *)"periodic",
 					TASK_PERIODIC_STACK_SIZE,
@@ -227,13 +243,15 @@ int App_CreateAppTask(SApp *pApp) {
  *  @note
  */
 int App_CreateAppEvent(SApp *pApp) {
-	OS_ERR err;
-//	OSMutexCreate(&pApp->mCtrl, "ctrl mtx", &err);
-//	if(err != OS_ERR_NONE) {
-//		LREP("create control mutex failed\r\n");
-//	}
+	OS_ERR error;
 
-	return err;
+	OSSemCreate(&debug_sem, "debug", 0, &error);
+	ASSERT(error == OS_ERR_NONE);
+
+	OSSemCreate(&pApp->hSem, "control", 0, &error);
+	ASSERT(error == OS_ERR_NONE);
+
+	return error == OS_ERR_NONE;
 }
 
 

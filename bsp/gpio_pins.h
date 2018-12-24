@@ -116,14 +116,6 @@ enum _gpio_pins_pinNames {
 	ModbusPsuEn					= GPIO_MAKE_PIN(GPIOB_IDX, 17U),
 	SimVccEn					= GPIO_MAKE_PIN(GPIOA_IDX, 6U),
 
-
-//	LanPsuOcp					= GPIO_MAKE_PIN(GPIOA_IDX, 16U),
-//	LanPsuEn					= GPIO_MAKE_PIN(GPIOE_IDX, 17U),
-//	IoVccEn						= GPIO_MAKE_PIN(GPIOA_IDX, 15U),
-//	IoVccOcf					= GPIO_MAKE_PIN(GPIOA_IDX, 14),
-//	ModbusPsuOcp				= GPIO_MAKE_PIN(GPIOA_IDX, 5U),
-//	ModbusPsuEn					= GPIO_MAKE_PIN(GPIOA_IDX, 12U),
-//	LcdGpio2					= GPIO_MAKE_PIN(GPIOA_IDX, 13U),
 };
 
 
