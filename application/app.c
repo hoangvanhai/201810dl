@@ -245,7 +245,7 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 
 	Str_Copy((CPU_CHAR*)pHandle->sAccount.rootname, "root");
 	Str_Copy((CPU_CHAR*)pHandle->sAccount.rootpass, "123456a@");
-#if 1
+#if 0
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname1, "ftpuser1");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd1, "zxcvbnm@12");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_prefix1, "/home/ftpuser1/");
@@ -254,7 +254,7 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname1, "win7");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd1, "123456a@");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_prefix1, "/home/");
-	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 192,168,0,102);
+	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 192,168,0,100);
 #endif
 	pHandle->sCom.server_ftp_port1 = 21;
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname2, "ftpuser2");
@@ -549,10 +549,13 @@ void App_TaskPeriodic(task_param_t parg) {
 	OSA_SleepMs(10);
 
 	if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-		if(pApp->sDateTime.tm_year == 1990) {
+		if(pApp->sDateTime.tm_year != 2018) {
 			RTC_SetDateTime(0, 0, 1, 1, 2018);
 		}
-
+		LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
+				pApp->sDateTime.tm_year, pApp->sDateTime.tm_mon,
+				pApp->sDateTime.tm_mday, pApp->sDateTime.tm_hour,
+				pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec);
 	} else {
 		ASSERT(FALSE);
 	}
@@ -1885,7 +1888,7 @@ void App_AiReadAllPort(SApp *pApp) {
 					LREP("wrong crc recv %x cal %x\r\n",data[recvLen-1], crc8);
 				}
 			} else {
-				LREP("not recv data\r\n");
+				//LREP("not recv data\r\n");
 				pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
 			}
 		}
@@ -2061,8 +2064,12 @@ int App_GenerateLogFile(SApp *pApp) {
 					retVal = f_close(&file);
 					if(retVal == FR_OK){
 						// TODO: send file name to Net module
-#if NETWORK_MODULE_EN > 0
-						Network_FtpClient_Send((uint8_t*)day, (uint8_t*)filename);
+#if NETWORK_MODULE_EN > 0 && NETWORK_FTP_CLIENT_EN > 0
+						int err = Network_FtpClient_Send(
+								(uint8_t*)day, (uint8_t*)filename);
+						if(err != 0) {
+							WARN("send file to network err = %d\r\n", err);
+						}
 #endif
 					}
 				}
@@ -2209,8 +2216,12 @@ int App_GenerateLogFileByName(SApp *pApp, const char *name) {
 
 				if(retVal == FR_OK && rowCount > 0) {
 					// TODO: send file name to Net module
-#if NETWORK_MODULE_EN > 0
-						Network_FtpClient_Send((uint8_t*)day, (uint8_t*)filename);
+#if NETWORK_MODULE_EN > 0 && NETWORK_FTP_CLIENT_EN > 0
+						int err = Network_FtpClient_Send(
+								(uint8_t*)day, (uint8_t*)filename);
+						if(err != 0) {
+							WARN("send file to network err = %d\r\n", err);
+						}
 #endif
 				}
 			}

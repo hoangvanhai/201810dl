@@ -12,6 +12,8 @@
 #include <lib_str.h>
 #include <network_cfg.h>
 
+#define NETWORK_FTP_MODEM_EN		0
+
 
 enum FtpCode {
 	FTP_ERR_NONE = 0,
@@ -67,6 +69,7 @@ typedef struct FtpClient_ {
 	uint8_t				curr_sv_idx;
 	ServerInfo			server_list[FTP_CLIENT_SERVER_NUM];
 	sys_thread_t		send_thread;
+	bool				active;
 
 }FtpClient;
 

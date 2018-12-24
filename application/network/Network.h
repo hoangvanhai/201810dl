@@ -27,16 +27,20 @@
 #define NET_IF_ALL			(NET_IF_ETHERNET | NET_IF_ETHERNET)
 
 typedef struct {
-    SCommon 	sCommSettings;
-    uint8_t		u8ActiveIf;
-    TcpClient	sTcpClientInstance;
-    TcpServer	sTcpServerInstance;
-    FtpClient	sFtpClientInstance;
-}SNetStatus;
+    SCommon 			*sSettings;		// point to setting, to save memory
+    uint8_t				u8ActiveIf;
+    TcpClient			sTcpClient;
+    TcpServer			sTcpServer;
+    FtpClient			sFtpClient;
+    struct netif 		eth0;
+    ring_file_handle_t 	retryTable;
+
+}SNetwork;
 
 void Network_InitModule(SCommon *pCM);
-void tcp_client_init(ip_addr_t ip, int port);
-void tcp_server_init(int port);
+void tcp_client_init(TcpClient *pClient, ip_addr_t ip, int port);
+void tcp_server_init(TcpServer *pServer, int port);
+int ftp_client_init(FtpClient *pFc, ring_file_handle_t *rfile, SCommon *pCM);
 
 void Network_Register_TcpClient_Notify(NetworkConnNotify func);
 void Network_Register_TcpClient_DataEvent(Network_DataEvent evt, NetworkDataEvent func);
@@ -49,16 +53,8 @@ int Network_TcpServer_Send(const uint8_t *data, int len);
 
 int Network_FtpClient_Send(const uint8_t *local_path,
 		const uint8_t *filename);
-
-int ftp_client_init(SCommon *pCM);
-
-
-
-
-extern TcpClient	 		tcpClient;
-extern TcpServer 	 		tcpServer;
 extern ring_file_handle_t 	g_retryTable;
-extern SNetStatus			g_netStat;
+extern SNetwork				g_network;
 
 
 #endif /* APPLICATION_NETWORK_H_ */

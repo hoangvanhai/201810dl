@@ -70,7 +70,13 @@
 
 #define BOARD_USE_VERSION					BOARD_VERSION_1
 
-#define NETWORK_MODULE_EN					0
+#define NETWORK_MODULE_EN					1
+#define NETWORK_FTP_CLIENT_EN				1
+#define NETWORK_TCP_CLIENT_EN				0
+#define NETWORK_TCP_SERVER_EN				0
+
+
+
 
 
 

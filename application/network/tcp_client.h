@@ -32,7 +32,7 @@ typedef struct TcpClient_ {
 	Network_Status		status;
 	sys_thread_t		send_thread;
 	sys_thread_t		recv_thread;
-
+	bool				active;
 }TcpClient;
 
 int 	tcp_client_configuration(TcpClient *pEP, ip_addr_t ip, int port,

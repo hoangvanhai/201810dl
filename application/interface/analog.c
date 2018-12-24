@@ -108,7 +108,7 @@ int Analog_RecvData(SAnalogReader *pAR, uint8_t* pData, uint16_t u16Size)
  */
 int Analog_SelectChannel (uint8_t channel) {
 
-	LREP("select ai %d\r\n", channel);
+	//LREP("select ai %d\r\n", channel);
 	switch(channel) {
 	case 0:
 		BOARD_GpioWritePin(SelectAnalog0, 0);

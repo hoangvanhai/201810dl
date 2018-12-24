@@ -89,7 +89,9 @@ int set_buffer_size(int fd, int tx_size, int rx_size) {
 
 
 bool Network_GetLinkStatus(bool *status) {
-	return (PHY_DRV_GetLinkStatus(
-			0, enetDevIf[0].phyAddr, status)
-			== kStatus_ENET_Success);
+//	return (PHY_DRV_GetLinkStatus(
+//			0, enetDevIf[0].phyAddr, status)
+//			== kStatus_ENET_Success);
+	*status = true;
+	return true;
 }
