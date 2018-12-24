@@ -171,35 +171,35 @@ int App_CreateAppTask(SApp *pApp) {
         return -1;
     }
 
-    result = OSA_TaskCreate(App_TaskUserInterface,
-                    (uint8_t *)"ui",
-                    TASK_UI_STACK_SIZE,
-					task_ui_stack,
-                    TASK_UI_PRIO,
-                    (task_param_t)pApp,
-                    false,
-                    &task_ui_task_handler);
-    if (result != kStatus_OSA_Success)
-    {
-        LREP("Failed to create user interface task\r\n\r\n");
-        return -1;
-    }
-
-
-
-    result = OSA_TaskCreate(App_TaskAnalogIn,
-					(uint8_t *)"ai",
-					TASK_AI_STACK_SIZE,
-					task_ai_stack,
-					TASK_AI_PRIO,
-					(task_param_t)pApp,
-					false,
-					&task_ai_task_handler);
-	if(result != kStatus_OSA_Success)
-	{
-		LREP("Failed to create ai task\r\n\r\n");
-		return -1;
-	}
+//    result = OSA_TaskCreate(App_TaskUserInterface,
+//                    (uint8_t *)"ui",
+//                    TASK_UI_STACK_SIZE,
+//					task_ui_stack,
+//                    TASK_UI_PRIO,
+//                    (task_param_t)pApp,
+//                    false,
+//                    &task_ui_task_handler);
+//    if (result != kStatus_OSA_Success)
+//    {
+//        LREP("Failed to create user interface task\r\n\r\n");
+//        return -1;
+//    }
+//
+//
+//
+//    result = OSA_TaskCreate(App_TaskAnalogIn,
+//					(uint8_t *)"ai",
+//					TASK_AI_STACK_SIZE,
+//					task_ai_stack,
+//					TASK_AI_PRIO,
+//					(task_param_t)pApp,
+//					false,
+//					&task_ai_task_handler);
+//	if(result != kStatus_OSA_Success)
+//	{
+//		LREP("Failed to create ai task\r\n\r\n");
+//		return -1;
+//	}
 
     // create app tasks
 	result = OSA_TaskCreate(App_TaskPeriodic,
