@@ -809,22 +809,23 @@ void App_TaskStartup(task_param_t arg) {
 
 			/* Check all pending command */
 			if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_1)) {
-			    pAppObj->sdhcPlugged = BOARD_IsSDCardDetected();
-			    LREP("card event = %d\r\n", pAppObj->sdhcPlugged);
+				bool status = BOARD_IsSDCardDetected();
+				if(pAppObj->sdhcPlugged != status) {
+					LREP("card event = %d\r\n", pAppObj->sdhcPlugged);
 
-			    if(!pAppObj->sdhcPlugged) {
-			    	NVIC_SystemReset();
-			    } else {
-			    	LREP("recv ctrl init sdcard 1\r\n");
-					int err = App_InitFS(pApp);
-					if(err != FR_OK) {
-						App_SetSysStatus(pApp, SYS_ERR_SDCARD_1);
+					if(!pAppObj->sdhcPlugged) {
+						NVIC_SystemReset();
 					} else {
-						App_ClearSysStatus(pApp, SYS_ERR_SDCARD_1);
-						ASSERT(App_LoadConfig(pApp, CONFIG_FILE_PATH) == FR_OK);
+						LREP("recv ctrl init sdcard 1\r\n");
+						int err = App_InitFS(pApp);
+						if(err != FR_OK) {
+							App_SetSysStatus(pApp, SYS_ERR_SDCARD_1);
+						} else {
+							App_ClearSysStatus(pApp, SYS_ERR_SDCARD_1);
+							ASSERT(App_LoadConfig(pApp, CONFIG_FILE_PATH) == FR_OK);
+						}
 					}
-			    }
-
+				}
 				App_ClearCtrlCode(pApp, CTRL_INIT_SDCARD_1);
 			}
 

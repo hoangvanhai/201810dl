@@ -31,7 +31,9 @@ int ftp_client_add_server(FtpClient *pFC, ServerInfo *server, uint8_t index) {
 	pFC->server_list[index].passwd 	 = server->passwd;
 	pFC->server_list[index].prefix 	 = server->prefix;
 
-	LREP("setup point to ftp server %s:%d\r\n", ipaddr_ntoa(&server->ip), server->port);
+	LREP("setup point to ftp server %s:%d\r\n",
+			ipaddr_ntoa(&server->ip), server->port);
+
 	return 0;
 }
 
@@ -426,10 +428,8 @@ int ftp_remote_put(FtpClient *pFC, uint8_t index,
 
 	int retVal;
 	int err = FTP_ERR_PUT;
-	CPU_CHAR data[128];
-	memset(data, 0, 128);
-	Str_Copy_N(data, local_path, 128);
-	LREP("local path = %s \r\n", data);
+
+	LREP("local path = %s \r\n", local_path);
 
 	err = ftp_setup_channel(pFC, index);
 	if(err != FTP_ERR_NONE) {
@@ -443,12 +443,21 @@ int ftp_remote_put(FtpClient *pFC, uint8_t index,
 		return err;
 	}
 
+	memset(pFC->tx_buff_ctrl, 0, 256);
+	Str_Copy_N((CPU_CHAR*)pFC->tx_buff_ctrl, local_path, FTP_CLIENT_BUFF_SIZE);
+	Str_Cat_N((CPU_CHAR*)pFC->tx_buff_ctrl, filename, FTP_CLIENT_BUFF_SIZE);
 
-	memset(pFC->tx_buff_data, 0, 256);
-	Str_Copy_N((CPU_CHAR*)pFC->tx_buff_data, "STOR ", FTP_CLIENT_BUFF_SIZE);
-	Str_Cat_N((CPU_CHAR*)pFC->tx_buff_data, &filename[1], FTP_CLIENT_BUFF_SIZE);
-	Str_Cat_N((CPU_CHAR*)pFC->tx_buff_data, "\r\n", FTP_CLIENT_BUFF_SIZE);
-	err = ftp_remote_send_recv_ctrl(pFC, (char*)pFC->tx_buff_data);
+	// ensure the file is existed before use STOR command
+	if(check_obj_existed((char*)pFC->tx_buff_ctrl) == false) {
+		ERR_LINE("file %s not found !\r\n", pFC->tx_buff_ctrl);
+		return FTP_ERR_FILE;
+	}
+
+	memset(pFC->tx_buff_ctrl, 0, 256);
+	Str_Copy_N((CPU_CHAR*)pFC->tx_buff_ctrl, "STOR ", FTP_CLIENT_BUFF_SIZE);
+	Str_Cat_N((CPU_CHAR*)pFC->tx_buff_ctrl, &filename[1], FTP_CLIENT_BUFF_SIZE);
+	Str_Cat_N((CPU_CHAR*)pFC->tx_buff_ctrl, "\r\n", FTP_CLIENT_BUFF_SIZE);
+	err = ftp_remote_send_recv_ctrl(pFC, (char*)pFC->tx_buff_ctrl);
 	if(err != FTP_ERR_NONE) {
 		WARN_LINE("STOR command failed\r\n");
 		return err;
@@ -462,19 +471,13 @@ int ftp_remote_put(FtpClient *pFC, uint8_t index,
 		return err;
 	}
 
-	memset(pFC->tx_buff_data, 0, 256);
-	Str_Copy_N((CPU_CHAR*)pFC->tx_buff_data, data, FTP_CLIENT_BUFF_SIZE);
-	Str_Cat_N((CPU_CHAR*)pFC->tx_buff_data, filename, FTP_CLIENT_BUFF_SIZE);
-
-	// ensure the file is existed before use STOR command
-	if(check_obj_existed((char*)pFC->tx_buff_data) == false) {
-		ERR_LINE("file %s not found !\r\n", pFC->tx_buff_data);
-		return FTP_ERR_FILE;
-	}
+	memset(pFC->tx_buff_ctrl, 0, 256);
+	Str_Copy_N((CPU_CHAR*)pFC->tx_buff_ctrl, local_path, FTP_CLIENT_BUFF_SIZE);
+	Str_Cat_N((CPU_CHAR*)pFC->tx_buff_ctrl, filename, FTP_CLIENT_BUFF_SIZE);
 
 	UINT read;
 	FIL file;
-	retVal = f_open(&file, (const char*)pFC->tx_buff_data, FA_OPEN_EXISTING | FA_READ);
+	retVal = f_open(&file, (const char*)pFC->tx_buff_ctrl, FA_OPEN_EXISTING | FA_READ);
 	if(retVal == FR_OK) {
 		int fr;
 		do {
@@ -490,7 +493,7 @@ int ftp_remote_put(FtpClient *pFC, uint8_t index,
 			}
 		} while(fr == FR_OK && read > 0);
 	} else {
-		ERR_LINE("open file %s error !\r\n", pFC->tx_buff_data);
+		ERR_LINE("open file %s error !\r\n", pFC->tx_buff_ctrl);
 		ASSERT(FALSE);
 		err = FTP_ERR_FILE;
 	}
@@ -665,7 +668,8 @@ void ftp_client_sender(void *arg) {
 }
 
 
-int	ftp_add_filename(FtpClient *pFC, const uint8_t *local_path, const uint8_t *file_name) {
+int	ftp_add_filename(FtpClient *pFC, const uint8_t *local_path,
+		const uint8_t *file_name) {
 	int retVal = 0;
 
 	FtpMsg *pMsg = (FtpMsg*)OSA_FixedMemMalloc(sizeof(FtpMsg));

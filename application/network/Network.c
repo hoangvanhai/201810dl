@@ -273,9 +273,12 @@ int ftp_client_init(SCommon *pCM) {
 //    modem_init();
 //    modem_ftp_init(&ftpClient);
 
-	ring_file_init(&g_retryTable, "/conf", "retrytable.dat", 5000,
+	ring_file_init(&g_retryTable, "/conf",
+			"retrytable.dat", 5000,
 			sizeof(ring_file_record_t));
+
 	LREP("Ring file Init Done!!!\r\n");
+
 	ring_file_print(&g_retryTable);
 
     return result;

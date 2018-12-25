@@ -78,15 +78,15 @@
 #define STREAM_VALUE                        0x04
 
 // Control server difinition
-#define SER_GET_INPUT_ALL           	0x0001
-#define SER_GET_INPUT_GROUP         	0x0002
-#define SER_GET_INPUT_CHAN          	0x0003
-#define SER_SET_SAMPLE_START        	0x0011
-#define LOG_REQ_CALIB_START         	0x0021
-#define SER_SET_CALIB_START         	0x0022
-#define LOGGER_LOGGING_IN           	0x0100
-#define SER_LOGGING_STATUS          	0x0101
-#define LOGGER_LOGGING_OUT          	0x0102
+#define SER_GET_INPUT_ALL           		0x0001
+#define SER_GET_INPUT_GROUP         		0x0002
+#define SER_GET_INPUT_CHAN          		0x0003
+#define SER_SET_SAMPLE_START        		0x0011
+#define LOG_REQ_CALIB_START         		0x0021
+#define SER_SET_CALIB_START         		0x0022
+#define LOGGER_LOGGING_IN           		0x0100
+#define SER_LOGGING_STATUS          		0x0101
+#define LOGGER_LOGGING_OUT          		0x0102
 
 
 #define GET_MSG_TYPE(data)          ((data)[0] << 8 | (data)[1])
