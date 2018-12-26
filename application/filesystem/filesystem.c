@@ -117,6 +117,36 @@ bool obj_stat(const char* path) {
  *  @return Void.
  *  @note
  */
+bool check_extension(const char *path, const char *exten) {
+	int strlen = Str_Len_N(path, 256);
+	int len = Str_Len_N(exten, 10);
+
+	//LREP("check path: %s exten %s\r\n", path, exten);
+
+	if(len >= strlen || len >= 10)
+		return false;
+
+	uint8_t tail[10];
+	memset(tail, 0, 10);
+	Str_Copy_N((CPU_CHAR*)tail, (CPU_CHAR*)&path[strlen - len], 10);
+
+	//LREP("check: %s exten %s\r\n", tail, exten);
+
+	if(Str_Cmp_N((CPU_CHAR*)tail, (CPU_CHAR*)exten, 10) == 0) {
+		return true;
+	} else {
+		return false;
+	}
+
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int show_content (
     char* path        /* Start node to be scanned (***also used as work area***) */
 )

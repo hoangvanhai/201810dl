@@ -17,8 +17,16 @@ extern "C" {
 #include <string.h>
 #include <stdlib.h>
 #include <ff.h>
+#include <fsl_os_abstraction.h>
 
-	
+#if 1
+#define RINGFILE_ENTER_CRITIAL()	OSA_MutexLock(&handle->mtx, 1000)
+#define RINGFILE_EXIT_CRITIAL()		OSA_MutexUnlock(&handle->mtx)
+#else
+#define RINGFILE_ENTER_CRITIAL()    kStatus_OSA_Success
+#define RINGFILE_EXIT_CRITIAL()
+#endif
+
 /**
  * Retry table header
  */
@@ -64,6 +72,7 @@ extern "C" {
 #endif
 	 FIL			fp;
 	 ring_file_header_t	header;
+	 mutex_t	mtx;
  } ring_file_handle_t;
 
 

@@ -89,7 +89,18 @@
 #define LOGGER_LOGGING_OUT          		0x0102
 
 
+
 #define GET_MSG_TYPE(data)          ((data)[0] << 8 | (data)[1])
+
+
+#define defaultMAC_ADDR0	0x00
+#define defaultMAC_ADDR1	0xCF
+#define defaultMAC_ADDR2	0x52
+#define defaultMAC_ADDR3	0x35
+#define defaultMAC_ADDR4	0x00
+#define defaultMAC_ADDR5	0x02
+
+
 
 enum ControlMsg {
 	Control_Get_Input_All = 0,
@@ -372,6 +383,7 @@ typedef struct SCommon_ {
     ip_addr_t		dev_ip;
     ip_addr_t       dev_netmask;
     ip_addr_t       dev_gw;
+    uint8_t			dev_hwaddr[6];
     uint8_t         dev_dhcp;
     uint8_t         ftp_enable1;
     uint8_t         ftp_enable2;

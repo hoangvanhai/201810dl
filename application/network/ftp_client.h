@@ -97,8 +97,13 @@ int 	ftp_remote_send_data(FtpClient *pFC, const uint8_t *data, int len);
 int		ftp_destroy_channel(FtpClient *pFC);
 int		ftp_get_code(FtpClient *pFC);
 
+int 	ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg);
 void 	ftp_client_sender(void *arg);
 int		ftp_add_filename(FtpClient *pFC, const uint8_t * local_path, const uint8_t* file_name);
+int		ftp_put_to_retry_table(const uint8_t *local_path,
+							   const uint8_t *file_name, uint8_t tabindex);
+int 	ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx);
+
 void 	ftp_print_err(int err);
 
 

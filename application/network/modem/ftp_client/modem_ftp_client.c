@@ -71,14 +71,10 @@ modem_ftp_err_code_t modem_ftp_init(FtpClient *pFC)
 
 
 	/* Configure modem  */
-	modem_init();
-	while(1){
-		LREP("send ATE1 ...");
-		modem_send_at_command("ATE1\r\n", "OK", 1000, 1);
-	}
-	modem_delay_ms(1000);
-	modem_tx_data("+++", 3);
-	modem_delay_ms(1000);
+//	modem_init();
+////	modem_delay_ms(1000);
+//	modem_tx_data("+++", 3);
+//	modem_delay_ms(1000);
 
 //	modem_send_at_command("AT+QIACT=0\r\n", "OK", 1000, 1);
 
@@ -683,7 +679,7 @@ modem_ftp_put_file_from_local(FtpClient *pFC, uint8_t index,
 	}
 	// close the file
 	f_close(&fil);
-//		modem_ftp_disconnect(pFC);
+	modem_ftp_disconnect(pFC);
 //	modem_tx_data("AT+QFTPCLOSE\r\n", strlen("AT+QFTPCLOSE\r\n"));
 	MODEM_DEBUG("Goodbye\r\n");
 

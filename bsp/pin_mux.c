@@ -333,6 +333,7 @@ void configure_uart_pins(uint32_t instance)
 	case UART0_IDX: //<> // SIM
 		PORT_HAL_SetMuxMode(PORTA,1u,kPortMuxAlt2);		// RxD
 		PORT_HAL_SetMuxMode(PORTA,2u,kPortMuxAlt2); 	// TxD
+
 	break;
 
 	case UART1_IDX: //<> // MB

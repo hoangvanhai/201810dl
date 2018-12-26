@@ -71,7 +71,7 @@ void hardware_init(void) {
     /* Init board clock */
 	BOARD_ClockInit();
 	dbg_uart_init();
-
+	configure_uart_pins(BOARD_SIM_UART_INSTANCE);
 #ifdef MPU_INSTANCE_COUNT /* File System need disabled MPU */
     // disable MPU
     for(int i = 0; i < MPU_INSTANCE_COUNT; i++)

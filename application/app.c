@@ -245,7 +245,7 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 
 	Str_Copy((CPU_CHAR*)pHandle->sAccount.rootname, "root");
 	Str_Copy((CPU_CHAR*)pHandle->sAccount.rootpass, "123456a@");
-#if 0
+#if 1
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname1, "ftpuser1");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd1, "zxcvbnm@12");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_prefix1, "/home/ftpuser1/");
@@ -269,6 +269,13 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 
 	pHandle->sCom.ftp_enable1 = TRUE;
 	pHandle->sCom.ftp_enable2 = FALSE;
+
+	pHandle->sCom.dev_hwaddr[0] = defaultMAC_ADDR0;
+	pHandle->sCom.dev_hwaddr[1] = defaultMAC_ADDR1;
+	pHandle->sCom.dev_hwaddr[2] = defaultMAC_ADDR2;
+	pHandle->sCom.dev_hwaddr[3] = defaultMAC_ADDR3;
+	pHandle->sCom.dev_hwaddr[4] = defaultMAC_ADDR4;
+	pHandle->sCom.dev_hwaddr[5] = defaultMAC_ADDR5;
 
 	IP4_ADDR(&pHandle->sCom.dev_ip, 192,168,0,105);
 	IP4_ADDR(&pHandle->sCom.dev_netmask, 255,255,255,0);
@@ -1121,11 +1128,11 @@ void App_CommCalibAi(SApp *pApp, const uint8_t *data) {
 		if(pApp->sAI.Node[i].status == TAG_STT_OK) {
 			if(data[2] == 0) {// calib at 4mA
 				pApp->sCfg.sAiCalib.calib[i].x1 =
-					pApp->sCfg.sAiCalib.calib[i].raw - 1;
+					pApp->sCfg.sAiCalib.calib[i].raw;
 			} else {// calib at 20mA
 				isSave = true;
 				pApp->sCfg.sAiCalib.calib[i].x2 =
-					pApp->sCfg.sAiCalib.calib[i].raw + 1;
+					pApp->sCfg.sAiCalib.calib[i].raw;
 				if((pApp->sCfg.sAiCalib.calib[i].x2 -
 						pApp->sCfg.sAiCalib.calib[i].x1) != 0) {
 				pApp->sCfg.sAiCalib.calib[i].coefficient = 16 /
@@ -1352,6 +1359,7 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
  */
 int	App_InitModbus(SApp *pApp){
 
+	memset(&pApp->sMB, 0, sizeof(SModbusValue));
 	for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 		if(pApp->sCfg.sTag[i].input_type == TIT_MB) {
 			pApp->sMB.Node[i].enable = pApp->sCfg.sTag[i].enable;
@@ -1476,6 +1484,7 @@ int App_InitDO(SApp *pApp) {
  *  @note
  */
 int	App_InitAI(SApp *pApp) {
+
 	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
 		pApp->sAI.Node[i].enable = true;
 	}
@@ -1862,41 +1871,34 @@ typedef struct AnalogChannel_ {
 void App_AiReadAllPort(SApp *pApp) {
 
 #if 1
-	uint8_t data[15];
-	SAnalogChannel adcValue;
+	uint8_t data[30];
 	uint8_t recvLen;
-	uint8_t dataSize = sizeof(SAnalogChannel);
 	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
 		if(pApp->sAI.Node[i].enable)
 		{
-			Analog_RecvFF_Reset(&pApp->sAnalogReader);
 			Analog_SelectChannel(i);
+			Analog_RecvFF_Reset(&pApp->sAnalogReader);
 			OSA_SleepMs(1500); // wait enough for slave mcu wakup and send data
-			recvLen = Analog_RecvData(&pApp->sAnalogReader, data, 15);
-			if(recvLen > 0) {
-				uint8_t crc8 = crc_8((const uint8_t*)data, recvLen - 1);
-				if(crc8 == data[recvLen-1])
-				{
-					if(data[0] == 0x55) {
-						memcpy(&adcValue, &data[1], dataSize);
-						pApp->sCfg.sAiCalib.calib[i].raw = adcValue.diff;
-						pApp->sAI.Node[i].value = pApp->sCfg.sAiCalib.calib[i].offset +
-										(pApp->sCfg.sAiCalib.calib[i].raw *
-										pApp->sCfg.sAiCalib.calib[i].coefficient);
+			memset(data, 30, 0);
+			recvLen = Analog_RecvData(&pApp->sAnalogReader, data, 30);
 
-						LREP("vref: %.2f - vsen: %.2f - diff %.2f\r\n",
-								adcValue.vref, adcValue.vsen, adcValue.diff);
-
-						pApp->sAI.Node[i].status = TAG_STT_OK;
-					} else {
-						LREP("not recv header\r\n");
-						pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
-					}
+			if(recvLen >= 2)
+			{
+				//LREP("recv: %s\r\n", data);
+				float value = atof((char*)&data[1]);
+				if(value > -20 && value < 500) {
+					LREP("recv value = %.2f\r\n", value);
+					pApp->sCfg.sAiCalib.calib[i].raw = value;
+					pApp->sAI.Node[i].value = pApp->sCfg.sAiCalib.calib[i].offset +
+									(pApp->sCfg.sAiCalib.calib[i].raw *
+									pApp->sCfg.sAiCalib.calib[i].coefficient);
+					pApp->sAI.Node[i].status = TAG_STT_OK;
 				} else {
-					LREP("wrong crc recv %x cal %x\r\n",data[recvLen-1], crc8);
+					LREP("invalid value = %f\r\n", value);
+					pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
 				}
 			} else {
-				//LREP("not recv data\r\n");
+				LREP("not recv data \r\n");
 				pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
 			}
 		}

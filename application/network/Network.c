@@ -27,7 +27,7 @@ uint8_t 		ftpclient_tx_data_buf[FTP_CLIENT_BUFF_SIZE];
 
 SNetworkStt	 	nwkStt;
 
-ring_file_handle_t g_retryTable;
+ring_file_handle_t g_retryTable[FTP_CLIENT_SERVER_NUM];
 
 APP_TASK_DEFINE(tcp_client_sender, 		TASK_TCP_CLIENT_SENDER_PRIO);
 APP_TASK_DEFINE(tcp_client_listen, 		TASK_TCP_CLIENT_LISTEN_PRIO);
@@ -61,8 +61,22 @@ void static netif_link_changed_callback(struct netif* netif);
  */
 void Network_InitModule(SCommon *pCM) {
 
-
 	tcpip_init(NULL,NULL);
+
+	eth0.hwaddr[0] = pCM->dev_hwaddr[0];
+	eth0.hwaddr[1] = pCM->dev_hwaddr[1];
+	eth0.hwaddr[2] = pCM->dev_hwaddr[2];
+	eth0.hwaddr[3] = pCM->dev_hwaddr[3];
+	eth0.hwaddr[4] = pCM->dev_hwaddr[4];
+	eth0.hwaddr[5] = pCM->dev_hwaddr[5];
+
+
+	ASSERT(!(eth0.hwaddr[0] == 0 &&
+			eth0.hwaddr[1] == 0 &&
+			eth0.hwaddr[2] == 0 &&
+			eth0.hwaddr[3] == 0 &&
+			eth0.hwaddr[4] == 0 &&
+			eth0.hwaddr[5] == 0));
 
 	if(pCM->dev_dhcp == false) {
 		netif_add(&eth0, &pCM->dev_ip,
@@ -70,7 +84,10 @@ void Network_InitModule(SCommon *pCM) {
 				NULL, ethernetif_init, tcpip_input);
 
 		netif_set_default(&eth0);
-
+		PRINTF("hw 			%02x:%02x:%02x:%02x:%02x:%02x\r\n",
+							eth0.hwaddr[0], eth0.hwaddr[1],
+							eth0.hwaddr[2], eth0.hwaddr[3],
+							eth0.hwaddr[4], eth0.hwaddr[5]);
 		PRINTF("ip 			%s\r\n", ipaddr_ntoa(&eth0.ip_addr));
 		PRINTF("nm			%s\r\n", ipaddr_ntoa(&eth0.netmask));
 		PRINTF("gw 			%s\r\n", ipaddr_ntoa(&eth0.gw));
@@ -105,8 +122,11 @@ void Network_InitModule(SCommon *pCM) {
 #endif
 
 
-	//TODO check network active status
+	nwkStt.activeIf = NET_IF_NONE;
+	//nwkStt.activeIf |= NET_IF_ETHERNET;
+	//nwkStt.activeIf |= NET_IF_WIRELESS;
 
+	//TODO check network active status
 }
 
 
@@ -270,16 +290,24 @@ int ftp_client_init(SCommon *pCM) {
     ftpClient.active = true;
 
 
-//    modem_init();
-//    modem_ftp_init(&ftpClient);
+    modem_init();
+    modem_ftp_init(&ftpClient);
 
-	ring_file_init(&g_retryTable, "/conf",
-			"retrytable.dat", 5000,
+	ring_file_init(&g_retryTable[0], "/conf",
+			"retrytable0.dat", 20000,
 			sizeof(ring_file_record_t));
 
-	LREP("Ring file Init Done!!!\r\n");
+	LREP("Ring file 0 Init Done!!!\r\n");
 
-	ring_file_print(&g_retryTable);
+	ring_file_print(&g_retryTable[0]);
+
+	ring_file_init(&g_retryTable[1], "/conf",
+			"retrytable1.dat", 20000,
+			sizeof(ring_file_record_t));
+
+	LREP("Ring file 1 Init Done!!!\r\n");
+
+	ring_file_print(&g_retryTable[1]);
 
     return result;
 }

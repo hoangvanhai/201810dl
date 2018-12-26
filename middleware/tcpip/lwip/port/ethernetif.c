@@ -329,12 +329,12 @@ low_level_init(struct netif *netif)
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
   /* set MAC hardware address */
-  netif->hwaddr[0] = configMAC_ADDR0;
-  netif->hwaddr[1] = configMAC_ADDR1;
-  netif->hwaddr[2] = configMAC_ADDR2;
-  netif->hwaddr[3] = configMAC_ADDR3;
-  netif->hwaddr[4] = configMAC_ADDR4;
-  netif->hwaddr[5] = configMAC_ADDR5;
+//  netif->hwaddr[0] = configMAC_ADDR0;
+//  netif->hwaddr[1] = configMAC_ADDR1;
+//  netif->hwaddr[2] = configMAC_ADDR2;
+//  netif->hwaddr[3] = configMAC_ADDR3;
+//  netif->hwaddr[4] = configMAC_ADDR4;
+//  netif->hwaddr[5] = configMAC_ADDR5;
 
 
   /* maximum transfer unit */

@@ -40,6 +40,7 @@
 #include <TransPC.h>
 #include <rtc_comm.h>
 #include <lib_str.h>
+#include <network.h>
 
 void clear_screen(int32_t argc, char**argv);
 void send_queue(int32_t argc, char**argv);
@@ -50,6 +51,7 @@ void status(int32_t argc, char **argv);
 void restart(int32_t argc, char**argv);
 void save_tag(int32_t argc, char**argv);
 void control(int32_t argc, char**argv);
+void test_log(int32_t argc, char**argv);
 
 void list(int32_t argc, char **argv);
 void mkdir(int32_t argc, char **argv);
@@ -88,6 +90,7 @@ const shell_command_t cmd_table[] =
 	{"stat", 	1u, 1u, stat, 			"check file status", "<file name>"},
 	{"mb", 		1u, 1u, modbus, 		"read mobus", "<reg addr>"},
 	{"select",	1u, 1u, select_ai, 		"select ai", "<ch>"},
+	{"log",		1u, 1u, test_log, 		"create log file randomly", "<num>"},
 	{0, 0u, 0u, 0, 0, 0}
 };
 
@@ -427,6 +430,16 @@ void status(int32_t argc, char **argv) {
 		for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 			print_tag(&pAppObj->sCfg.sTag[i]);
 		}
+	} else if(strcmp(argv[1], "net") == 0) {
+		WARN("hw 			%02x:%02x:%02x:%02x:%02x:%02x\r\n",
+				eth0.hwaddr[0], eth0.hwaddr[1],
+				eth0.hwaddr[2], eth0.hwaddr[3],
+				eth0.hwaddr[4], eth0.hwaddr[5]);
+
+		WARN("ip 			%s\r\n", ipaddr_ntoa(&eth0.ip_addr));
+		WARN("nm			%s\r\n", ipaddr_ntoa(&eth0.netmask));
+		WARN("gw 			%s\r\n", ipaddr_ntoa(&eth0.gw));
+
 	}
 
 }
@@ -758,6 +771,31 @@ void control(int32_t argc, char**argv) {
     	GPIO_DRV_ClearPinOutput(ModbusPsuOcp);
     	GPIO_DRV_ClearPinOutput(ModbusPsuEn);
     	GPIO_DRV_ClearPinOutput(SimVccEn);
+	} else if(strcmp(argv[1], "del") == 0) {
+		LREP("delete ring file\r\n");
+		int retVal = f_unlink("/conf/retrytable0.dat");
+		ASSERT(retVal == FR_OK);
+		retVal = f_unlink("/conf/retrytable1.dat");
+		ASSERT(retVal == FR_OK);
+	}
+
+}
+
+
+void test_log(int32_t argc, char**argv) {
+	int idx = atoi(argv[1]);
+	uint32_t randout;
+	int randVal;
+	for(int i = 0; i < idx; i++) {
+		RNGA_DRV_GetRandomData(0, &randout, sizeof(uint32_t));
+		randout = abs(randout);
+		randout = randout % 20;
+		randVal = randout;
+		randVal = MAX(randVal, 3);
+		App_GenerateLogFile(pAppObj);
+		randVal = 1000 * randVal;
+		WARN("Delay %d\r\n", randVal);
+		OSA_SleepMs(randVal);
 	}
 
 }

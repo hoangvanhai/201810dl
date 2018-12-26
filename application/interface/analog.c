@@ -108,7 +108,9 @@ int Analog_RecvData(SAnalogReader *pAR, uint8_t* pData, uint16_t u16Size)
  */
 int Analog_SelectChannel (uint8_t channel) {
 
-	//LREP("select ai %d\r\n", channel);
+	channel = 3;
+	LREP("select ai %d\r\n", channel);
+
 	switch(channel) {
 	case 0:
 		BOARD_GpioWritePin(SelectAnalog0, 0);
@@ -347,10 +349,11 @@ void Analog_RecvFF_Reset (SAnalogReader *pAR) {
 static void analog_rx_handle(uint32_t instance, void * uartState) {
 	uart_state_t *state = (uart_state_t*)uartState;
 
-	//LREP("%02x ", state->rxBuff[0]);
+//	LREP("%02x ", state->rxBuff[0]);
+	//debug_putchar(state->rxBuff[0]);
 	if(FIFO_Push(&pThisAr->sRecvFIFO, state->rxBuff[0]) == FALSE) {
 		LREP("push fifo error \r\n");
-		//FIFO_Reset(&pThisAr->sRecvFIFO);
+		FIFO_Reset(&pThisAr->sRecvFIFO);
 	}
 }
 

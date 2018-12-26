@@ -14,6 +14,7 @@
 #include <ff.h>
 
 bool check_obj_existed(const char *path);
+bool check_extension(const char *path, const char *exten);
 bool obj_stat(const char* path);
 int	show_content(char *path);
 int scan_files(char *path);

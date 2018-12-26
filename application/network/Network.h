@@ -20,16 +20,17 @@
 #include <ftp_client.h>
 #include <network_cfg.h>
 
-enum ActiveIf {
-	NET_IF_NONE = 0,
+typedef enum ActiveIf {
+	NET_IF_NONE 	= 0,
 	NET_IF_ETHERNET = 1 << 0,
 	NET_IF_WIRELESS = 1 << 1,
 	NET_IF_ALL = (NET_IF_ETHERNET | NET_IF_WIRELESS),
-};
+}EActiveIf;
 
 typedef struct NetworkStt {
 	SCommon		*sSettings;
-	uint8_t 	activeIf;
+	EActiveIf 	activeIf;
+	OS_TMR		hTimerCheckLinkStatus;
 }SNetworkStt;
 
 void Network_InitModule(SCommon *pCM);
@@ -53,7 +54,7 @@ int ftp_client_init(SCommon *pCM);
 extern TcpClient	 		tcpClient;
 extern TcpServer 	 		tcpServer;
 extern SNetworkStt	 		nwkStt;
-extern ring_file_handle_t 	g_retryTable;
-
+extern ring_file_handle_t 	g_retryTable[FTP_CLIENT_SERVER_NUM];
+extern struct netif eth0;
 
 #endif /* APPLICATION_NETWORK_H_ */

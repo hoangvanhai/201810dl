@@ -34,10 +34,12 @@ void modem_init()
 	modem_hw_init();
 	modem_hw_add_rx_callback(modem_rx_cmplt_callback);
 
-	while(1){
-		LREP("send AT ...");
-		modem_send_at_command("AT\r\n", "OK", 1000, 1);
-	}
+//	while(1){
+//		LREP("send AT ...");
+//		modem_send_at_command("AT\r\n", "OK", 1000, 1);
+//	}
+	LREP("send AT ...");
+	modem_send_at_command("AT\r\n", "OK", 1000, 1);
 
 	modem_switch_to_command_mode();
 	modem_send_at_command("AT&F\r\n", "OK", 1000, 1);

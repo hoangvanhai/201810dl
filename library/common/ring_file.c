@@ -57,13 +57,16 @@ void			ring_file_init(ring_file_handle_t* handle, const char* path, const char* 
 	}
 	ASSERT_VOID((handle != NULL));
 	
+
 	handle->path = OSA_MemAlloc(256);
 	ASSERT_VOID(handle->path);
 
 	memset(handle->path, 0, 256);
 
-
 	fp = &handle->fp;
+
+	ASSERT_VOID(OSA_MutexCreate(&handle->mtx) == kStatus_OSA_Success);
+
 	/**
 	 *  TODO [manhbt]
 	 *  1. Check file exist, if no -> create new file
@@ -155,10 +158,12 @@ BOOL 			ring_file_push_back(ring_file_handle_t* handle, void* data)
 	    }
 
 	// Move the file pointer to push index
+	 ASSERT_NONVOID(RINGFILE_ENTER_CRITIAL() == kStatus_OSA_Success, FALSE );
 
 	ret = f_open(&handle->fp, (const TCHAR*)handle->path, FA_OPEN_ALWAYS|FA_WRITE|FA_READ);
 	if(ret){
 		MODEM_DEBUG_ERROR("Open file Failed, err_code: 0x%.2x", ret);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 
@@ -169,6 +174,7 @@ BOOL 			ring_file_push_back(ring_file_handle_t* handle, void* data)
 	{
 		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", offset, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 
@@ -178,6 +184,7 @@ BOOL 			ring_file_push_back(ring_file_handle_t* handle, void* data)
 	{
 		MODEM_DEBUG_ERROR("Write Record ERROR, err_code: 0x%.2x", ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 
@@ -194,6 +201,7 @@ BOOL 			ring_file_push_back(ring_file_handle_t* handle, void* data)
 	if(ret){
 		MODEM_DEBUG_ERROR("Update File header ERROR, err_code: 0x%.2x", ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 	
@@ -204,6 +212,7 @@ BOOL 			ring_file_push_back(ring_file_handle_t* handle, void* data)
 	{
 		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", 0, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 		
@@ -211,13 +220,14 @@ BOOL 			ring_file_push_back(ring_file_handle_t* handle, void* data)
 	if(ret){
 		MODEM_DEBUG_ERROR("Read back file header ERROR, err_code: 0x%.2x", ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 	
 //	ring_file_print(handle);
 
 	f_close(&handle->fp);
-	
+	RINGFILE_EXIT_CRITIAL();
 	return TRUE;
 
 
@@ -256,11 +266,14 @@ BOOL        	ring_file_pop_front(ring_file_handle_t* handle, void* data)
 		return FALSE;
 	}
 
+	ASSERT_NONVOID(RINGFILE_ENTER_CRITIAL() == kStatus_OSA_Success, FALSE);
+
 	ret = f_open(&handle->fp, (const TCHAR*)handle->path, FA_OPEN_ALWAYS|FA_READ|FA_WRITE);
 	/* Open file Failed */
 	if(ret)
 	{
 		MODEM_DEBUG_ERROR("Unable to open file '%s', err_code: 0x%.2x", handle->path, ret);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 
@@ -271,6 +284,7 @@ BOOL        	ring_file_pop_front(ring_file_handle_t* handle, void* data)
 	{
 		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", offset, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 	
@@ -281,6 +295,7 @@ BOOL        	ring_file_pop_front(ring_file_handle_t* handle, void* data)
 	{
 		MODEM_DEBUG_ERROR("Read Record ERROR, err_code: 0x%.2x", ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 
@@ -292,6 +307,7 @@ BOOL        	ring_file_pop_front(ring_file_handle_t* handle, void* data)
 	{
 		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", offset, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 
@@ -300,6 +316,7 @@ BOOL        	ring_file_pop_front(ring_file_handle_t* handle, void* data)
 	{
 		MODEM_DEBUG_ERROR("ERROR while Alloc memory for temporarily buffer");
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 	memset(pRecord, 0xFF, sizeof(ring_file_record_t));
@@ -310,6 +327,7 @@ BOOL        	ring_file_pop_front(ring_file_handle_t* handle, void* data)
 	{
 		MODEM_DEBUG_ERROR("Erase Record ERROR, err_code: 0x%.2x", ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 
@@ -322,12 +340,14 @@ BOOL        	ring_file_pop_front(ring_file_handle_t* handle, void* data)
 	if(ret){
 		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", 0, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 	ret =f_write(&handle->fp, &handle->header, sizeof(ring_file_header_t), (UINT*)&br);
 	if(ret){
 		MODEM_DEBUG_ERROR("ERROR while Update header, err_code: 0x%.2x", 0, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 
@@ -336,6 +356,7 @@ BOOL        	ring_file_pop_front(ring_file_handle_t* handle, void* data)
 	if(ret){
 		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", 0, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 	
@@ -343,11 +364,13 @@ BOOL        	ring_file_pop_front(ring_file_handle_t* handle, void* data)
 	if(ret){
 		MODEM_DEBUG_ERROR("ERROR while read back  file header, err_code: 0x%.2x", 0, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 //	ring_file_print(handle);
 
 	f_close(&handle->fp);
+	RINGFILE_EXIT_CRITIAL();
 	return TRUE;
 }
 
@@ -384,11 +407,14 @@ uint8_t         ring_file_get_front(ring_file_handle_t* handle, void* data)
 		return FALSE;
 	}
 
+	ASSERT_NONVOID(RINGFILE_ENTER_CRITIAL() == kStatus_OSA_Success, FALSE);
+
 	ret = f_open(&handle->fp, (const TCHAR*)handle->path, FA_OPEN_ALWAYS|FA_READ|FA_WRITE);
 	/* Open file Failed */
 	if(ret)
 	{
 		MODEM_DEBUG_ERROR("Unable to open file '%s', err_code: 0x%.2x", handle->path, ret);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 
@@ -399,6 +425,7 @@ uint8_t         ring_file_get_front(ring_file_handle_t* handle, void* data)
 	{
 		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", offset, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 
@@ -409,73 +436,13 @@ uint8_t         ring_file_get_front(ring_file_handle_t* handle, void* data)
 	{
 		MODEM_DEBUG_ERROR("Read Record ERROR, err_code: 0x%.2x", ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return FALSE;
 	}
 
-//	/* Erase Record content */
-//
-//	ret = f_lseek(&handle->fp, offset);
-//
-//	if(ret)
-//	{
-//		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", offset, ret);
-//		f_close(&handle->fp);
-//		return FALSE;
-//	}
-//
-//	uint8_t *pRecord = OSA_FixedMemMalloc(sizeof(ring_file_record_t));
-//	if(!pRecord)
-//	{
-//		MODEM_DEBUG_ERROR("ERROR while Alloc memory for temporarily buffer");
-//		f_close(&handle->fp);
-//		return FALSE;
-//	}
-//	memset(pRecord, 0xFF, sizeof(ring_file_record_t));
-//	btw = sizeof(ring_file_record_t), bw = 0;
-//	ret = f_write(&handle->fp, pRecord, btr, (UINT*)&br);
-//	OSA_FixedMemFree(pRecord);
-//	if ((ret))
-//	{
-//		MODEM_DEBUG_ERROR("Read Record ERROR, err_code: 0x%.2x", ret);
-//		f_close(&handle->fp);
-//		return FALSE;
-//	}
-
-//	/* Update the file header */
-//	handle->header.u16_buffer_pop_index++;
-//	handle->header.u16_buffer_pop_index %= handle->header.u16_max_record_count;
-//	handle->header.u16_record_count--;
-//
-//	ret = f_lseek(&handle->fp, 0);
-//	if(ret){
-//		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", 0, ret);
-//		f_close(&handle->fp);
-//		return FALSE;
-//	}
-//	ret =f_write(&handle->fp, &handle->header, sizeof(ring_file_header_t), (UINT*)&br);
-//	if(ret){
-//		MODEM_DEBUG_ERROR("ERROR while Update header, err_code: 0x%.2x", 0, ret);
-//		f_close(&handle->fp);
-//		return FALSE;
-//	}
-//
-//	// read back header
-//	ret = f_lseek(&handle->fp, 0);
-//	if(ret){
-//		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", 0, ret);
-//		f_close(&handle->fp);
-//		return FALSE;
-//	}
-//
-//	ret = f_read(&handle->fp, &handle->header, sizeof(ring_file_header_t), (UINT*)&br);
-//	if(ret){
-//		MODEM_DEBUG_ERROR("ERROR while read back  file header, err_code: 0x%.2x", 0, ret);
-//		f_close(&handle->fp);
-//		return FALSE;
-//	}
-//	ring_file_print(handle);
 
 	f_close(&handle->fp);
+	RINGFILE_EXIT_CRITIAL();
 	return TRUE;
 }
 
@@ -517,11 +484,14 @@ void 			ring_file_flush(ring_file_handle_t* handle)
 	handle->header.u16_buffer_pop_index  = 0;
 	handle->header.u16_buffer_push_index = 0;
 
+	ASSERT_NONVOID(RINGFILE_ENTER_CRITIAL() == kStatus_OSA_Success, FALSE);
+
 	ret = f_open(&handle->fp, (const TCHAR*)handle->path, FA_OPEN_ALWAYS|FA_READ|FA_WRITE);
 	/* Open file Failed */
 	if(ret)
 	{
 		MODEM_DEBUG_ERROR("Unable to open file '%s', err_code: 0x%.2x", handle->path, ret);
+		RINGFILE_EXIT_CRITIAL();
 		return;
 	}
 
@@ -531,6 +501,7 @@ void 			ring_file_flush(ring_file_handle_t* handle)
 	if(ret){
 		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", 0, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return;
 	}
 	
@@ -538,6 +509,7 @@ void 			ring_file_flush(ring_file_handle_t* handle)
 	if(ret){
 		MODEM_DEBUG_ERROR("ERROR while Update header, err_code: 0x%.2x", 0, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return;
 	}
 
@@ -546,6 +518,7 @@ void 			ring_file_flush(ring_file_handle_t* handle)
 	if(ret){
 		MODEM_DEBUG_ERROR("ERROR while lseek to %.2x, err_code: 0x%.2x", 0, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return;
 	}
 	
@@ -553,11 +526,13 @@ void 			ring_file_flush(ring_file_handle_t* handle)
 	if(ret){
 		MODEM_DEBUG_ERROR("ERROR while read back  file header, err_code: 0x%.2x", 0, ret);
 		f_close(&handle->fp);
+		RINGFILE_EXIT_CRITIAL();
 		return;
 	}
 	//ring_file_print(handle);
 
 	f_close(&handle->fp);
+	RINGFILE_EXIT_CRITIAL();
 
 }
 
