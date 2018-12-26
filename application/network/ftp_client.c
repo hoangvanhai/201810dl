@@ -732,13 +732,14 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 			do {
 				retVal = ftp_remote_put(pFC, idx, (char*)msg->file_name,
 						(char*)msg->local_path, (char*)msg->local_path);
+				ftp_destroy_channel(pFC);
 
 				if(retVal != FTP_ERR_NONE) {
 					ftp_print_err(retVal);
 				}
-				ftp_destroy_channel(pFC);
 				retryCount++;
-			} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE && retryCount < 5);
+			} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
+					retryCount < FTP_CLIENT_ETHERNET_RETRY);
 
 			// ethernet is now active but send via ethernet failed
 			if(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE) {
@@ -751,7 +752,8 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 					retVal = modem_ftp_put_file_from_local(pFC, idx, (char*)msg->file_name,
 						(char*)msg->local_path, (char*)msg->local_path);
 						retryCount++;
-					} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE && retryCount < 2);
+					} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
+							retryCount < FTP_CLIENT_WIRELESS_RETRY);
 				}
 			}
 		} else { // if ethernet interface is not active
@@ -762,7 +764,8 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 				retVal = modem_ftp_put_file_from_local(pFC, idx, (char*)msg->file_name,
 					(char*)msg->local_path, (char*)msg->local_path);
 					retryCount++;
-				} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE && retryCount < 2);
+				} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
+						retryCount < FTP_CLIENT_WIRELESS_RETRY);
 			} else {
 				WARN("no such interface is active, put file to retry table %d\r\n", idx);
 				ftp_put_to_retry_table(msg->local_path, msg->file_name, idx);
@@ -848,13 +851,14 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 				do {
 					retVal = ftp_remote_put(pFC, idx, (char*)pRecord->file_name,
 							(char*)pRecord->dir_path, (char*)pRecord->dir_path);
+					ftp_destroy_channel(pFC);
 
 					if(retVal != FTP_ERR_NONE) {
 						ftp_print_err(retVal);
 					}
-					ftp_destroy_channel(pFC);
 					retryCount++;
-				} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE && retryCount < 5);
+				} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
+						retryCount < FTP_CLIENT_ETHERNET_RETRY);
 
 				// ethernet is now active but send via ethernet failed
 				if(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE) {
@@ -867,7 +871,8 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 						retVal = modem_ftp_put_file_from_local(pFC, idx, (char*)pRecord->file_name,
 							(char*)pRecord->dir_path, (char*)pRecord->dir_path);
 							retryCount++;
-						} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE && retryCount < 2);
+						} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
+								retryCount < FTP_CLIENT_WIRELESS_RETRY);
 					}
 				}
 			} else { // if ethernet interface is not active
@@ -878,7 +883,8 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 					retVal = modem_ftp_put_file_from_local(pFC, idx, (char*)pRecord->file_name,
 						(char*)pRecord->dir_path, (char*)pRecord->dir_path);
 						retryCount++;
-					} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE && retryCount < 2);
+					} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
+							retryCount < FTP_CLIENT_WIRELESS_RETRY);
 				}
 			}
 

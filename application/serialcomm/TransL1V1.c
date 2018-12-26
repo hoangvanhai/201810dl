@@ -24,11 +24,10 @@
 
 /************************** Function Prototypes ******************************/
 extern void   		UART_SetIsrL1Handle(uint32_t u32UartPort, STransL1 *pTransL1);
-inline void 		RS485_RX(STransL1 *pTransL1);
-inline void 		RS485_TX(STransL1 *pTransL1);
-inline void 		RS485_Init();
 /************************** Variable Definitions *****************************/
+
 STransL1 	*pUartPtr[UART_INSTANCE_COUNT] = {NULL, NULL, NULL, NULL, NULL, NULL};
+
 /*****************************************************************************/
 /** @brief
  *		   init UART port
@@ -82,16 +81,7 @@ void RS485_Init()
  *  @return Void.
  *  @note
  */
-void RS485_TX(STransL1 *pTransL1)
-{
-    /*Config RS485 Driver as transmiter*/
 
-//    if(pTransL1->sRS485DE.u16Port != NULL)
-//    {
-//        BIT_SET(*(volatile unsigned int *)pTransL1->sRS485DE.u16Port, pTransL1->sRS485DE.u16Pin);
-//    }
-	
-}
 /*****************************************************************************/
 /** @brief
  *		  
@@ -100,20 +90,7 @@ void RS485_TX(STransL1 *pTransL1)
  *  @return Void.
  *  @note
  */
-void RS485_RX(STransL1 *pTransL1)
-{
-//	/*wait until last byte is shifted out*/
-//	while(UART_IsBusy(pTransL1->u32UartPort));
-//
-//	/*Config RS485 Driver as receiver*/
-//	if(pTransL1->sRS485DE.u16Port != NULL)
-//	{
-//		ASSERT(pTransL1->sRS485DE.u16Port == LATF_BASE);
-//
-//		BIT_CLEAR(*(volatile unsigned int *)pTransL1->sRS485DE.u16Port,	pTransL1->sRS485DE.u16Pin);
-//	}
-	
-}
+
 /*****************************************************************************/
 /** @brief
  *		   Initialize Transmission Layer 1
@@ -137,7 +114,7 @@ uint8_t  TransL1_Init(STransL1 *pTransL1, uint32_t u32UartPort, uint32_t u32Baud
 	
 	RS485_Init();
 	
-	RS485_TX(pTransL1);	// do not want to receice any thing
+	//RS485_TX(pTransL1);	// do not want to receice any thing
 	
 	//init some data of TransL1
 	pTransL1->u32UartPort	 	= u32UartPort;
@@ -157,7 +134,7 @@ uint8_t  TransL1_Init(STransL1 *pTransL1, uint32_t u32UartPort, uint32_t u32Baud
 	// init UART
 	TransL1_UARTInit(pTransL1);
 		
-	RS485_RX(pTransL1);
+	//RS485_RX(pTransL1);
 	
 	pTransL1->sFlag.Bits.bStarted = TRUE;
 	return TRANS_SUCCESS;
@@ -279,7 +256,7 @@ int TransL1_Send(STransL1 *pTransL1, uint8_t* pData, uint16_t u16Size)
 		pTransL1->u16SendPtr  = 0;
 	UART_TX_EXIT_CRITICAL();
 
-	RS485_TX(pTransL1);
+	//RS485_TX(pTransL1);
 
 	pTransL1->sFlag.Bits.bSending = TRUE;
 	
@@ -448,7 +425,7 @@ inline void TransL1_TX_Interrupt_Handle(uint32_t instance, void* uartState)
 		state->txBuff++;
 		state->txSize--;
 		if(state->txSize == 0) {
-			RS485_RX(pTransL1);
+			//RS485_RX(pTransL1);
 			pTransL1->sFlag.Bits.bSending = FALSE;
 			if(pTransL1->fClbL1SendDone) {
 				pTransL1->fClbL1SendDone(pTransL1->pClbSendDoneParam);

@@ -16,12 +16,8 @@
 #define TCP_CLIENT_BUFF_SIZE		512
 #define TCP_SERVER_BUFF_SIZE		512
 
-//#define defaultMAC_ADDR0	0x00
-//#define defaultMAC_ADDR1	0xCF
-//#define defaultMAC_ADDR2	0x52
-//#define defaultMAC_ADDR3	0x35
-//#define defaultMAC_ADDR4	0x00
-//#define defaultMAC_ADDR5	0x02
+#define FTP_CLIENT_ETHERNET_RETRY	5
+#define FTP_CLIENT_WIRELESS_RETRY	2
 
 
 #endif /* APPLICATION_NETWORK_NETWORK_CFG_H_ */

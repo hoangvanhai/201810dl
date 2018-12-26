@@ -143,62 +143,72 @@ int App_CreateAppTask(SApp *pApp) {
 	osa_status_t result;
 	LREP("start create app task \r\n");
 
-//    result = OSA_TaskCreate(App_TaskModbus,
-//                    (uint8_t *)"modbus",
-//                    TASK_MODBUS_STACK_SIZE,
-//					task_modbus_stack,
-//                    TASK_MODBUS_PRIO,
-//                    (task_param_t)pApp,
-//                    false,
-//                    &task_modbus_task_handler);
-//    if(result != kStatus_OSA_Success)
-//    {
-//        LREP("Failed to create slave task\r\n\r\n");
-//        return -1;
-//    }
+#if APP_TASK_MODBUS_EN > 0
+    result = OSA_TaskCreate(App_TaskModbus,
+                    (uint8_t *)"modbus",
+                    TASK_MODBUS_STACK_SIZE,
+					task_modbus_stack,
+                    TASK_MODBUS_PRIO,
+                    (task_param_t)pApp,
+                    false,
+                    &task_modbus_task_handler);
+    if(result != kStatus_OSA_Success)
+    {
+        LREP("Failed to create slave task\r\n\r\n");
+        return -1;
+    }
+#endif
 
-//    result = OSA_TaskCreate(App_TaskSerialcomm,
-//                    (uint8_t *)"serialcomm",
-//                    TASK_SERIAL_COMM_STACK_SIZE,
-//					task_serialcomm_stack,
-//                    TASK_SERIALCOMM_PRIO,
-//                    (task_param_t)pApp,
-//                    false,
-//                    &task_serialcomm_task_handler);
-//    if (result != kStatus_OSA_Success)
-//    {
-//        LREP("Failed to create serialcomm task\r\n\r\n");
-//        return -1;
-//    }
+#if APP_TASK_PC_EN > 0
+    result = OSA_TaskCreate(App_TaskSerialcomm,
+                    (uint8_t *)"serialcomm",
+                    TASK_SERIAL_COMM_STACK_SIZE,
+					task_serialcomm_stack,
+                    TASK_SERIALCOMM_PRIO,
+                    (task_param_t)pApp,
+                    false,
+                    &task_serialcomm_task_handler);
+    if (result != kStatus_OSA_Success)
+    {
+        LREP("Failed to create serialcomm task\r\n\r\n");
+        return -1;
+    }
+#endif
 
-//    result = OSA_TaskCreate(App_TaskUserInterface,
-//                    (uint8_t *)"ui",
-//                    TASK_UI_STACK_SIZE,
-//					task_ui_stack,
-//                    TASK_UI_PRIO,
-//                    (task_param_t)pApp,
-//                    false,
-//                    &task_ui_task_handler);
-//    if (result != kStatus_OSA_Success)
-//    {
-//        LREP("Failed to create user interface task\r\n\r\n");
-//        return -1;
-//    }
+#if APP_TASK_UI_EN > 0
+    result = OSA_TaskCreate(App_TaskUserInterface,
+                    (uint8_t *)"ui",
+                    TASK_UI_STACK_SIZE,
+					task_ui_stack,
+                    TASK_UI_PRIO,
+                    (task_param_t)pApp,
+                    false,
+                    &task_ui_task_handler);
+    if (result != kStatus_OSA_Success)
+    {
+        LREP("Failed to create user interface task\r\n\r\n");
+        return -1;
+    }
+#endif
 
-//    result = OSA_TaskCreate(App_TaskAnalogIn,
-//					(uint8_t *)"ai",
-//					TASK_AI_STACK_SIZE,
-//					task_ai_stack,
-//					TASK_AI_PRIO,
-//					(task_param_t)pApp,
-//					false,
-//					&task_ai_task_handler);
-//	if(result != kStatus_OSA_Success)
-//	{
-//		LREP("Failed to create ai task\r\n\r\n");
-//		return -1;
-//	}
+#if APP_TASK_AI_EN > 0
+    result = OSA_TaskCreate(App_TaskAnalogIn,
+					(uint8_t *)"ai",
+					TASK_AI_STACK_SIZE,
+					task_ai_stack,
+					TASK_AI_PRIO,
+					(task_param_t)pApp,
+					false,
+					&task_ai_task_handler);
+	if(result != kStatus_OSA_Success)
+	{
+		LREP("Failed to create ai task\r\n\r\n");
+		return -1;
+	}
+#endif
 
+
+#if APP_TASK_PERIODIC_EN > 0
     // create app tasks
 	result = OSA_TaskCreate(App_TaskPeriodic,
 					(uint8_t *)"periodic",
@@ -213,7 +223,9 @@ int App_CreateAppTask(SApp *pApp) {
 		LREP("Failed to create periodic task\r\n\r\n");
 		return -1;
 	}
+#endif
 
+#if APP_TASK_SHELL_EN > 0
     // create app tasks
     result = OSA_TaskCreate(App_TaskShell,
                     (uint8_t *)"shell",
@@ -228,7 +240,7 @@ int App_CreateAppTask(SApp *pApp) {
         LREP("Failed to create master task\r\n\r\n");
         return -1;
     }
-
+#endif
 	return result;
 
 }

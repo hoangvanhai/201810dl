@@ -67,6 +67,7 @@ void hardware_init(void) {
     GPIO_DRV_Init(NULL, SelectAnalogPin);
 
     GPIO_DRV_SetPinOutput(SimVccEn);
+    GPIO_DRV_SetPinOutput(ModbusPsuEn);
 
     /* Init board clock */
 	BOARD_ClockInit();

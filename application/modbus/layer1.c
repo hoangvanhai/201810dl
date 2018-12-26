@@ -88,7 +88,7 @@ void RS485_Init()
  */
 void RS485_TX(SModbus *pModbus)
 {
-	GPIO_DRV_SetPinOutput(pModbus->rs485Pin);
+	GPIO_DRV_ClearPinOutput(pModbus->rs485Pin);
 }
 /*****************************************************************************/
 /** @brief
@@ -100,10 +100,12 @@ void RS485_TX(SModbus *pModbus)
  */
 void RS485_RX(SModbus *pModbus)
 {
-	uint32_t remain;
-	/*wait until last byte is shifted out*/
-	while(UART_DRV_GetTransmitStatus(pModbus->uartInstance, &remain) == kStatus_UART_TxBusy);
-	GPIO_DRV_ClearPinOutput(pModbus->rs485Pin);
+	while (kStatus_UART_TxBusy ==
+			UART_DRV_GetTransmitStatus(
+					pModbus->uartInstance, NULL)) {
+	}
+
+	GPIO_DRV_SetPinOutput(pModbus->rs485Pin);
 }
 /*****************************************************************************/
 /** @brief
@@ -152,7 +154,11 @@ uint8_t	Modbus_SendAndRecv		(SModbus *pModbus, uint8_t *psData,
 									 uint16_t *rSize, uint16_t timeout) {
 	Modbus_RecvFF_Reset(pModbus);
 	uint8_t retVal;
-	retVal = Modbus_Send(pModbus, psData, sSize);
+//	uint8_t data[20];
+//	Str_Copy(data, "1234567890");
+	retVal = Modbus_Send(pModbus, psData, sSize + 1); // + 1 to prevent
+													  // rs485 problem
+	//retVal = Modbus_Send(pModbus, data, 11);
 	if(retVal == MB_SUCCESS) {
 		OSA_SleepMs(timeout);
 		uint32_t recvCount = Modbus_GetRecvCount(pModbus);
@@ -185,11 +191,13 @@ int Modbus_Send(SModbus *pModbus, uint8_t* pData, uint16_t u16Size)
 
 	int i = 0;
 	// copy data
+	//LREP("send: ");
 	for(; i < u16Size; i++) {
 		pModbus->pSendBuff[i] = pData[i];
-		//LREP("%x ", pData[i]);
+		//LREP("%02x ", pData[i]);
 	}
 
+	//LREP("\r\n");
 	pModbus->u16SendSize = u16Size;
 
 	Modbus_SetSending(pModbus, TRUE);

@@ -124,7 +124,7 @@ void Network_InitModule(SCommon *pCM) {
 
 	nwkStt.activeIf = NET_IF_NONE;
 	//nwkStt.activeIf |= NET_IF_ETHERNET;
-	//nwkStt.activeIf |= NET_IF_WIRELESS;
+	nwkStt.activeIf |= NET_IF_WIRELESS;
 
 	//TODO check network active status
 }

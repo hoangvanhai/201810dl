@@ -1409,7 +1409,7 @@ int	App_ModbusDoRead(SApp *pApp){
 
 			if(retVal != MB_SUCCESS) {
 				pApp->sMB.Node[i].status = TAG_STT_MB_FAILED;
-//				LREP("MBT ");
+				LREP("MBT ");
 			} else {
 				pApp->sMB.Node[i].status = TAG_STT_OK;
 				switch(pApp->sMB.Node[i].data_format) {
