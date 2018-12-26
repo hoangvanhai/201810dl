@@ -108,8 +108,8 @@ int Analog_RecvData(SAnalogReader *pAR, uint8_t* pData, uint16_t u16Size)
  */
 int Analog_SelectChannel (uint8_t channel) {
 
-	channel = 3;
-	LREP("select ai %d\r\n", channel);
+	//channel = 3;
+	LREP("select channel %d\r\n", channel);
 
 	switch(channel) {
 	case 0:
