@@ -86,7 +86,7 @@ uint16_t MBMaster_Read(SModbus *pModbus, uint8_t slv_adrr, uint8_t fc, uint16_t 
  *  @return Void.
  *  @note
  */
-uint16_t MBMaster_Parse(const uint8_t* data, uint8_t data_format, void *rdata) {
+uint16_t MBMaster_Parse(const uint8_t* data, uint8_t data_format, uint8_t data_order, float *rdata) {
 	uint8_t dataSize = 1, recvObjNum;
 	switch(data_format) {
 	case Integer_8bits: dataSize = 1; break;
@@ -101,26 +101,104 @@ uint16_t MBMaster_Parse(const uint8_t* data, uint8_t data_format, void *rdata) {
 	for(int i = 0, j = 0; i < recvObjNum; i++, j+=dataSize) {
 		switch(data_format) {
 		case Integer_8bits: {
-			*((uint8_t*)rdata) = data[MB_DATA_RESP_IDX + j];
+			*rdata = (float)data[MB_DATA_RESP_IDX + j];
 		} break;
 		case Integer_16bits: {
-			uint16_t value = ((data[MB_DATA_RESP_IDX + j] << 8) & 0xFF00) |
-                    (data[MB_DATA_RESP_IDX + j + 1]);
-			*((uint16_t*)rdata) = value;
+			uint16_t value;
+			switch(data_order) {
+			case HiBFist_HiWFirst:
+				value = ((data[MB_DATA_RESP_IDX + j] << 8) & 0xFF00) |
+				                    (data[MB_DATA_RESP_IDX + j + 1]);
+				break;
+
+			case HiBFist_LoWFirst:
+				break;
+
+			case LoBFist_HiWFirst:
+				break;
+
+			case LoBFist_LoWFirst:
+				value = ((data[MB_DATA_RESP_IDX + j + 1] << 8) & 0xFF00) |
+						(data[MB_DATA_RESP_IDX + j ]);
+				break;
+
+			default:
+				break;
+			}
+
+			*rdata = (float)value;
+
 		} break;
 		case Integer_32bits: {
-			uint32_t value = (data[MB_DATA_RESP_IDX + j]     << 24)  |
+			uint32_t value;
+
+			switch(data_order) {
+			case HiBFist_HiWFirst:
+			value = (data[MB_DATA_RESP_IDX + j]     << 24)  |
 							 (data[MB_DATA_RESP_IDX + j + 1] << 16)  |
 							 (data[MB_DATA_RESP_IDX + j + 2] << 8)   |
 							 (data[MB_DATA_RESP_IDX + j + 3]);
-			*((uint32_t*)rdata) = value;
+			break;
+
+			case HiBFist_LoWFirst:
+				break;
+
+			case LoBFist_HiWFirst:
+				break;
+
+			case LoBFist_LoWFirst:
+				value = (data[MB_DATA_RESP_IDX + j + 3]     << 24)  |
+								 (data[MB_DATA_RESP_IDX + j + 2] << 16)  |
+								 (data[MB_DATA_RESP_IDX + j + 1] << 8)   |
+								 (data[MB_DATA_RESP_IDX + j]);
+				break;
+
+			default:
+				break;
+			}
+
+			*rdata = (float)value;
+
+
 		} break;
 		case Float_32bits: {
-			float value =(data[MB_DATA_RESP_IDX + j]     << 24)  |
-						 (data[MB_DATA_RESP_IDX + j + 1] << 16)  |
-						 (data[MB_DATA_RESP_IDX + j + 2] << 8)   |
-						 (data[MB_DATA_RESP_IDX + j + 3]);
-			*((float*)rdata) = value;
+			unionfloat32 value;
+			switch(data_order) {
+			case HiBFist_HiWFirst:
+				value.u8[0] = data[MB_DATA_RESP_IDX + j];
+				value.u8[1] = data[MB_DATA_RESP_IDX + j + 1];
+				value.u8[2] = data[MB_DATA_RESP_IDX + j + 2];
+				value.u8[3] = data[MB_DATA_RESP_IDX + j + 3];
+			break;
+
+			case HiBFist_LoWFirst:
+				value.u8[2] = data[MB_DATA_RESP_IDX + j];
+				value.u8[3] = data[MB_DATA_RESP_IDX + j + 1];
+				value.u8[0] = data[MB_DATA_RESP_IDX + j + 2];
+				value.u8[1] = data[MB_DATA_RESP_IDX + j + 3];
+				break;
+
+			case LoBFist_HiWFirst:
+				value.u8[1] = data[MB_DATA_RESP_IDX + j];
+				value.u8[0] = data[MB_DATA_RESP_IDX + j + 1];
+				value.u8[3] = data[MB_DATA_RESP_IDX + j + 2];
+				value.u8[2] = data[MB_DATA_RESP_IDX + j + 3];
+				break;
+
+			case LoBFist_LoWFirst:
+				value.u8[3] = data[MB_DATA_RESP_IDX + j];
+				value.u8[2] = data[MB_DATA_RESP_IDX + j + 1];
+				value.u8[1] = data[MB_DATA_RESP_IDX + j + 2];
+				value.u8[0] = data[MB_DATA_RESP_IDX + j + 3];
+				break;
+
+			default:
+				break;
+			}
+
+			*rdata = value.f32;
+
+
 		} break;
 		default:
 			ASSERT(false);

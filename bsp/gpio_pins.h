@@ -115,6 +115,7 @@ enum _gpio_pins_pinNames {
 	ModbusPsuOcp				= GPIO_MAKE_PIN(GPIOB_IDX, 16U),
 	ModbusPsuEn					= GPIO_MAKE_PIN(GPIOB_IDX, 17U),
 	SimVccEn					= GPIO_MAKE_PIN(GPIOA_IDX, 6U),
+	SimVccOcf					= GPIO_MAKE_PIN(GPIOA_IDX, 10U),
 
 };
 

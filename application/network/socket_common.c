@@ -94,7 +94,7 @@ bool Network_GetLinkStatus(bool *status) {
 			0, enetDevIf[0].phyAddr, status)
 			== kStatus_ENET_Success);
 
-	if(ret) {
+	if(*status) {
 		nwkStt.activeIf |= NET_IF_ETHERNET;
 	} else {
 		nwkStt.activeIf &= ~(NET_IF_ETHERNET);

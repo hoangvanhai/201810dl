@@ -78,7 +78,7 @@ const shell_command_t cmd_table[] =
 	{"setdate", 3u, 3u, setdate, 		"set date", "<date> <month> <year>"},
 	{"status", 	1u, 1u, status, 		"show system status", "<type>"},
 	{"tag", 	1u, 1u, save_tag, 		"save tag cfg", "<tag>"},
-	{"ctrl", 	1u, 1u, control, 		"control", "<param>"},
+	{"ctrl", 	1u, 2u, control, 		"control", "<param>"},
 	{"ls", 		1u, 1u, list, 			"list all item in current wd", ""},
 	{"mkdir", 	1u, 1u, mkdir, 			"make directory", "<dir>"},
 	{"rmdir", 	1u, 1u, rmdir, 			"remove directory", "<dir>"},
@@ -706,71 +706,28 @@ void control(int32_t argc, char**argv) {
 		App_GenerateLogFile(pAppObj);
 	} else if(strcmp(argv[1], "don") == 0) {
 		LREP("control don\r\n");
-
-    	GPIO_DRV_SetPinOutput(kGpioMbRs485);
-//    	GPIO_DRV_SetPinOutput(DigitalOutput0);
-//    	GPIO_DRV_SetPinOutput(DigitalOutput1);
-//    	GPIO_DRV_SetPinOutput(DigitalOutput2);
-//    	GPIO_DRV_SetPinOutput(DigitalOutput3);
-//    	GPIO_DRV_SetPinOutput(DigitalOutput4);
-//    	GPIO_DRV_SetPinOutput(DigitalOutput5);
-//
-//    	GPIO_DRV_SetPinOutput(SelectAnalog0	);
-//    	GPIO_DRV_SetPinOutput(SelectAnalog1);
-//    	GPIO_DRV_SetPinOutput(SelectAnalog2);
-//    	GPIO_DRV_SetPinOutput(SelectAnalog3);
-//
-//    	GPIO_DRV_SetPinOutput(SelectTrigger0);
-//    	GPIO_DRV_SetPinOutput(SelectTrigger1);
-//    	GPIO_DRV_SetPinOutput(SelectTrigger2);
-//    	GPIO_DRV_SetPinOutput(SelectTrigger3);
-//
-//    	GPIO_DRV_SetPinOutput(WatchDogFeed);
-//    	GPIO_DRV_SetPinOutput(LcdVccOcf);
-//    	GPIO_DRV_SetPinOutput(LcdVccEn);
-//    	GPIO_DRV_SetPinOutput(LcdGpio1);
-//    	GPIO_DRV_SetPinOutput(LcdGpio2);
-//    	GPIO_DRV_SetPinOutput(LanPsuOcp);
-//    	GPIO_DRV_SetPinOutput(LanPsuEn);
-//    	GPIO_DRV_SetPinOutput(IoVccEn);
-//    	GPIO_DRV_SetPinOutput(IoVccOcf);
-//    	GPIO_DRV_SetPinOutput(ModbusPsuOcp);
-//    	GPIO_DRV_SetPinOutput(ModbusPsuEn);
-//    	GPIO_DRV_SetPinOutput(SimVccEn);
-
+		int idx = atoi(argv[2]);
+		if(idx >= 0 && idx <= 11) {
+			App_SetDoPinByIndex(pAppObj, idx, 1);
+		}
+		//GPIO_DRV_SetPinOutput(DigitalOutput0);
+		//GPIO_DRV_SetPinOutput(DigitalOutput1);
+		//GPIO_DRV_SetPinOutput(DigitalOutput2);
+		//GPIO_DRV_SetPinOutput(DigitalOutput3);
+		//GPIO_DRV_SetPinOutput(DigitalOutput4);
+		//GPIO_DRV_SetPinOutput(DigitalOutput5);
 	} else if(strcmp(argv[1], "doff") == 0) {
 		LREP("control doff\r\n");
-
-    	GPIO_DRV_ClearPinOutput(kGpioMbRs485);
-//    	GPIO_DRV_ClearPinOutput(DigitalOutput0);
-//    	GPIO_DRV_ClearPinOutput(DigitalOutput1);
-//    	GPIO_DRV_ClearPinOutput(DigitalOutput2);
-//    	GPIO_DRV_ClearPinOutput(DigitalOutput3);
-//    	GPIO_DRV_ClearPinOutput(DigitalOutput4);
-//    	GPIO_DRV_ClearPinOutput(DigitalOutput5);
-//
-//    	GPIO_DRV_ClearPinOutput(SelectAnalog0	);
-//    	GPIO_DRV_ClearPinOutput(SelectAnalog1);
-//    	GPIO_DRV_ClearPinOutput(SelectAnalog2);
-//    	GPIO_DRV_ClearPinOutput(SelectAnalog3);
-//
-//    	GPIO_DRV_ClearPinOutput(SelectTrigger0);
-//    	GPIO_DRV_ClearPinOutput(SelectTrigger1);
-//    	GPIO_DRV_ClearPinOutput(SelectTrigger2);
-//    	GPIO_DRV_ClearPinOutput(SelectTrigger3);
-//
-//    	GPIO_DRV_ClearPinOutput(WatchDogFeed);
-//    	GPIO_DRV_ClearPinOutput(LcdVccOcf);
-//    	GPIO_DRV_ClearPinOutput(LcdVccEn);
-//    	GPIO_DRV_ClearPinOutput(LcdGpio1);
-//    	GPIO_DRV_ClearPinOutput(LcdGpio2);
-//    	GPIO_DRV_ClearPinOutput(LanPsuOcp);
-//    	GPIO_DRV_ClearPinOutput(LanPsuEn);
-//    	GPIO_DRV_ClearPinOutput(IoVccEn);
-//    	GPIO_DRV_ClearPinOutput(IoVccOcf);
-//    	GPIO_DRV_ClearPinOutput(ModbusPsuOcp);
-//    	GPIO_DRV_ClearPinOutput(ModbusPsuEn);
-//    	GPIO_DRV_ClearPinOutput(SimVccEn);
+		int idx = atoi(argv[2]);
+		if(idx >= 0 && idx <= 11) {
+			App_SetDoPinByIndex(pAppObj, idx, 0);
+		}
+		//GPIO_DRV_ClearPinOutput(DigitalOutput0);
+		//GPIO_DRV_ClearPinOutput(DigitalOutput1);
+		//GPIO_DRV_ClearPinOutput(DigitalOutput2);
+		//GPIO_DRV_ClearPinOutput(DigitalOutput3);
+		//GPIO_DRV_ClearPinOutput(DigitalOutput4);
+		//GPIO_DRV_ClearPinOutput(DigitalOutput5);
 	} else if(strcmp(argv[1], "del") == 0) {
 		LREP("delete ring file\r\n");
 		int retVal = f_unlink("/conf/retrytable0.dat");

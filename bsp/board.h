@@ -58,14 +58,8 @@ void BOARD_InitOsc0(void);
 
 /* Function to initialize RTC external clock base on board configuration. */
 bool BOARD_IsSDCardDetected(void);
-
-/*Function to handle board-specified initialization*/
-uint8_t usb_device_board_init(uint8_t controller_id);
-/*Function to handle board-specified initialization*/
-uint8_t usb_host_board_init(uint8_t controller_id);
-/*Function to handle board-specified initialization*/
-uint8_t usb_otg_board_init(uint8_t controller_id);
-
+bool BOARD_IsSPISDCardDetected(void);
+void BOARD_CheckPeripheralFault(void);
 void BOARD_EnableAllFault(void);
 int BOARD_GetFaultType(void);
 void BOARD_CreateWDG(void);

@@ -73,42 +73,42 @@ const gpio_input_pin_user_config_t sdhcCdPin[] = {
 const gpio_output_pin_user_config_t DigitalOutputPin[] = {
 	{
 		.pinName = DigitalOutput0,
-		.config.outputLogic = 1,
+		.config.outputLogic = 0,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.isOpenDrainEnabled = false,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
 	{
 		.pinName = DigitalOutput1,
-		.config.outputLogic = 1,
+		.config.outputLogic = 0,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.isOpenDrainEnabled = false,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
 	{
 		.pinName = DigitalOutput2,
-		.config.outputLogic = 1,
+		.config.outputLogic = 0,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.isOpenDrainEnabled = false,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
 	{
 		.pinName = DigitalOutput3,
-		.config.outputLogic = 1,
+		.config.outputLogic = 0,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.isOpenDrainEnabled = false,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
 	{
 		.pinName = DigitalOutput4,
-		.config.outputLogic = 1,
+		.config.outputLogic = 0,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.isOpenDrainEnabled = false,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
 	{
 		.pinName = DigitalOutput5,
-		.config.outputLogic = 1,
+		.config.outputLogic = 0,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.isOpenDrainEnabled = false,
 		.config.driveStrength = kPortLowDriveStrength,
@@ -155,13 +155,6 @@ const gpio_output_pin_user_config_t DigitalOutputPin[] = {
 		.config.isOpenDrainEnabled = false,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
-//	{
-//		.pinName = LcdVccOcf,
-//		.config.outputLogic = 1,
-//		.config.slewRate = kPortSlowSlewRate,
-//		.config.isOpenDrainEnabled = false,
-//		.config.driveStrength = kPortLowDriveStrength,
-//	},
 	{
 		.pinName = LcdVccEn,
 		.config.outputLogic = 1,
@@ -183,13 +176,6 @@ const gpio_output_pin_user_config_t DigitalOutputPin[] = {
 		.config.isOpenDrainEnabled = false,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
-//	{
-//		.pinName = LanPsuOcp,
-//		.config.outputLogic = 1,
-//		.config.slewRate = kPortSlowSlewRate,
-//		.config.isOpenDrainEnabled = false,
-//		.config.driveStrength = kPortLowDriveStrength,
-//	},
 	{
 		.pinName = IoVccEn,
 		.config.outputLogic = 1,
@@ -197,20 +183,6 @@ const gpio_output_pin_user_config_t DigitalOutputPin[] = {
 		.config.isOpenDrainEnabled = false,
 		.config.driveStrength = kPortLowDriveStrength,
 	},
-//	{
-//		.pinName = IoVccOcf,
-//		.config.outputLogic = 1,
-//		.config.slewRate = kPortSlowSlewRate,
-//		.config.isOpenDrainEnabled = false,
-//		.config.driveStrength = kPortLowDriveStrength,
-//	},
-//	{
-//		.pinName = ModbusPsuOcp,
-//		.config.outputLogic = 1,
-//		.config.slewRate = kPortSlowSlewRate,
-//		.config.isOpenDrainEnabled = false,
-//		.config.driveStrength = kPortLowDriveStrength,
-//	},
 	{
 		.pinName = ModbusPsuEn,
 		.config.outputLogic = 1,
@@ -345,6 +317,41 @@ const gpio_input_pin_user_config_t DigitalInputPin[] = {
 	},
 	{
 		.pinName = DigitalInput7,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = LcdVccOcf,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = LanPsuOcp,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = IoVccOcf,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = ModbusPsuOcp,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = SimVccOcf,
 		.config.isPullEnable = true,
 		.config.pullSelect = kPortPullUp,
 		.config.isPassiveFilterEnabled = false,

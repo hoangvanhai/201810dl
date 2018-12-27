@@ -84,10 +84,13 @@ void App_Init(SApp *pApp) {
 	pApp->eStatus = SYS_ERR_NONE;
 	pApp->stat = false;
 	pApp->reboot = false;
+	pApp->sdhcPlugged = false;
+	pApp->spiPlugged = false;
 
 	err = App_InitFS(pApp);
 
 	if(err == FR_OK) {
+		pApp->sdhcPlugged = true;
 		LREP("app init FS successfully \r\n");
 	} else {
 		LREP("app init FS failed err = %d \r\n", err);
@@ -250,15 +253,23 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd1, "zxcvbnm@12");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_prefix1, "/home/ftpuser1/");
 	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 27,118,20,209);
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname2, "ftpuser1");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd2, "zxcvbnm@12");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_prefix2, "/home/ftpuser1/");
+	IP4_ADDR(&pHandle->sCom.server_ftp_ip2, 27,118,20,209);
 #else
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname1, "win7");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd1, "123456a@");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_prefix1, "/home/");
 	IP4_ADDR(&pHandle->sCom.server_ftp_ip1, 192,168,0,100);
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname2, "win7");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd2, "123456a@");
+	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_prefix2, "/home/");
+
+	IP4_ADDR(&pHandle->sCom.server_ftp_ip2, 192,168,0,100);
 #endif
 	pHandle->sCom.server_ftp_port1 = 21;
-	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_usrname2, "ftpuser2");
-	Str_Copy((CPU_CHAR*)pHandle->sCom.ftp_passwd2, "ftppasswd2");
+	pHandle->sCom.server_ftp_port2 = 21;
 
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ctrl_usrname, "ctrluser");
 	Str_Copy((CPU_CHAR*)pHandle->sCom.ctrl_passwd, "ctrlpasswd");
@@ -268,7 +279,7 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	pHandle->sCom.modbus_brate = 9600;
 
 	pHandle->sCom.ftp_enable1 = TRUE;
-	pHandle->sCom.ftp_enable2 = FALSE;
+	pHandle->sCom.ftp_enable2 = TRUE;
 
 	pHandle->sCom.dev_hwaddr[0] = defaultMAC_ADDR0;
 	pHandle->sCom.dev_hwaddr[1] = defaultMAC_ADDR1;
@@ -281,9 +292,6 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	IP4_ADDR(&pHandle->sCom.dev_netmask, 255,255,255,0);
 	IP4_ADDR(&pHandle->sCom.dev_gw, 192,168,0,1);
 
-
-	IP4_ADDR(&pHandle->sCom.server_ftp_ip2, 192,168,1,12);
-	pHandle->sCom.server_ftp_port2 = 21;
 	IP4_ADDR(&pHandle->sCom.server_ctrl_ip, 192,168,0,100);
 	pHandle->sCom.server_ctrl_port = 1186;
 
@@ -579,44 +587,17 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	LREP("log min = %d\r\n", log_min);
 
-#if NETWORK_MODULE_EN > 0
-	Network_InitModule(&pApp->sCfg.sCom);
-
-	Network_Register_TcpClient_Notify(Clb_NetTcpClientConnEvent);
-	Network_Register_TcpClient_DataEvent(Event_DataReceived, Clb_NetTcpClientRecvData);
-	Network_Register_TcpClient_DataEvent(Event_DataSendDone, Clb_NetTcpClientSentData);
-	Network_Register_TcpClient_DataEvent(Event_DataError, Clb_NetTcpClientError);
-
-	Network_Register_TcpServer_Notify(Clb_NetTcpServerConnEvent);
-	Network_Register_TcpServer_DataEvent(Event_DataReceived, Clb_NetTcpServerRecvData);
-	Network_Register_TcpServer_DataEvent(Event_DataSendDone, Clb_NetTcpServerSentData);
-	Network_Register_TcpServer_DataEvent(Event_DataError, Clb_NetTcpServerError);
-#endif
-
 	while(1) {
 		OSA_SleepMs(1000);
-
-		if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-//			 LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
-//					pApp->sDateTime.tm_year, pApp->sDateTime.tm_mon,
-//					pApp->sDateTime.tm_mday, pApp->sDateTime.tm_hour,
-//					pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec);
-			//LREP(".");
-			//GPIO_DRV_TogglePinOutput(kGpioLEDGREEN);
-		}
-
-
+		RTC_GetTimeDate(&pApp->sDateTime);
 		App_DiReadAllPort(pApp);
 		App_UpdateTagContent(pApp);
-
         if(pApp->sDateTime.tm_min != last_min && logged) {
             logged = false;
         }
-
-
 		if((logged == false) && (pApp->sDateTime.tm_min % log_min == 0)) {
 			// To ensure has valid data before log to file
-			//if(pApp->aiReadCount > 0 && pApp->mbReadCount > 0)
+			if(pApp->aiReadCount > 0 && pApp->mbReadCount > 0)
 			{
 				if(pApp->sCfg.sCom.ftp_enable1 ||
 						pApp->sCfg.sCom.ftp_enable2)
@@ -758,7 +739,7 @@ void App_TaskUserInterface(task_param_t param)
 		/* Timer was created but NOT started */
 		LREP("timer started ok\r\n");
 	} else {
-		LREP("timer start failed\r\n");
+		LREP("timer start failed err = %d\r\n", err);
 	}
 
 	while(1) {
@@ -788,8 +769,6 @@ void App_TaskStartup(task_param_t arg) {
 
 	App_CreateAppEvent(pApp);
 
-	App_CreateAppTask(pApp);
-
 	OSTmrCreate(&pApp->hCtrlTimer,
 				(CPU_CHAR *)"timer",
 				(OS_TICK)0,
@@ -801,6 +780,8 @@ void App_TaskStartup(task_param_t arg) {
 
 	ASSERT(err == OS_ERR_NONE);
 
+	App_CreateAppTask(pApp);
+
 	App_OS_SetAllHooks();
 
 #if OS_CFG_STAT_TASK_EN == DEF_ENABLED
@@ -809,36 +790,66 @@ void App_TaskStartup(task_param_t arg) {
 #endif
 
 
-	while(1) {
+    BOARD_CheckPeripheralFault();
 
+#if NETWORK_MODULE_EN > 0
+    Network_InitTcpModule(&pApp->sCfg.sCom);
+
+	Network_Register_TcpClient_Notify(Clb_NetTcpClientConnEvent);
+	Network_Register_TcpClient_DataEvent(Event_DataReceived, Clb_NetTcpClientRecvData);
+	Network_Register_TcpClient_DataEvent(Event_DataSendDone, Clb_NetTcpClientSentData);
+	Network_Register_TcpClient_DataEvent(Event_DataError, Clb_NetTcpClientError);
+
+	Network_Register_TcpServer_Notify(Clb_NetTcpServerConnEvent);
+	Network_Register_TcpServer_DataEvent(Event_DataReceived, Clb_NetTcpServerRecvData);
+	Network_Register_TcpServer_DataEvent(Event_DataSendDone, Clb_NetTcpServerSentData);
+	Network_Register_TcpServer_DataEvent(Event_DataError, Clb_NetTcpServerError);
+
+	uint32_t timeNow = sys_now();
+	Network_InitFtpModule(&pApp->sCfg.sCom);
+#endif
+
+	WARN("FTP client wakeup spend %d ms\r\n", sys_now() - timeNow);
+	ERR("FTP CLIENT INIT DONE -> CREATE DOG \r\n");
+	BOARD_CreateWDG();
+
+	while(1) {
 		OSSemPend(&pApp->hSem, 1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
 
 			/* Check all pending command */
-			if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_1)) {
+			if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_2)) {
+				if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_2)) {
+					bool status = BOARD_IsSPISDCardDetected();
+					if(pAppObj->spiPlugged != status) {
+						LREP("card 1 event = %d\r\n", pAppObj->spiPlugged);
+
+
+					}
+					App_ClearCtrlCode(pApp, CTRL_INIT_SDCARD_2);
+				}
+			}
+
+			if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_2)) {
 				bool status = BOARD_IsSDCardDetected();
 				if(pAppObj->sdhcPlugged != status) {
-					LREP("card event = %d\r\n", pAppObj->sdhcPlugged);
+					LREP("card 2 event = %d\r\n", pAppObj->sdhcPlugged);
 
 					if(!pAppObj->sdhcPlugged) {
 						NVIC_SystemReset();
 					} else {
-						LREP("recv ctrl init sdcard 1\r\n");
+						LREP("recv ctrl init sdcard 2\r\n");
 						int err = App_InitFS(pApp);
 						if(err != FR_OK) {
-							App_SetSysStatus(pApp, SYS_ERR_SDCARD_1);
+							App_SetSysStatus(pApp, SYS_ERR_SDCARD_2);
+							pApp->sdhcPlugged = false;
 						} else {
-							App_ClearSysStatus(pApp, SYS_ERR_SDCARD_1);
+							pApp->sdhcPlugged = true;
+							App_ClearSysStatus(pApp, SYS_ERR_SDCARD_2);
 							ASSERT(App_LoadConfig(pApp, CONFIG_FILE_PATH) == FR_OK);
 						}
 					}
 				}
-				App_ClearCtrlCode(pApp, CTRL_INIT_SDCARD_1);
-			}
-
-			if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_2)) {
-				LREP("recv ctrl init sdcard 2\r\n");
-
 				App_ClearCtrlCode(pApp, CTRL_INIT_SDCARD_2);
 			}
 
@@ -853,13 +864,11 @@ void App_TaskStartup(task_param_t arg) {
 				App_ClearCtrlCode(pApp, CTRL_INIT_MODBUS);
 			}
 
-
 			//WDOG_DRV_Refresh();
 		} else {
-			//LEP("Feed dog \r\n");
+			BOARD_CheckPeripheralFault();
 			/* Feed dog to prevent WDG reset */
 			WDOG_DRV_Refresh();
-
 		}
 
 
@@ -1122,20 +1131,20 @@ void App_CommCalibAi(SApp *pApp, const uint8_t *data) {
 	if(data[2] == 0) {
 		LREP("calib 4mA\r\n");
 	} else {
-		LREP("calib 20mA\r\n");
+		LREP("calib 16mA\r\n");
 	}
 	for(int i = 0; i < ANALOG_INPUT_NUM_CHANNEL; i++) {
 		if(pApp->sAI.Node[i].status == TAG_STT_OK) {
 			if(data[2] == 0) {// calib at 4mA
 				pApp->sCfg.sAiCalib.calib[i].x1 =
 					pApp->sCfg.sAiCalib.calib[i].raw;
-			} else {// calib at 20mA
+			} else {// calib at 16mA
 				isSave = true;
 				pApp->sCfg.sAiCalib.calib[i].x2 =
 					pApp->sCfg.sAiCalib.calib[i].raw;
 				if((pApp->sCfg.sAiCalib.calib[i].x2 -
 						pApp->sCfg.sAiCalib.calib[i].x1) != 0) {
-				pApp->sCfg.sAiCalib.calib[i].coefficient = 16 /
+				pApp->sCfg.sAiCalib.calib[i].coefficient = 12 /
 						(pApp->sCfg.sAiCalib.calib[i].x2 -
 						pApp->sCfg.sAiCalib.calib[i].x1);
 				pApp->sCfg.sAiCalib.calib[i].offset = 4 -
@@ -1285,18 +1294,35 @@ void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type) {
 void Clb_TimerControl(void *p_tmr, void *p_arg) {
 	static uint8_t counter = 0;
 
-	App_GenerateFakeTime(pAppObj);
+//	App_GenerateFakeTime(pAppObj);
 
 	if(counter % 15 == 0) {
 		pAppObj->uiCounter = 0;
 		SSystemStatus *pSys = (SSystemStatus*)OSA_FixedMemMalloc(sizeof(SSystemStatus));
 		if(pSys != NULL) {
 			memset(pSys, 0, sizeof(SSystemStatus));
+
 			memcpy(&pSys->time, &pAppObj->sDateTime, sizeof(SDateTime));
+			pSys->ip = eth0.ip_addr;
+			pSys->sdcard1_stat = 0;
+			pSys->sdcard2_stat = pAppObj->sdhcPlugged;
+			pSys->sim_stat = (nwkStt.activeIf & NET_IF_WIRELESS) != 0;
+			pSys->eth_stat = (nwkStt.activeIf & NET_IF_ETHERNET) != 0;
+			pSys->curr_out = pAppObj->currOut;
+
+			LREP("ip %x\r\n", 		pSys->ip);
+			LREP("sdcard1_stat %x\r\n", pSys->sdcard1_stat);
+			LREP("sdcard2_stat %x\r\n", pSys->sdcard2_stat);
+			LREP("sim_stat %x\r\n", pSys->sim_stat);
+			LREP("eth_stat %x\r\n", pSys->eth_stat);
+			LREP("curr_out %x\r\n", pSys->curr_out);
+
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
 					(uint8_t*)pSys, sizeof(SSystemStatus), false);
+
 			OSA_FixedMemFree((uint8_t*)pSys);
 		}
+
 		LREP("send system status\r\n");
 	}
 
@@ -1327,21 +1353,44 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 			OSA_FixedMemFree(mem);
 			pAppObj->uiCounter++;
 		}
-	} else {
-		STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
-		if(pMem != NULL) {
-			for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
-				pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
-				pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
-				pMem->Node[i].meas_stt[0] = pAppObj->sTagValue.Node[i].meas_stt[0];
-				pMem->Node[i].meas_stt[1] = pAppObj->sTagValue.Node[i].meas_stt[1];
-				pMem->Node[i].meas_stt[2] = pAppObj->sTagValue.Node[i].meas_stt[2];
-			}
-			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_VALUE,
-					(uint8_t*)pMem, sizeof(STagVArray), false);
+	}
 
-			OSA_FixedMemFree((uint8_t*)pMem);
+	//else
+
+	{
+//		STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
+//		if(pMem != NULL) {
+//			for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+//				pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
+//				pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
+//				pMem->Node[i].meas_stt[0] = pAppObj->sTagValue.Node[i].meas_stt[0];
+//				pMem->Node[i].meas_stt[1] = pAppObj->sTagValue.Node[i].meas_stt[1];
+//				pMem->Node[i].meas_stt[2] = pAppObj->sTagValue.Node[i].meas_stt[2];
+//			}
+//			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_VALUE,
+//					(uint8_t*)pMem, sizeof(STagVArray), false);
+//
+//			OSA_FixedMemFree((uint8_t*)pMem);
+//		}
+
+
+		if(counter % 3 == 0) {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_AI,
+				  (uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput), false);
+			LREP("send ai\r\n");
+		} else if (counter % 3 == 1) {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_DO,
+				  (uint8_t*)&pAppObj->sDO, sizeof(SDigitalOutputLog), false);
+			LREP("send do\r\n");
 		}
+
+		if(counter % 3 == 2) {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_DI,
+				  (uint8_t*)&pAppObj->sDI, sizeof(SDigitalInputLog), false);
+			LREP("send di\r\n");
+		}
+
+
 	}
 
 	//LREP("counter = %d\r\n", counter);
@@ -1367,6 +1416,7 @@ int	App_InitModbus(SApp *pApp){
 			pApp->sMB.Node[i].data_type = pApp->sCfg.sTag[i].data_type;
 			pApp->sMB.Node[i].reg_address = pApp->sCfg.sTag[i].slave_reg_addr;
 			pApp->sMB.Node[i].data_format = pApp->sCfg.sTag[i].data_format;
+			pApp->sMB.Node[i].data_order = pApp->sCfg.sTag[i].data_order;
 		}
 	}
 	return Modbus_Init(&pApp->sModbus, BOARD_MODBUS_UART_INSTANCE,
@@ -1412,31 +1462,13 @@ int	App_ModbusDoRead(SApp *pApp){
 				LREP("MBT ");
 			} else {
 				pApp->sMB.Node[i].status = TAG_STT_OK;
-				switch(pApp->sMB.Node[i].data_format) {
-				case Integer_8bits: {
-					uint8_t readValue;
-					MBMaster_Parse((const uint8_t*)data, Integer_8bits, &readValue);
-					pApp->sMB.Node[i].value = (float)readValue;
-				} break;
-				case Integer_16bits: {
-					uint16_t readValue;
-					MBMaster_Parse((const uint8_t*)data, Integer_16bits, &readValue);
-					//LREP("uint16_t value: %x\r\n", readValue);
-					pApp->sMB.Node[i].value = (float)readValue;
-				} break;
-				case Integer_32bits: {
-					uint32_t readValue;
-					MBMaster_Parse((const uint8_t*)data, Integer_32bits, &readValue);
-					pApp->sMB.Node[i].value = (float)readValue;
-				} break;
-				case Float_32bits: {
 					float readValue;
-					MBMaster_Parse((const uint8_t*)data, Float_32bits, &readValue);
-					pApp->sMB.Node[i].value = (float)readValue;
-				} break;
-				default:
-					break;
-				}
+					MBMaster_Parse((const uint8_t*)data,
+							pApp->sMB.Node[i].data_format,
+							pApp->sMB.Node[i].data_order, &readValue);
+
+					pApp->sMB.Node[i].value = readValue;
+
 			}
 		}
 	}
@@ -1471,6 +1503,7 @@ int App_InitDO(SApp *pApp) {
 
 	for(int i = 0; i < DIGITAL_OUTPUT_NUM_CHANNEL; i++) {
 		pApp->sCfg.sDO[i].port = DigitalOutputPin[i].pinName;
+		pApp->sDO.Node[i].id = DigitalOutputPin[i].pinName;
 	}
 	return 0;
 }
@@ -1837,7 +1870,9 @@ void App_SetFTPCallback(SApp *pApp) {
 void App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic) {
 	for(int i = 0; i < DIGITAL_OUTPUT_NUM_CHANNEL; i++) {
 		if(Str_Cmp((CPU_CHAR*)pApp->sCfg.sDO[i].name, name) == 0) {
-			GPIO_DRV_WritePinOutput(pApp->sCfg.sDO[i].port, logic);
+			pApp->sDO.Node[i].lev = logic;
+			GPIO_DRV_WritePinOutput(pApp->sDO.Node[i].id,
+					(pApp->sCfg.sDO[i].activeType == ACTIVE_HIGH) ? logic : (!logic));
 		}
 	}
 }
@@ -1849,9 +1884,28 @@ void App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic) {
  *  @return Void.
  *  @note
  */
+void App_SetDoPinByIndex(SApp *pApp, uint8_t idx, uint32_t logic) {
+	pApp->sDO.Node[idx].lev = logic;
+	GPIO_DRV_WritePinOutput(pApp->sDO.Node[idx].id,
+			(pApp->sCfg.sDO[idx].activeType == ACTIVE_HIGH) ? logic : (!logic));
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void App_DiReadAllPort(SApp *pApp) {
+	bool value;
 	for(int i = 0; i < DIGITAL_INPUT_NUM_CHANNEL; i++) {
-		pApp->sDI.Node[i].lev = GPIO_DRV_ReadPinInput(pApp->sDI.Node[i].id);
+		value = GPIO_DRV_ReadPinInput(pApp->sDI.Node[i].id);
+		if(pApp->sCfg.sDI[i].activeType == ACTIVE_HIGH) {
+			pApp->sDI.Node[i].lev = !value;
+		} else {
+			pApp->sDI.Node[i].lev = value;
+		}
 	}
 }
 /*****************************************************************************/
@@ -1887,7 +1941,7 @@ void App_AiReadAllPort(SApp *pApp) {
 				//LREP("recv: %s\r\n", data);
 				float value = atof((char*)&data[1]);
 				if(value > -20 && value < 500) {
-					LREP("recv value = %.2f\r\n", value);
+					//LREP("recv value = %.2f\r\n", value);
 					pApp->sCfg.sAiCalib.calib[i].raw = value;
 					pApp->sAI.Node[i].value = pApp->sCfg.sAiCalib.calib[i].offset +
 									(pApp->sCfg.sAiCalib.calib[i].raw *
@@ -2292,7 +2346,7 @@ int	App_GenerateFakeTime(SApp *pApp) {
 void sdhc_card_detection(void)
 {
 	OS_ERR err;
-	App_SetCtrlCode(pAppObj, CTRL_INIT_SDCARD_1);
+	App_SetCtrlCode(pAppObj, CTRL_INIT_SDCARD_2);
     OSSemPost(&pAppObj->hSem, OS_OPT_POST_1, &err);
 }
 

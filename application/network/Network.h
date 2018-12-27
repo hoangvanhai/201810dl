@@ -33,7 +33,9 @@ typedef struct NetworkStt {
 	OS_TMR		hTimerCheckLinkStatus;
 }SNetworkStt;
 
-void Network_InitModule(SCommon *pCM);
+void Network_InitTcpModule(SCommon *pCM);
+void Network_InitFtpModule(SCommon *pCM);
+
 void tcp_client_init(ip_addr_t ip, int port);
 void tcp_server_init(int port);
 

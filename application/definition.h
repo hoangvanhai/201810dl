@@ -72,6 +72,8 @@
 
 #define LOGGER_STREAM_HEADER				0x30
 #define LOGGER_STREAM_VALUE					0x31
+#define LOGGER_STREAM_DI					0x32
+#define LOGGER_STREAM_DO					0x33
 
 #define STREAM_AI                           0x01
 #define STREAM_MB                           0x02
@@ -219,9 +221,11 @@ typedef enum EDOCtrlType_ {
 
 typedef struct SSystemStatus_ {
 	uint8_t		eth_stat;
+	ip_addr_t	ip;
 	uint8_t		sim_stat;
 	uint8_t		sdcard1_stat;
-	uint8_t		stcard2_stat;
+	uint8_t		sdcard2_stat;
+	uint8_t		curr_out;
 	struct		tm time;
 }SSystemStatus;
 
@@ -244,6 +248,7 @@ typedef struct SVMBNode_ {
 	uint8_t 		status;
 	uint8_t			data_format;
 	uint8_t			data_type;
+	uint8_t			data_order;
     uint8_t 		address;
     uint16_t		reg_address;
     float 			value;
@@ -282,6 +287,10 @@ typedef struct SInputPort_ {
 typedef struct SDigitalInputLog_ {
     SLogicNode		Node[DIGITAL_INPUT_NUM_CHANNEL];
 }SDigitalInputLog;
+
+typedef struct SDigitalOutputLog_ {
+    SLogicNode		Node[DIGITAL_OUTPUT_NUM_CHANNEL];
+}SDigitalOutputLog;
 
 typedef struct SAnalogInput_ {
 	SAiValueNode	Node[ANALOG_INPUT_NUM_CHANNEL];

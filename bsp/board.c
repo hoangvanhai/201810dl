@@ -185,6 +185,23 @@ bool BOARD_IsSDCardDetected(void)
     }
 }
 
+
+bool BOARD_IsSPISDCardDetected(void)
+{
+    GPIO_Type * gpioBase = g_gpioBase[GPIO_EXTRACT_PORT(kGpioSdhc0Cd)];
+    uint32_t pin = GPIO_EXTRACT_PIN(kGpioSdhc0Cd);
+
+    if(GPIO_HAL_ReadPinInput(gpioBase, pin) == false)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
 /* Initialize debug console. */
 void dbg_uart_init(void)
 {
@@ -422,6 +439,29 @@ void BOARD_GpioWritePin(uint32_t pinName, bool value) {
 		GPIO_DRV_SetPinOutput(pinName);
 	} else {
 		GPIO_DRV_ClearPinOutput(pinName);
+	}
+}
+
+
+void BOARD_CheckPeripheralFault() {
+	if(!GPIO_DRV_ReadPinInput(LcdVccOcf)) {
+		ERR("LCD POWER FAULT \r\n");
+	}
+
+	if(!GPIO_DRV_ReadPinInput(LanPsuOcp)) {
+		ERR("ETHERNET POWER FAULT \r\n");
+	}
+
+	if(!GPIO_DRV_ReadPinInput(IoVccOcf)) {
+		ERR("IO POWER FAULT \r\n");
+	}
+
+	if(!GPIO_DRV_ReadPinInput(ModbusPsuOcp)) {
+		ERR("MODBUS POWER FAULT \r\n");
+	}
+
+	if(!GPIO_DRV_ReadPinInput(SimVccOcf)) {
+		ERR("WIRELESS POWER FAULT \r\n");
 	}
 }
 /*******************************************************************************

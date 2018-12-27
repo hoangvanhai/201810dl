@@ -59,9 +59,17 @@ void static netif_link_changed_callback(struct netif* netif);
  *  @return Void.
  *  @note
  */
-void Network_InitModule(SCommon *pCM) {
+void Network_InitTcpModule(SCommon *pCM) {
 
 	tcpip_init(NULL,NULL);
+
+	pCM->dev_hwaddr[0] = defaultMAC_ADDR0;
+	pCM->dev_hwaddr[1] = defaultMAC_ADDR1;
+	pCM->dev_hwaddr[2] = defaultMAC_ADDR2;
+	pCM->dev_hwaddr[3] = defaultMAC_ADDR3;
+	pCM->dev_hwaddr[4] = defaultMAC_ADDR4;
+	pCM->dev_hwaddr[5] = defaultMAC_ADDR5;
+
 
 	eth0.hwaddr[0] = pCM->dev_hwaddr[0];
 	eth0.hwaddr[1] = pCM->dev_hwaddr[1];
@@ -117,11 +125,6 @@ void Network_InitModule(SCommon *pCM) {
 	tcp_server_init(12345);
 #endif
 
-#if NETWORK_FTP_CLIENT_EN > 0
-	ftp_client_init(pCM);
-#endif
-
-
 	nwkStt.activeIf = NET_IF_NONE;
 	//nwkStt.activeIf |= NET_IF_ETHERNET;
 	nwkStt.activeIf |= NET_IF_WIRELESS;
@@ -129,6 +132,20 @@ void Network_InitModule(SCommon *pCM) {
 	//TODO check network active status
 }
 
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Network_InitFtpModule(SCommon *pCM) {
+#if NETWORK_FTP_CLIENT_EN > 0
+	ftp_client_init(pCM);
+#endif
+
+}
 
 void static netif_changed_callback(struct netif* netif) {
 	WARN("netif_changed_callback\r\n");
@@ -261,7 +278,7 @@ int ftp_client_init(SCommon *pCM) {
 
 	ftp_client_add_server(&ftpClient, &server, 0);
 
-	server.enable = 0;	//pCM->ftp_enable2;
+	server.enable = pCM->ftp_enable2;
 	server.ip = pCM->server_ftp_ip2;
 	server.port = pCM->server_ftp_port2;
 	server.username = (CPU_CHAR*)pCM->ftp_usrname2;
@@ -290,11 +307,8 @@ int ftp_client_init(SCommon *pCM) {
     ftpClient.active = true;
 
 
-    modem_init();
-    modem_ftp_init(&ftpClient);
-
 	ring_file_init(&g_retryTable[0], "/conf",
-			"retrytable0.dat", 20000,
+			"retrytable0.dat", 5000,
 			sizeof(ring_file_record_t));
 
 	LREP("Ring file 0 Init Done!!!\r\n");
@@ -302,12 +316,15 @@ int ftp_client_init(SCommon *pCM) {
 	ring_file_print(&g_retryTable[0]);
 
 	ring_file_init(&g_retryTable[1], "/conf",
-			"retrytable1.dat", 20000,
+			"retrytable1.dat", 5000,
 			sizeof(ring_file_record_t));
 
 	LREP("Ring file 1 Init Done!!!\r\n");
 
 	ring_file_print(&g_retryTable[1]);
+
+    modem_init();
+    modem_ftp_init(&ftpClient);
 
     return result;
 }

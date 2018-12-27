@@ -58,6 +58,7 @@ typedef struct SApp_ {
 	SAnalogReader		sAnalogReader;
 	SDateTime			sDateTime;
 	SDigitalInputLog	sDI;
+	SDigitalOutputLog	sDO;
 	SAnalogInput		sAI;
 	SModbusValue		sMB;
 	STagValue			sTagValue;
@@ -69,6 +70,8 @@ typedef struct SApp_ {
 	uint32_t			pcCounter;
 	uint32_t			uiCounter;
 	bool				sdhcPlugged;
+	bool				spiPlugged;
+	bool				currOut;
 	bool				stat;
 	bool				reboot;
 	semaphore_t			hSem;
@@ -150,6 +153,7 @@ void 			App_DiReadAllPort(SApp *pApp);
 void			App_AiReadAllPort(SApp *pApp);
 
 void			App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic);
+void			App_SetDoPinByIndex(SApp *pApp, uint8_t idx, uint32_t logic);
 
 double			App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index);
 double			App_GetMBValueByIndex(SModbusValue *pHandle, uint16_t index);

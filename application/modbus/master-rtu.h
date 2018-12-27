@@ -45,7 +45,7 @@ uint16_t MBMaster_Read(SModbus *pModbus, uint8_t slv_adrr, uint8_t fc,
 						uint16_t data_addr, uint16_t num_data,
 						uint8_t *read_frame, uint16_t *len);
 
-uint16_t MBMaster_Parse(const uint8_t* data, uint8_t data_format, void *rdata);
+uint16_t MBMaster_Parse(const uint8_t* data, uint8_t data_format, uint8_t data_order, float *rdata);
 
 
 uint16_t MBMaster_Write(uint8_t id, uint8_t fc,
