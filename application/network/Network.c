@@ -454,6 +454,33 @@ int Network_FtpClient_Send(const uint8_t *local_path,
 
 }
 
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int Network_GetWirelessStatus(void) {
+
+	static uint8_t result = 1;
+
+	if (result == 0) return result;
+
+	uint8_t ret = modem_get_status(&g_modem_status);
+	result = ret;
+	ASSERT_NONVOID(ret == 0, -1);
+
+	nwkStt.rssi = g_modem_status.csq;
+	Str_Copy_N(nwkStt.simid, g_modem_status.iccid, 10);
+	Str_Copy_N(nwkStt.netid, g_modem_status.opn, 10);
+
+	return ret;
+
+
+}
+
 
 
 

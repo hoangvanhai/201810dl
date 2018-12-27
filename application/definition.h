@@ -175,6 +175,7 @@ typedef enum EControlCode_ {
     CTRL_INIT_SDCARD_2 = 	1 << 2,
     CTRL_INIT_MODBUS = 		1 << 3,
 	CTRL_SEND_HEADER = 		1 << 4,
+	CTRL_GET_WL_STT = 		1 << 5,
 }ECtrlCode;
 
 typedef enum ECfgConnType_ {

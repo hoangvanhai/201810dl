@@ -56,6 +56,8 @@ int Network_FtpClient_Send(const uint8_t *local_path,
 
 int ftp_client_init(SCommon *pCM);
 
+int Network_GetWirelessStatus(void);
+
 extern TcpClient	 		tcpClient;
 extern TcpServer 	 		tcpServer;
 extern SNetworkStt	 		nwkStt;

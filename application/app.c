@@ -870,6 +870,13 @@ void App_TaskStartup(task_param_t arg) {
 				App_ClearCtrlCode(pApp, CTRL_INIT_MODBUS);
 			}
 
+			if(App_IsCtrlCodePending(pApp, CTRL_GET_WL_STT)) {
+				LREP("recv ctrl get wireless status\r\n");
+
+				Network_GetWirelessStatus();
+				App_ClearCtrlCode(pApp, CTRL_GET_WL_STT);
+			}
+
 			//WDOG_DRV_Refresh();
 		} else {
 			BOARD_CheckPeripheralFault();
@@ -1316,8 +1323,8 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 			pSys->eth_stat = (nwkStt.activeIf & NET_IF_ETHERNET) != 0;
 			pSys->curr_out = pAppObj->currOut;
 			pSys->rssi = nwkStt.rssi;
-			Str_Copy_N(pSys->simid, nwkStt.simid, 22);
-			Str_Copy_N(pSys->netid, nwkStt.netid, 22);
+			Str_Copy_N(pSys->simid, nwkStt.simid, 10);
+			Str_Copy_N(pSys->netid, nwkStt.netid, 10);
 
 			LREP("ip %x\r\n", 		pSys->ip);
 			LREP("sdcard1_stat %x\r\n", pSys->sdcard1_stat);
@@ -1333,6 +1340,10 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 
 			OSA_FixedMemFree((uint8_t*)pSys);
 		}
+
+		OS_ERR err;
+		App_SetCtrlCode(pAppObj, CTRL_GET_WL_STT);
+	    OSSemPost(&pAppObj->hSem, OS_OPT_POST_1, &err);
 
 		LREP("send system status\r\n");
 	}
