@@ -734,6 +734,22 @@ void control(int32_t argc, char**argv) {
 		ASSERT(retVal == FR_OK);
 		retVal = f_unlink("/conf/retrytable1.dat");
 		ASSERT(retVal == FR_OK);
+	} else if(strcmp(argv[1], "ref") == 0) {
+		if(strcmp(argv[2], "on") == 0) {
+			GPIO_DRV_ClearPinOutput(RefCurrEn);
+			ERR("on ref current \r\n");
+		} else {
+			GPIO_DRV_SetPinOutput(RefCurrEn);
+			ERR("off ref current \r\n");
+
+		}
+	} else if(strcmp(argv[1], "lev") == 0) {
+		uint16_t lev = atoi(argv[2]);
+
+		if(lev >= 0 && lev <= 4095) {
+			int err = DAC_SetRefLevel(lev);
+			ERR("set ref level = %d err = %d\r\n", lev, err);
+		}
 	}
 
 }

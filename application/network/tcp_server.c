@@ -38,7 +38,7 @@ void tcp_server_listener(void *arg) {
 
 		if(Network_GetLinkStatus(&status)) {
 			if(status == false) {
-				LREP("tcp_server_listener link down ... \r\n");
+				//LREP("tcp_server_listener link down ... \r\n");
 				OSA_TimeDelay(3000);
 				continue;
 			}

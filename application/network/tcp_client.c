@@ -31,7 +31,7 @@ int tcp_client_open_connection(TcpClient *pEP, int timeout) {
 	bool status = true;
 	if(Network_GetLinkStatus(&status)) {
 		if(status == false) {
-			LREP("tcp_client_open_connection link down ... \r\n");
+			//LREP("tcp_client_open_connection link down ... \r\n");
 			return err;
 		}
 	}

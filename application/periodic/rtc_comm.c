@@ -120,7 +120,8 @@ int RTC_SetTimeDate(SDateTime *time) {
 	DateTime[5] = DEC_TO_HEX_1BYTE(time->tm_mon);
 	DateTime[6] = DEC_TO_HEX_1BYTE(time->tm_year);
 
-	i2c_ret = I2C_DRV_MasterSendDataBlocking(BOARD_I2C_RTC_INSTANCE, &slave, cmd, 1, DateTime, 7, 20);
+	i2c_ret = I2C_DRV_MasterSendDataBlocking(BOARD_I2C_RTC_INSTANCE,
+			&slave, cmd, 1, DateTime, 7, 20);
 
 	if(i2c_ret != kStatus_I2C_Success) {
 		ASSERT(FALSE);

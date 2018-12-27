@@ -560,6 +560,9 @@ void App_TaskPeriodic(task_param_t parg) {
 	pApp->sDateTime.tm_mon = 1;
 	pApp->sDateTime.tm_year = 2018;
 
+
+	ASSERT(DAC_InitRefCurr() == 0);
+
 	ASSERT(RTC_InitDateTime(&pApp->sDateTime) == 0);
 	OSA_SleepMs(10);
 
@@ -611,6 +614,8 @@ void App_TaskPeriodic(task_param_t parg) {
 				logged = true;
 			}
 		}
+
+		WDOG_DRV_Refresh();
 
 	}
 
@@ -811,7 +816,6 @@ void App_TaskStartup(task_param_t arg) {
 
 	WARN("FTP client wakeup spend %d ms\r\n", sys_now() - timeNow);
 	ERR("FTP CLIENT INIT DONE -> CREATE DOG \r\n");
-	BOARD_CreateWDG();
 
 	while(1) {
 		OSSemPend(&pApp->hSem, 1000, OS_OPT_PEND_BLOCKING, &ts, &err);
@@ -868,7 +872,7 @@ void App_TaskStartup(task_param_t arg) {
 		} else {
 			BOARD_CheckPeripheralFault();
 			/* Feed dog to prevent WDG reset */
-			WDOG_DRV_Refresh();
+			//WDOG_DRV_Refresh();
 		}
 
 
@@ -1377,17 +1381,17 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 		if(counter % 3 == 0) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_AI,
 				  (uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput), false);
-			LREP("send ai\r\n");
+//			LREP("send ai\r\n");
 		} else if (counter % 3 == 1) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_DO,
 				  (uint8_t*)&pAppObj->sDO, sizeof(SDigitalOutputLog), false);
-			LREP("send do\r\n");
+//			LREP("send do\r\n");
 		}
 
 		if(counter % 3 == 2) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_DI,
 				  (uint8_t*)&pAppObj->sDI, sizeof(SDigitalInputLog), false);
-			LREP("send di\r\n");
+//			LREP("send di\r\n");
 		}
 
 
@@ -1459,7 +1463,8 @@ int	App_ModbusDoRead(SApp *pApp){
 
 			if(retVal != MB_SUCCESS) {
 				pApp->sMB.Node[i].status = TAG_STT_MB_FAILED;
-				LREP("MBT ");
+				//LREP("MBT ");
+				debug_putchar('M');
 			} else {
 				pApp->sMB.Node[i].status = TAG_STT_OK;
 					float readValue;
@@ -1952,7 +1957,8 @@ void App_AiReadAllPort(SApp *pApp) {
 					pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
 				}
 			} else {
-				LREP("not recv data \r\n");
+				//LREP("A ");
+				debug_putchar('A');
 				pApp->sAI.Node[i].status = TAG_STT_AI_FAILED;
 			}
 		}

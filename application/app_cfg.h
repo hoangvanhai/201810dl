@@ -77,7 +77,7 @@
 #define NETWORK_TCP_SERVER_EN				1
 
 
-#define APP_TASK_MODBUS_EN 					0
+#define APP_TASK_MODBUS_EN 					1
 #define APP_TASK_PC_EN						0
 #define APP_TASK_UI_EN						1
 #define APP_TASK_AI_EN						1

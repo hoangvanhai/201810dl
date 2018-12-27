@@ -38,6 +38,7 @@
 #include <os_app_hooks.h>
 #include <Network.h>
 #include <ring_file.h>
+#include <dac_comm.h>
 
 /************************** Constant Definitions *****************************/
 #define CONFIG_FILE_PATH		"/conf/config.dat"
@@ -74,6 +75,7 @@ typedef struct SApp_ {
 	bool				currOut;
 	bool				stat;
 	bool				reboot;
+	uint16_t			currLevel;
 	semaphore_t			hSem;
 	uint32_t			aiReadCount;
 	uint32_t			mbReadCount;

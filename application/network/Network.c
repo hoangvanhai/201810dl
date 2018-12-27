@@ -63,12 +63,12 @@ void Network_InitTcpModule(SCommon *pCM) {
 
 	tcpip_init(NULL,NULL);
 
-	pCM->dev_hwaddr[0] = defaultMAC_ADDR0;
-	pCM->dev_hwaddr[1] = defaultMAC_ADDR1;
-	pCM->dev_hwaddr[2] = defaultMAC_ADDR2;
-	pCM->dev_hwaddr[3] = defaultMAC_ADDR3;
-	pCM->dev_hwaddr[4] = defaultMAC_ADDR4;
-	pCM->dev_hwaddr[5] = defaultMAC_ADDR5;
+//	pCM->dev_hwaddr[0] = defaultMAC_ADDR0;
+//	pCM->dev_hwaddr[1] = defaultMAC_ADDR1;
+//	pCM->dev_hwaddr[2] = defaultMAC_ADDR2;
+//	pCM->dev_hwaddr[3] = defaultMAC_ADDR3;
+//	pCM->dev_hwaddr[4] = defaultMAC_ADDR4;
+//	pCM->dev_hwaddr[5] = defaultMAC_ADDR5;
 
 
 	eth0.hwaddr[0] = pCM->dev_hwaddr[0];
