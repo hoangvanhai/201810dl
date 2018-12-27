@@ -739,6 +739,17 @@ void App_TaskUserInterface(task_param_t param)
 
 	LREP("UI PORT: %d _______\r\n", BOARD_TRANSUI_UART_INSTANCE);
 
+	OSTmrCreate(&pApp->hCtrlTimer,
+				(CPU_CHAR *)"timer",
+				(OS_TICK)0,
+				(OS_TICK)100,
+				(OS_OPT)OS_OPT_TMR_PERIODIC,
+				(OS_TMR_CALLBACK_PTR) Clb_TimerControl,
+				(void*)NULL,
+				(OS_ERR*)&err);
+
+	ASSERT(err == OS_ERR_NONE);
+
 	OSTmrStart(&pApp->hCtrlTimer, &err);
 	if (err == OS_ERR_NONE) {
 		/* Timer was created but NOT started */
@@ -774,16 +785,7 @@ void App_TaskStartup(task_param_t arg) {
 
 	App_CreateAppEvent(pApp);
 
-	OSTmrCreate(&pApp->hCtrlTimer,
-				(CPU_CHAR *)"timer",
-				(OS_TICK)0,
-				(OS_TICK)100,
-				(OS_OPT)OS_OPT_TMR_PERIODIC,
-				(OS_TMR_CALLBACK_PTR) Clb_TimerControl,
-				(void*)NULL,
-				(OS_ERR*)&err);
 
-	ASSERT(err == OS_ERR_NONE);
 
 	App_CreateAppTask(pApp);
 
@@ -1300,7 +1302,7 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 
 //	App_GenerateFakeTime(pAppObj);
 
-	if(counter % 15 == 0) {
+	if(counter % 10 == 0) {
 		pAppObj->uiCounter = 0;
 		SSystemStatus *pSys = (SSystemStatus*)OSA_FixedMemMalloc(sizeof(SSystemStatus));
 		if(pSys != NULL) {
@@ -1313,13 +1315,18 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 			pSys->sim_stat = (nwkStt.activeIf & NET_IF_WIRELESS) != 0;
 			pSys->eth_stat = (nwkStt.activeIf & NET_IF_ETHERNET) != 0;
 			pSys->curr_out = pAppObj->currOut;
+			pSys->rssi = nwkStt.rssi;
+			Str_Copy_N(pSys->simid, nwkStt.simid, 22);
+			Str_Copy_N(pSys->netid, nwkStt.netid, 22);
 
 			LREP("ip %x\r\n", 		pSys->ip);
 			LREP("sdcard1_stat %x\r\n", pSys->sdcard1_stat);
 			LREP("sdcard2_stat %x\r\n", pSys->sdcard2_stat);
 			LREP("sim_stat %x\r\n", pSys->sim_stat);
 			LREP("eth_stat %x\r\n", pSys->eth_stat);
-			LREP("curr_out %x\r\n", pSys->curr_out);
+			LREP("rssi %d\r\n", pSys->rssi);
+			LREP("simd %s\r\n", pSys->simid);
+			LREP("netid %s\r\n", pSys->netid);
 
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
 					(uint8_t*)pSys, sizeof(SSystemStatus), false);
@@ -1330,34 +1337,34 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 		LREP("send system status\r\n");
 	}
 
-	if(pAppObj->uiCounter < SYSTEM_NUM_TAG) {
-		uint8_t *mem = OSA_FixedMemMalloc(sizeof(STagHeader) + 1);
-		if(mem != NULL) {
-			STagHeader *hdr = (STagHeader*)((uint8_t*)mem + 1);
-			mem[0] = (uint8_t)pAppObj->uiCounter;
-			hdr->id = pAppObj->sCfg.sTag[pAppObj->uiCounter].id;
-			hdr->enable = pAppObj->sCfg.sTag[pAppObj->uiCounter].enable;
-			hdr->min = pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_min;
-			hdr->max = pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_max;
-			hdr->alarm_value = pAppObj->sCfg.sTag[pAppObj->uiCounter].alarm_value;
-			hdr->alarm_enable = pAppObj->sCfg.sTag[pAppObj->uiCounter].alarm_enable;
-			Str_Copy_N((CPU_CHAR*)hdr->name,
-					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].name,
-					sizeof(hdr->name));
-			Str_Copy_N((CPU_CHAR*)hdr->raw_unit,
-					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_unit,
-					sizeof(hdr->raw_unit));
-			Str_Copy_N((CPU_CHAR*)hdr->std_unit,
-					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].std_unit,
-					sizeof(hdr->std_unit));
-			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_HEADER,
-					(uint8_t*)mem, sizeof(STagHeader) + 1, false);
-
-			//LREP("send header %d\r\n", pAppObj->uiCounter);
-			OSA_FixedMemFree(mem);
-			pAppObj->uiCounter++;
-		}
-	}
+//	if(pAppObj->uiCounter < SYSTEM_NUM_TAG) {
+//		uint8_t *mem = OSA_FixedMemMalloc(sizeof(STagHeader) + 1);
+//		if(mem != NULL) {
+//			STagHeader *hdr = (STagHeader*)((uint8_t*)mem + 1);
+//			mem[0] = (uint8_t)pAppObj->uiCounter;
+//			hdr->id = pAppObj->sCfg.sTag[pAppObj->uiCounter].id;
+//			hdr->enable = pAppObj->sCfg.sTag[pAppObj->uiCounter].enable;
+//			hdr->min = pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_min;
+//			hdr->max = pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_max;
+//			hdr->alarm_value = pAppObj->sCfg.sTag[pAppObj->uiCounter].alarm_value;
+//			hdr->alarm_enable = pAppObj->sCfg.sTag[pAppObj->uiCounter].alarm_enable;
+//			Str_Copy_N((CPU_CHAR*)hdr->name,
+//					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].name,
+//					sizeof(hdr->name));
+//			Str_Copy_N((CPU_CHAR*)hdr->raw_unit,
+//					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_unit,
+//					sizeof(hdr->raw_unit));
+//			Str_Copy_N((CPU_CHAR*)hdr->std_unit,
+//					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].std_unit,
+//					sizeof(hdr->std_unit));
+//			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_HEADER,
+//					(uint8_t*)mem, sizeof(STagHeader) + 1, false);
+//
+//			//LREP("send header %d\r\n", pAppObj->uiCounter);
+//			OSA_FixedMemFree(mem);
+//			pAppObj->uiCounter++;
+//		}
+//	}
 
 	//else
 

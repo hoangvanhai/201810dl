@@ -85,7 +85,7 @@ modem_ftp_err_code_t modem_ftp_init(FtpClient *pFC)
 	modem_send_at_command("AT+QFTPCFG=\"contextid\",1\r\n", "OK", 500, 1);
 	modem_send_at_command("AT+QFTPCFG=\"filetype\",1\r\n", "OK", 500, 1);
 	modem_send_at_command("AT+QFTPCFG=\"transmode\",1\r\n", "OK",500, 1);
-	modem_send_at_command("AT+QFTPCFG=\"rsptimeout\",60\r\n", "OK", 500, 1);
+	modem_send_at_command("AT+QFTPCFG=\"rsptimeout\",20\r\n", "OK", 500, 1);
 	g_modemInitialized = TRUE;
 
 	return FTP_ERR_NONE;

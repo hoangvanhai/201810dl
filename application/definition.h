@@ -226,6 +226,9 @@ typedef struct SSystemStatus_ {
 	uint8_t		sdcard1_stat;
 	uint8_t		sdcard2_stat;
 	uint8_t		curr_out;
+	uint8_t		simid[22];
+	uint8_t		netid[22];
+	uint8_t		rssi;
 	struct		tm time;
 }SSystemStatus;
 

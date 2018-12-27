@@ -751,6 +751,9 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 					do {
 					retVal = modem_ftp_put_file_from_local(pFC, idx, (char*)msg->file_name,
 						(char*)msg->local_path, (char*)msg->local_path);
+					if(retVal != FTP_ERR_NONE) {
+						ftp_print_err(retVal);
+					}
 						retryCount++;
 					} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
 							retryCount < FTP_CLIENT_WIRELESS_RETRY);
@@ -763,6 +766,9 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 				do {
 				retVal = modem_ftp_put_file_from_local(pFC, idx, (char*)msg->file_name,
 					(char*)msg->local_path, (char*)msg->local_path);
+				if(retVal != FTP_ERR_NONE) {
+					ftp_print_err(retVal);
+				}
 					retryCount++;
 				} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
 						retryCount < FTP_CLIENT_WIRELESS_RETRY);
@@ -870,6 +876,9 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 						do {
 						retVal = modem_ftp_put_file_from_local(pFC, idx, (char*)pRecord->file_name,
 							(char*)pRecord->dir_path, (char*)pRecord->dir_path);
+						if(retVal != FTP_ERR_NONE) {
+							ftp_print_err(retVal);
+						}
 							retryCount++;
 						} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
 								retryCount < FTP_CLIENT_WIRELESS_RETRY);
@@ -883,6 +892,9 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 					retVal = modem_ftp_put_file_from_local(pFC, idx, (char*)pRecord->file_name,
 						(char*)pRecord->dir_path, (char*)pRecord->dir_path);
 						retryCount++;
+						if(retVal != FTP_ERR_NONE) {
+							ftp_print_err(retVal);
+						}
 					} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
 							retryCount < FTP_CLIENT_WIRELESS_RETRY);
 				}
@@ -932,6 +944,10 @@ void ftp_print_err(int err) {
 	case FTP_ERR_AUTHEN: LREP("FTP_ERR_AUTHEN\r\n"); break;
 	case FTP_ERR_PASV: LREP("FTP_ERR_PASV\r\n"); break;
 	case FTP_ERR_CODE: LREP("FTP_ERR_CODE\r\n"); break;
+	case FTP_ERR_MEM: LREP("\r\n"); break;
+	case FTP_ERR_INVALID_PARAM: LREP("FTP_ERR_INVALID_PARAM\r\n"); break;
+	case FTP_ERR_TIMEOUT: LREP("FTP_ERR_TIMEOUT\r\n"); break;
+	case FTP_ERR_UNKNOWN: LREP("FTP_ERR_UNKNOWN\r\n"); break;
 
 	default:
 		break;
