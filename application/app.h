@@ -39,6 +39,7 @@
 #include <Network.h>
 #include <ring_file.h>
 #include <dac_comm.h>
+#include <dac_out.h>
 
 /************************** Constant Definitions *****************************/
 #define CONFIG_FILE_PATH		"/conf/config.dat"

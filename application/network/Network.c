@@ -142,6 +142,7 @@ void Network_InitTcpModule(SCommon *pCM) {
  */
 void Network_InitFtpModule(SCommon *pCM) {
 #if NETWORK_FTP_CLIENT_EN > 0
+
 	ftp_client_init(pCM);
 #endif
 
@@ -324,6 +325,7 @@ int ftp_client_init(SCommon *pCM) {
 	ring_file_print(&g_retryTable[1]);
 
 #if NETWORK_FTP_CLIENT_WLESS_EN > 0
+	GPIO_DRV_SetPinOutput(SimVccEn);
     modem_init();
     modem_ftp_init(&ftpClient);
 #endif

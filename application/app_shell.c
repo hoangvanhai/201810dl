@@ -738,7 +738,14 @@ void control(int32_t argc, char**argv) {
 			int err = DAC_SetRefLevel(lev, false);
 			ERR("set ref level = %d err = %d\r\n", lev, err);
 		}
-	}
+	} else if(strcmp(argv[1], "dac") == 0) {
+		uint16_t lev = atoi(argv[2]);
+
+		if(lev >= 0 && lev <= 4095) {
+			DAC_InterfaceSetLevel(lev);
+			ERR("set ref level = %d \r\n", lev);
+		}
+}
 }
 
 

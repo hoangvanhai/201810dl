@@ -113,6 +113,7 @@ void App_Init(SApp *pApp) {
 
 	App_InitDI(pApp);
 	App_InitDO(pApp);
+	DAC_InterfaceInit();
 
     LREP("sizeof(SCommon) %d\r\n", 		sizeof(SCommon));
     LREP("sizeof(STag) %d\r\n", 		sizeof(STag));

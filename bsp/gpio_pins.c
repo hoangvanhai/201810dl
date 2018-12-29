@@ -192,7 +192,7 @@ const gpio_output_pin_user_config_t DigitalOutputPin[] = {
 	},
 	{
 		.pinName = SimVccEn,
-		.config.outputLogic = 1,
+		.config.outputLogic = 0,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.isOpenDrainEnabled = false,
 		.config.driveStrength = kPortLowDriveStrength,
