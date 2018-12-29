@@ -139,6 +139,7 @@ void 			App_CommRecvHandle(const uint8_t *data);
 void 			App_NetRecvHandle(const uint8_t *data);
 void			App_CommCalibAi(SApp *pApp, const uint8_t *data);
 void			App_CommCalibCurrPwr(SApp *pApp, const uint8_t *data);
+void 			App_CommTurnOnOffCurr(SApp *pApp, const uint8_t *data);
 
 
 // Modbus

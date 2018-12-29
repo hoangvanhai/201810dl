@@ -323,8 +323,10 @@ int ftp_client_init(SCommon *pCM) {
 
 	ring_file_print(&g_retryTable[1]);
 
+#if NETWORK_FTP_CLIENT_WLESS_EN > 0
     modem_init();
     modem_ftp_init(&ftpClient);
+#endif
 
     return result;
 }

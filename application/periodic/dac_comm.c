@@ -16,7 +16,7 @@ static i2c_master_state_t master_dac;
 static i2c_device_t slave_dac =
 {
     .address = I2C_DAC_SLAVE_ADDRESS,
-    .baudRate_kbps = 400
+    .baudRate_kbps = 100
 };
 
 
@@ -36,17 +36,32 @@ int DAC_InitRefCurr(void) {
 	return retVal;
 }
 
-
-int DAC_SetRefLevel(uint16_t lev) {
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int DAC_SetRefLevel(uint16_t lev, bool write_eeprom) {
 
 	i2c_status_t i2c_ret;
 	uint8_t cmd[1];
 	uint8_t level[3];
-	level[0] =  MCP4726_CMD_WRITEDAC;
+
+	cmd[0] = 0;
+
+	if(write_eeprom) {
+		level[0] = MCP4726_CMD_WRITEDACEEPROM;
+	} else {
+		level[0] = MCP4726_CMD_WRITEDAC;
+	}
+
+	level[0] = MCP4726_CMD_WRITEDAC;
+
 	level[1] =  (lev >> 8) & 0x0F;
 	level[2] =  lev & 0xFF;
-
-	cmd[0] = 0x00;
 
 	i2c_ret = I2C_DRV_MasterSendDataBlocking(
 			BOARD_I2C_DAC_INSTANCE, &slave_dac,
@@ -58,11 +73,4 @@ int DAC_SetRefLevel(uint16_t lev) {
 
 	return i2c_ret;
 }
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
+

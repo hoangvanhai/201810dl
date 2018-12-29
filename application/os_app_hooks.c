@@ -214,7 +214,7 @@ void  App_OS_StatTaskHook (void)
 {
 	if(pAppObj->stat) {
 
-		LREP("\rcpu usage %d", OSStatTaskCPUUsage);
+		LREP("\rcpu usage %d\t", OSStatTaskCPUUsage);
 //		LREP("%10s used %4d free %4d\r\n", "ui",
 //				TCB_task_ui.StkUsed,
 //				TCB_task_ui.StkFree);

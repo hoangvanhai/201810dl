@@ -27,6 +27,7 @@
 #include <app_shell.c>
 #include <lib_str.h>
 #include <lib_mem.h>
+#include <math.h>
 /************************** Constant Definitions *****************************/
 
 /**************************** Type Definitions *******************************/
@@ -304,6 +305,10 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 		pHandle->sAiCalib.calib[i].coefficient = 1;
 	}
 
+	for(int i = 0; i < 5; i++) {
+		pHandle->sCurrOutCoeff[i] = (i + 1) * 400;
+	}
+
 	return 0;
 }
 /*****************************************************************************/
@@ -553,6 +558,7 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	int log_min = pApp->sCfg.sCom.log_dur > 0 ? pApp->sCfg.sCom.log_dur : 1;
 	int last_min = 0;
+	int err;
 	bool logged = false;
 
 
@@ -561,7 +567,7 @@ void App_TaskPeriodic(task_param_t parg) {
 	pApp->sDateTime.tm_year = 2018;
 
 
-	ASSERT(DAC_InitRefCurr() == 0);
+	ASSERT(DAC_InitRefCurr() == kStatus_I2C_Success);
 
 	ASSERT(RTC_InitDateTime(&pApp->sDateTime) == 0);
 	OSA_SleepMs(10);
@@ -578,8 +584,6 @@ void App_TaskPeriodic(task_param_t parg) {
 		ASSERT(FALSE);
 	}
 
-	//FM_Init(0);
-
 	rnga_user_config_t rngaConfig;
 
 	// Initialize RNGA
@@ -592,9 +596,20 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	while(1) {
 		OSA_SleepMs(1000);
-		RTC_GetTimeDate(&pApp->sDateTime);
+		ASSERT(RTC_GetTimeDate(&pApp->sDateTime) == kStatus_I2C_Success);
+
+
+//		err = DAC_SetRefLevel(100, true);
+//		if(err != kStatus_I2C_Success) {
+//			LREP("DAC err = %d\r\n", err);
+//		} else  {
+//			LREP("DAC err = %d\r\n", err);
+//		}
+
+
 		App_DiReadAllPort(pApp);
 		App_UpdateTagContent(pApp);
+
         if(pApp->sDateTime.tm_min != last_min && logged) {
             logged = false;
         }
@@ -615,8 +630,8 @@ void App_TaskPeriodic(task_param_t parg) {
 			}
 		}
 
-		WDOG_DRV_Refresh();
 
+		WDOG_DRV_Refresh();
 	}
 
 }
@@ -799,7 +814,10 @@ void App_TaskStartup(task_param_t arg) {
 
     BOARD_CheckPeripheralFault();
 
+
+
 #if NETWORK_MODULE_EN > 0
+    uint32_t timeNow = sys_now();
     Network_InitTcpModule(&pApp->sCfg.sCom);
 
 	Network_Register_TcpClient_Notify(Clb_NetTcpClientConnEvent);
@@ -812,12 +830,10 @@ void App_TaskStartup(task_param_t arg) {
 	Network_Register_TcpServer_DataEvent(Event_DataSendDone, Clb_NetTcpServerSentData);
 	Network_Register_TcpServer_DataEvent(Event_DataError, Clb_NetTcpServerError);
 
-	uint32_t timeNow = sys_now();
 	Network_InitFtpModule(&pApp->sCfg.sCom);
-#endif
-
 	WARN("FTP client wakeup spend %d ms\r\n", sys_now() - timeNow);
-	ERR("FTP CLIENT INIT DONE -> CREATE DOG \r\n");
+	ERR("FTP CLIENT INIT DONE\r\n");
+#endif
 
 	while(1) {
 		OSSemPend(&pApp->hSem, 1000, OS_OPT_PEND_BLOCKING, &ts, &err);
@@ -873,7 +889,7 @@ void App_TaskStartup(task_param_t arg) {
 			if(App_IsCtrlCodePending(pApp, CTRL_GET_WL_STT)) {
 				LREP("recv ctrl get wireless status\r\n");
 
-				Network_GetWirelessStatus();
+				//Network_GetWirelessStatus();
 				App_ClearCtrlCode(pApp, CTRL_GET_WL_STT);
 			}
 
@@ -998,8 +1014,12 @@ void App_CommRecvHandle(const uint8_t *data) {
 		App_CommCalibAi(pAppObj, data);
 	break;
 
-	case LOGGER_SET | LOGGER_CALIB_CURR_PWR:
+	case LOGGER_SET | LOGGER_CALIB_CURR:
+		App_CommCalibCurrPwr(pAppObj, data);
+	break;
 
+	case LOGGER_SET | LOGGER_GENERATE_CURR:
+		App_CommTurnOnOffCurr(pAppObj, data);
 	break;
 
 	default:
@@ -1121,8 +1141,12 @@ void App_NetRecvHandle(const uint8_t *data) {
 		App_CommCalibAi(pAppObj, data);
 	break;
 
-	case LOGGER_SET | LOGGER_CALIB_CURR_PWR:
+	case LOGGER_SET | LOGGER_CALIB_CURR:
+		App_CommCalibCurrPwr(pAppObj, data);
+	break;
 
+	case LOGGER_SET | LOGGER_GENERATE_CURR:
+		App_CommTurnOnOffCurr(pAppObj, data);
 	break;
 
 	default:
@@ -1183,6 +1207,53 @@ void App_CommCalibAi(SApp *pApp, const uint8_t *data) {
  */
 void App_CommCalibCurrPwr(SApp *pApp, const uint8_t *data) {
 
+	uint8_t point = data[2];
+
+	float current_out;
+	float new_coeff, new_value;
+	LREP("calib point = %d\r\n", point);
+
+	ASSERT_VOID(point >= 0 && point <5);
+
+	switch(point) {
+	case 0: current_out = 4.0; break;
+	case 1: current_out = 8.0; break;
+	case 2: current_out = 12.0; break;
+	case 3: current_out = 16.0; break;
+	case 4: current_out = 20.0; break;
+	default: return;
+	}
+
+	memcpy((uint8_t*)&new_value, &data[3], sizeof(float));
+	new_coeff = (current_out / new_value) *
+			pApp->sCfg.sCurrOutCoeff[point];
+
+	LREP("new coeff = %f\r\n", new_coeff);
+	pApp->sCfg.sCurrOutCoeff[point] = new_coeff;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void App_CommTurnOnOffCurr(SApp *pApp, const uint8_t *data) {
+
+	uint8_t point = data[2];
+	if(point > 5 || point < 0) {
+		if(point == 0xFF) {
+			GPIO_DRV_SetPinOutput(RefCurrEn); // turn off
+		}
+		return;
+	}
+
+	GPIO_DRV_ClearPinOutput(RefCurrEn);
+	ASSERT_VOID(pApp->sCfg.sCurrOutCoeff[point] < 3000);
+	uint16_t lev = (int)(pApp->sCfg.sCurrOutCoeff[point]);
+	LREP("generate lev = %d\r\n", lev);
+	DAC_SetRefLevel(lev, false);
 }
 /*****************************************************************************/
 /** @brief
@@ -2473,6 +2544,9 @@ void Clb_NetTcpServerConnEvent(Network_Status event,
  */
 void Clb_NetTcpServerRecvData(const uint8_t* data, int length) {
 	LREP("server recv data len = %d\r\n", length);
+//	for(int i = 0; i < length; i++) {
+//		LREP("%x ", data[i]);
+//	}
 	App_NetRecvHandle((uint8_t*)data);
 }
 /*****************************************************************************/

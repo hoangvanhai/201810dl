@@ -650,6 +650,13 @@ int	ftp_add_filename(FtpClient *pFC, const uint8_t *local_path,
 				sizeof(FtpMsg), OS_OPT_POST_FIFO, &err);
 		if(err != OS_ERR_NONE) {
 			retVal = -2;
+			ERR("thread queue size = %d peak = %d\r\n",
+					pFC->send_thread->MsgQ.NbrEntries,
+					pFC->send_thread->MsgQ.NbrEntriesMax);
+		} else {
+			WARN("thread queue size = %d peak = %d\r\n",
+					pFC->send_thread->MsgQ.NbrEntries,
+					pFC->send_thread->MsgQ.NbrEntriesMax);
 		}
 	} else {
 		retVal = -1;

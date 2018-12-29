@@ -710,24 +710,12 @@ void control(int32_t argc, char**argv) {
 		if(idx >= 0 && idx <= 11) {
 			App_SetDoPinByIndex(pAppObj, idx, 1);
 		}
-		//GPIO_DRV_SetPinOutput(DigitalOutput0);
-		//GPIO_DRV_SetPinOutput(DigitalOutput1);
-		//GPIO_DRV_SetPinOutput(DigitalOutput2);
-		//GPIO_DRV_SetPinOutput(DigitalOutput3);
-		//GPIO_DRV_SetPinOutput(DigitalOutput4);
-		//GPIO_DRV_SetPinOutput(DigitalOutput5);
 	} else if(strcmp(argv[1], "doff") == 0) {
 		LREP("control doff\r\n");
 		int idx = atoi(argv[2]);
 		if(idx >= 0 && idx <= 11) {
 			App_SetDoPinByIndex(pAppObj, idx, 0);
 		}
-		//GPIO_DRV_ClearPinOutput(DigitalOutput0);
-		//GPIO_DRV_ClearPinOutput(DigitalOutput1);
-		//GPIO_DRV_ClearPinOutput(DigitalOutput2);
-		//GPIO_DRV_ClearPinOutput(DigitalOutput3);
-		//GPIO_DRV_ClearPinOutput(DigitalOutput4);
-		//GPIO_DRV_ClearPinOutput(DigitalOutput5);
 	} else if(strcmp(argv[1], "del") == 0) {
 		LREP("delete ring file\r\n");
 		int retVal = f_unlink("/conf/retrytable0.dat");
@@ -747,11 +735,10 @@ void control(int32_t argc, char**argv) {
 		uint16_t lev = atoi(argv[2]);
 
 		if(lev >= 0 && lev <= 4095) {
-			int err = DAC_SetRefLevel(lev);
+			int err = DAC_SetRefLevel(lev, false);
 			ERR("set ref level = %d err = %d\r\n", lev, err);
 		}
 	}
-
 }
 
 

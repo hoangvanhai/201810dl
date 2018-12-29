@@ -68,7 +68,8 @@
 #define LOGGER_STREAM_AI                    0x20
 #define LOGGER_STREAM_MB                    0x21
 #define LOGGER_CALIB_AI                     0x22
-#define LOGGER_CALIB_CURR_PWR               0x23
+#define LOGGER_GENERATE_CURR                0x23
+#define LOGGER_CALIB_CURR                   0x24
 
 #define LOGGER_STREAM_HEADER				0x30
 #define LOGGER_STREAM_VALUE					0x31
@@ -437,6 +438,7 @@ typedef struct SSysCfg_ {
     SInputPort          sDI[DIGITAL_INPUT_NUM_CHANNEL];
     SAccount			sAccount;
     SAnalogCalib		sAiCalib;
+    float				sCurrOutCoeff[5];
 }SSysCfg;
 
 

@@ -65,22 +65,27 @@
 #define TRANSL1_V2							2
 #define TRANSL1_VER							TRANSL1_V1
 
-
+/* START HW DEFINE */
 #define BOARD_FRDM_K64F						0
 #define BOARD_VERSION_1						1
 #define BOARD_VERSION_2						2
 #define BOARD_USE_VERSION					BOARD_VERSION_1
+/* END OF HW DEFINE */
+
+
 
 #define NETWORK_MODULE_EN					1
-#define NETWORK_FTP_CLIENT_EN				1
-#define NETWORK_TCP_CLIENT_EN				1
+#define NETWORK_FTP_CLIENT_EN				0
+#define NETWORK_FTP_CLIENT_WLESS_EN			1
+#define NETWORK_TCP_CLIENT_EN				0
 #define NETWORK_TCP_SERVER_EN				1
 
 
-#define APP_TASK_MODBUS_EN 					1
+
+#define APP_TASK_MODBUS_EN 					0
 #define APP_TASK_PC_EN						0
-#define APP_TASK_UI_EN						1
-#define APP_TASK_AI_EN						1
+#define APP_TASK_UI_EN						0
+#define APP_TASK_AI_EN						0
 #define APP_TASK_PERIODIC_EN				1
 #define APP_TASK_SHELL_EN					1
 
