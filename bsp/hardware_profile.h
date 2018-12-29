@@ -132,6 +132,7 @@
 /* The SDHC instance/channel used for board */
 #define BOARD_SDHC_INSTANCE             	0
 #define BOARD_SDHC_CD_GPIO_IRQ_HANDLER  	PORTD_IRQHandler
+#define BOARD_SDSPI_INSTANCE				2
 /* The CMP instance used for board. */
 #define BOARD_CMP_INSTANCE              	0
 /* The CMP channel used for board. */

@@ -297,34 +297,34 @@ void configure_sdhc_pins(uint32_t instance)
 //}
 
 // Connected TWR_MEM
-//void configure_sdcard_spi_pins(uint32_t instance)
-//{
-//  /* SPI1_CS0 */
-//  PORT_HAL_SetMuxMode(PORTB,10u,kPortMuxAlt2);
-//  PORT_HAL_SetPullMode(PORTB,10u,kPortPullUp);
-//  PORT_HAL_SetPullCmd(PORTB,10u,true);
-//
-//  /* SPI1_SCK */
-//  PORT_HAL_SetMuxMode(PORTB,11u,kPortMuxAlt2);
-//
-//  /* SPI1_SOUT */
-//  PORT_HAL_SetMuxMode(PORTB,16u,kPortMuxAlt2);
-//  PORT_HAL_SetPullMode(PORTB,16u,kPortPullUp);
-//  PORT_HAL_SetPullCmd(PORTB,16u,true);
-//
-//  /* SPI1_SIN */
-//  PORT_HAL_SetMuxMode(PORTB,17u,kPortMuxAlt2);
-//  PORT_HAL_SetPullMode(PORTB,17u,kPortPullUp);
-//  PORT_HAL_SetPullCmd(PORTB,17u,true);
-//
-//  /* Pin_Card_detection*/
-//  PORT_HAL_SetMuxMode(PORTD,15u,kPortMuxAsGpio);
-//
-//  /* Pin_Card_write_protection*/
+void configure_sdcard_spi_pins(uint32_t instance)
+{
+  /* SPI2_CS1 */
+  PORT_HAL_SetMuxMode(PORTD,11u,kPortMuxAlt2);
+  PORT_HAL_SetPullMode(PORTD,11u,kPortPullUp);
+  PORT_HAL_SetPullCmd(PORTD,11u,true);
+
+  /* SPI2_SCK */
+  PORT_HAL_SetMuxMode(PORTD,12u,kPortMuxAlt2);
+
+  /* SPI2_SOUT */
+  PORT_HAL_SetMuxMode(PORTD,13u,kPortMuxAlt2);
+  PORT_HAL_SetPullMode(PORTD,13u,kPortPullUp);
+  PORT_HAL_SetPullCmd(PORTD,16u,true);
+
+  /* SPI2_SIN */
+  PORT_HAL_SetMuxMode(PORTD,14u,kPortMuxAlt2);
+  PORT_HAL_SetPullMode(PORTD,14u,kPortPullUp);
+  PORT_HAL_SetPullCmd(PORTD,14u,true);
+
+  /* Pin_Card_detection*/
+  PORT_HAL_SetMuxMode(PORTD,15u,kPortMuxAsGpio);
+
+  /* Pin_Card_write_protection*/
 //  PORT_HAL_SetMuxMode(PORTC,13u,kPortMuxAsGpio);
 //  PORT_HAL_SetPullMode(PORTC,13u,kPortPullUp);
 //  PORT_HAL_SetPullCmd(PORTC,13u,true);
-//}
+}
 
 void configure_uart_pins(uint32_t instance)
 {

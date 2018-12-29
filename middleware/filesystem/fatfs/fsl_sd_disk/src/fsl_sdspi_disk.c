@@ -39,7 +39,7 @@
 #include "fsl_sdcard_spi.h"
 #include "fsl_debug_console.h"
 
-#define SDSPI_SPI_INSTANCE 0
+#define SDSPI_SPI_INSTANCE 2
 #define SDSPI_SPI_PCS   (1 << 0)
 static uint32_t g_card_initialized = 0;
 static sdspi_card_t g_card;

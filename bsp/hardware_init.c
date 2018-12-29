@@ -50,13 +50,16 @@ void hardware_init(void) {
 
 	configure_sdhc_pins(BOARD_SDHC_INSTANCE);
 	configure_enet_pins(BOARD_ENET_INSTANCE);
-
+	configure_sdcard_spi_pins(BOARD_SDSPI_INSTANCE);
 
 #if BOARD_USE_VERSION == BOARD_VERSION_1
     CLOCK_SYS_SetEnetExternalFreq(0, 	50000000U);
 	CLOCK_SYS_SetEnetTimeStampSrc(0, 	kClockTimeSrcCoreSysClk);
 	CLOCK_SYS_SetEnetRmiiSrc(0, 		kClockRmiiSrcExt);
 	CLOCK_SYS_SetSdhcSrc(0, 			kClockTimeSrcCoreSysClk);
+
+
+
 #elif BOARD_USE_VERSION == BOARD_FRDM_K64F
 
 #endif
