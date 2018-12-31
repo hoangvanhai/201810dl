@@ -135,11 +135,11 @@ debug_console_status_t DbgConsole_Init( uint32_t uartInstance, uint32_t baudRate
 			 lpuartConfig.parityMode = kLpuartParityDisabled;
 			 lpuartConfig.stopBitCount = kLpuartOneStopBit;
 			 LPUART_Type * g_Base[LPUART_INSTANCE_COUNT] = LPUART_BASE_PTRS;
-			 LPUART_Type * base = g_Base[uartInstance];
+			 LPUART_Type * base = g_Base[LPUART0_IDX];
 
 			 LPUART_DRV_Init(LPUART0_IDX, &debug_uart_state, &lpuartConfig);
 			 s_debugConsole.base = base;
-			 LPUART_DRV_InstallRxCallback(uartInstance, debug_rx_handle, &rx_char, NULL, true);
+			 LPUART_DRV_InstallRxCallback(LPUART0_IDX, debug_rx_handle, &rx_char, NULL, true);
 			 s_debugConsole.ops.tx_union.UART_Send = LPUART_HAL_SendDataPolling;
 
 #else

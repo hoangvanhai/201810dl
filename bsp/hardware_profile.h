@@ -101,8 +101,8 @@
 // DBG 5
 
 /* debug */
-#define BOARD_DEBUG_UART_INSTANCE   		3
-#define BOARD_DEBUG_UART_BAUD       		460800	//921600	//115200
+#define BOARD_DEBUG_UART_INSTANCE   		5
+#define BOARD_DEBUG_UART_BAUD       		1000000	//460800	//921600	//115200
 
 /* communication */
 #define BOARD_ANALOG_UART_INSTANCE			2

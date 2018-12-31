@@ -105,9 +105,12 @@ int RTC_SetTimeDate(SDateTime *time) {
 	cmd[0] = 0x00;
 	i2c_status_t i2c_ret;
 
+	if(time->tm_year > 1990)
+		time->tm_year -= 1990;
+
 	ASSERT_NONVOID(time->tm_min >= 0 && time->tm_min <= 59, -1);
 	ASSERT_NONVOID(time->tm_hour >= 0 && time->tm_hour <= 23, -1);
-	ASSERT_NONVOID(time->tm_wday >= 1 && time->tm_wday <= 7, -1);
+	//ASSERT_NONVOID(time->tm_wday >= 1 && time->tm_wday <= 7, -1);
 	ASSERT_NONVOID(time->tm_mday >= 1 && time->tm_mon <= 31, -1);
 	ASSERT_NONVOID(time->tm_mon >= 1 && time->tm_mon <= 12, -1);
 	ASSERT_NONVOID(time->tm_year >= 0 && time->tm_year <= 99, -1);
@@ -124,7 +127,7 @@ int RTC_SetTimeDate(SDateTime *time) {
 			&slave, cmd, 1, DateTime, 7, 20);
 
 	if(i2c_ret != kStatus_I2C_Success) {
-		ASSERT(FALSE);
+		LREP("ret = %d\r\n", i2c_ret);
 	}
 	return i2c_ret;
 }

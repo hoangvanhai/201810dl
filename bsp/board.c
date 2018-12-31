@@ -36,6 +36,7 @@
 #include "fsl_wdog_driver.h"
 #include "fsl_rnga_driver.h"
 #include "fsl_rcm_hal.h"
+#include "fsl_lpuart_driver.h"
 
 
 #if BOARD_USE_VERSION == BOARD_FRDM_K64F
@@ -464,6 +465,7 @@ void BOARD_CheckPeripheralFault() {
 		ERR("WIRELESS POWER FAULT \r\n");
 	}
 }
+
 /*******************************************************************************
  * EOF
  ******************************************************************************/

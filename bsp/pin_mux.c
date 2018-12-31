@@ -359,16 +359,9 @@ void configure_uart_pins(uint32_t instance)
 	case 5:		// DBG
 		PORT_HAL_SetMuxMode(PORTD,9u,kPortMuxAlt5);		//
 		PORT_HAL_SetMuxMode(PORTD,8u,kPortMuxAlt5);		//
+		//SIM_HAL_SetLpuartTxSrcMode(SIM, 0, kSimLpuartTxsrcPin);
+		//SIM_HAL_SetLpuartRxSrcMode(SIM, 0, kSimLpuartRxsrcPin);
 
-//		SIM_HAL_SetLpuartTxSrcMode(SIM, 0, kSimLpuartTxsrcPin);
-//		SIM_HAL_SetLpuartRxSrcMode(SIM, 0, kSimLpuartRxsrcPin);
-
-		SIM->SOPT5 = ((SIM->SOPT5 &
-	                   /* Mask bits to zero which are setting */
-	                   (~(SIM_SOPT5_LPUART0TXSRC_MASK)))
-
-	                  /* LPUART0 transmit data source select: LPUART0_TX pin. */
-	                  | SIM_SOPT5_LPUART0TXSRC(0));
 	break;
 
     default:
@@ -376,70 +369,6 @@ void configure_uart_pins(uint32_t instance)
   }
 }
 
-//void configure_cmp_pins(uint32_t instance)
-//{
-//  switch (instance) {
-//    case CMP0_IDX:
-//      PORT_HAL_SetMuxMode(PORTC, 6u, kPortPinDisabled); /* PTC6 - CMP0_IN0. */
-//      break;
-//    default:
-//      break;
-//  }
-//}
-
-//void configure_flexbus_pins(uint32_t instance)
-//{
-//  switch (instance) {
-//    case FB_IDX:
-//      /* Address pins */
-//      PORT_HAL_SetMuxMode(PORTD,6u,kPortMuxAlt5);      /* FB_AD0 */
-//      PORT_HAL_SetMuxMode(PORTD,5u,kPortMuxAlt5);      /* FB_AD1 */
-//      PORT_HAL_SetMuxMode(PORTD,4u,kPortMuxAlt5);      /* FB_AD2 */
-//      PORT_HAL_SetMuxMode(PORTD,3u,kPortMuxAlt5);      /* FB_AD3 */
-//      PORT_HAL_SetMuxMode(PORTD,2u,kPortMuxAlt5);      /* FB_AD4 */
-//      PORT_HAL_SetMuxMode(PORTC,10u,kPortMuxAlt5);     /* FB_AD5 */
-//      PORT_HAL_SetMuxMode(PORTC,9u,kPortMuxAlt5);      /* FB_AD6 */
-//      PORT_HAL_SetMuxMode(PORTC,8u,kPortMuxAlt5);      /* FB_AD7 */
-//      PORT_HAL_SetMuxMode(PORTC,7u,kPortMuxAlt5);      /* FB_AD8 */
-//      PORT_HAL_SetMuxMode(PORTC,6u,kPortMuxAlt5);      /* FB_AD9 */
-//      PORT_HAL_SetMuxMode(PORTC,5u,kPortMuxAlt5);      /* FB_AD10 */
-//      /* Comment out for UART1 purpose.*/
-//      // PORT_HAL_SetMuxMode(PORTC,4u,kPortMuxAlt5);      /* FB_AD11 */
-//      PORT_HAL_SetMuxMode(PORTC,2u,kPortMuxAlt5);      /* FB_AD12 */
-//      PORT_HAL_SetMuxMode(PORTC,1u,kPortMuxAlt5);      /* FB_AD13 */
-//      PORT_HAL_SetMuxMode(PORTC,0u,kPortMuxAlt5);      /* FB_AD14 */
-//      PORT_HAL_SetMuxMode(PORTB,18u,kPortMuxAlt5);     /* FB_AD15 */
-//      PORT_HAL_SetMuxMode(PORTB,17u,kPortMuxAlt5);     /* FB_AD16 */
-//      PORT_HAL_SetMuxMode(PORTB,16u,kPortMuxAlt5);     /* FB_AD17 */
-//      PORT_HAL_SetMuxMode(PORTB,11u,kPortMuxAlt5);     /* FB_AD18 */
-//      PORT_HAL_SetMuxMode(PORTB,10u,kPortMuxAlt5);     /* FB_AD19 */
-//      PORT_HAL_SetMuxMode(PORTC,15u,kPortMuxAlt5);     /* FB_AD24 */
-//      PORT_HAL_SetMuxMode(PORTC,14u,kPortMuxAlt5);     /* FB_AD25 */
-//      PORT_HAL_SetMuxMode(PORTC,13u,kPortMuxAlt5);     /* FB_AD26 */
-//      PORT_HAL_SetMuxMode(PORTC,12u,kPortMuxAlt5);     /* FB_AD27 */
-//      PORT_HAL_SetMuxMode(PORTB,23u,kPortMuxAlt5);     /* FB_D28 */
-//      PORT_HAL_SetMuxMode(PORTB,22u,kPortMuxAlt5);     /* FB_D29 */
-//      PORT_HAL_SetMuxMode(PORTB,21u,kPortMuxAlt5);     /* FB_D30 */
-//      PORT_HAL_SetMuxMode(PORTB,20u,kPortMuxAlt5);     /* FB_D31 */
-//
-//      /* R/W */
-//      PORT_HAL_SetMuxMode(PORTC,11u,kPortMuxAlt5);     /* FB_R/W_B */
-//
-//      /* OE */
-//      PORT_HAL_SetMuxMode(PORTB,19u,kPortMuxAlt5);     /* FB_OE_B */
-//
-//      /* CS */
-//      PORT_HAL_SetMuxMode(PORTD,1u,kPortMuxAlt5);      /* FB_CS0 */
-//      PORT_HAL_SetMuxMode(PORTD,0u,kPortMuxAlt5);      /* FB_CS1 */
-//
-//      /* CLKOUT */
-//      /* Comment out for UART1 purpose.*/
-//      // PORT_HAL_SetMuxMode(PORTC, 3u, kPortMuxAlt5);      /* FB_CLKOUT */
-//      break;
-//    default:
-//      break;
-//  }
-//}
 
 
 

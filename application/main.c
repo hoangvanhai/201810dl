@@ -72,6 +72,7 @@ int main(void)
 {
 	osa_status_t result;
     hardware_init();
+
     LREP(logo_msg);
     LREP("Application started built time: " __TIME__ " " __DATE__ "\r\n");
 
