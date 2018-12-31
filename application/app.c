@@ -87,6 +87,7 @@ void App_Init(SApp *pApp) {
 	pApp->reboot = false;
 	pApp->sdhcPlugged = false;
 	pApp->spiPlugged = false;
+	pApp->logged = false;
 
 	err = App_InitFS(pApp);
 
@@ -597,15 +598,6 @@ void App_TaskPeriodic(task_param_t parg) {
 	while(1) {
 		OSA_SleepMs(1000);
 		ASSERT(RTC_GetTimeDate(&pApp->sDateTime) == kStatus_I2C_Success);
-
-
-//		err = DAC_SetRefLevel(100, true);
-//		if(err != kStatus_I2C_Success) {
-//			LREP("DAC err = %d\r\n", err);
-//		} else  {
-//			LREP("DAC err = %d\r\n", err);
-//		}
-
 
 		App_DiReadAllPort(pApp);
 		App_UpdateTagContent(pApp);
@@ -2595,16 +2587,34 @@ void Clb_NetTcpClientConnEvent(Network_Status event,
 		Network_Interface interface) {
 	switch(event) {
 	case Status_Connected:
-		LREP("Event connected\r\n");
+		WARN("Event connected\r\n");
+		if(!pAppObj->logged)
+		{
+			uint8_t len = SYS_CTRL_USRNAME_LENGTH + SYS_CTRL_PASSWD_LENGTH;
+			uint8_t *mem = OSA_FixedMemMalloc(len);
+			if(mem != NULL) {
+				Str_Copy_N((CPU_CHAR*)mem, (CPU_CHAR*)pAppObj->sCfg.sCom.ctrl_usrname,
+						SYS_CTRL_USRNAME_LENGTH);
+				Str_Copy_N((CPU_CHAR*)&mem[SYS_CTRL_USRNAME_LENGTH],
+						(CPU_CHAR*)pAppObj->sCfg.sCom.ctrl_passwd,
+						SYS_CTRL_PASSWD_LENGTH);
+				Network_TcpClient_SendWLength(LOGGER_LOGGING_IN, mem, len);
+				OSA_FixedMemFree(mem);
+			} else {
+				ASSERT(FALSE);
+			}
+		}
 		break;
 	case Status_Disconnected:
-		LREP("Event disconnected\r\n");
+		pAppObj->logged = false;
+		WARN("Event disconnected\r\n");
 		break;
 	case Status_Network_Down:
-		LREP("Event network down\r\n");
+		pAppObj->logged = false;
+		WARN("Event network down\r\n");
 		break;
 	case Status_Connecting:
-		LREP("Event connecting\r\n");
+		WARN("Event connecting\r\n");
 		break;
 	default:
 		break;
