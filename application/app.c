@@ -529,7 +529,7 @@ int	App_InitFS(SApp *pApp) {
 	if(retVal != FR_OK) {
 		return retVal;
 	}
-
+	LREP("f_mount passed \r\n");
 	if(!check_obj_existed("conf")) {
 		retVal = f_mkdir("conf");
 		if(retVal != FR_OK) {
