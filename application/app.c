@@ -1707,6 +1707,10 @@ int App_InitDO(SApp *pApp) {
 	for(int i = 0; i < DIGITAL_OUTPUT_NUM_CHANNEL; i++) {
 		pApp->sCfg.sDO[i].port = DigitalOutputPin[i].pinName;
 		pApp->sDO.Node[i].id = DigitalOutputPin[i].pinName;
+		// Clear logic level at startup
+		pApp->sDO.Node[i].lev = false;
+		GPIO_DRV_WritePinOutput(pApp->sDO.Node[i].id,
+				(pApp->sCfg.sDO[i].activeType == ACTIVE_HIGH) ? 0 : 1);
 	}
 	return 0;
 }
@@ -2074,8 +2078,8 @@ bool App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic) {
 	bool ret = false;
 	for(int i = 0; i < DIGITAL_OUTPUT_NUM_CHANNEL; i++) {
 		if(Str_Cmp((CPU_CHAR*)pApp->sCfg.sDO[i].name, name) == 0) {
-			pApp->sDO.Node[i].lev = logic;
 			if(pApp->sCfg.sDO[i].ctrlType == CTRL_LEVEL) { // ctrl by level
+				pApp->sDO.Node[i].lev = logic;
 				GPIO_DRV_WritePinOutput(pApp->sDO.Node[i].id,
 						(pApp->sCfg.sDO[i].activeType == ACTIVE_HIGH) ? logic : (!logic));
 			} else { // ctrl by pulse
@@ -2085,8 +2089,6 @@ bool App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic) {
 				GPIO_DRV_WritePinOutput(pApp->sDO.Node[i].id,
 						(pApp->sCfg.sDO[i].activeType == ACTIVE_HIGH) ? !logic : (logic));
 			}
-
-
 			ret = true;
 		}
 	}
@@ -2101,9 +2103,20 @@ bool App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic) {
  *  @note
  */
 void App_SetDoPinByIndex(SApp *pApp, uint8_t idx, uint32_t logic) {
-	pApp->sDO.Node[idx].lev = logic;
-	GPIO_DRV_WritePinOutput(pApp->sDO.Node[idx].id,
+	if(idx >= DIGITAL_OUTPUT_NUM_CHANNEL)
+		ASSERT_VOID(FALSE);
+
+	if(pApp->sCfg.sDO[idx].ctrlType == CTRL_LEVEL) { // ctrl by level
+		pApp->sDO.Node[idx].lev = logic;
+		GPIO_DRV_WritePinOutput(pApp->sDO.Node[idx].id,
 			(pApp->sCfg.sDO[idx].activeType == ACTIVE_HIGH) ? logic : (!logic));
+	} else { // ctrl by pulse
+		GPIO_DRV_WritePinOutput(pApp->sDO.Node[idx].id,
+				(pApp->sCfg.sDO[idx].activeType == ACTIVE_HIGH) ? logic : (!logic));
+		OSA_SleepMs(100); //pApp->sCfg.sDO.duty
+		GPIO_DRV_WritePinOutput(pApp->sDO.Node[idx].id,
+				(pApp->sCfg.sDO[idx].activeType == ACTIVE_HIGH) ? !logic : (logic));
+	}
 }
 /*****************************************************************************/
 /** @brief
