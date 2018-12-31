@@ -703,7 +703,7 @@ void control(int32_t argc, char**argv) {
 			OSA_SleepMs(100);
 		}
 	} else if(strcmp(argv[1], "log") == 0) {
-		App_GenerateLogFile(pAppObj);
+		App_GenerateLogFile(pAppObj, SEND_SERVER_ALL);
 	} else if(strcmp(argv[1], "don") == 0) {
 		LREP("control don\r\n");
 		int idx = atoi(argv[2]);
@@ -759,7 +759,7 @@ void test_log(int32_t argc, char**argv) {
 		randout = randout % 20;
 		randVal = randout;
 		randVal = MAX(randVal, 3);
-		App_GenerateLogFile(pAppObj);
+		App_GenerateLogFile(pAppObj, SEND_SERVER_ALL);
 		randVal = 1000 * randVal;
 		WARN("Delay %d\r\n", randVal);
 		OSA_SleepMs(randVal);

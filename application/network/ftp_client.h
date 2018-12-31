@@ -49,7 +49,8 @@ typedef struct ServerInfo_ {
 
 
 typedef struct FtpMsg_ {
-	uint8_t local_path[128];
+	uint8_t	server;
+	uint8_t local_path[120];
 	uint8_t file_name[128];
 }FtpMsg;
 
@@ -99,7 +100,8 @@ int		ftp_get_code(FtpClient *pFC);
 
 int 	ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg);
 void 	ftp_client_sender(void *arg);
-int		ftp_add_filename(FtpClient *pFC, const uint8_t * local_path, const uint8_t* file_name);
+int		ftp_add_filename(FtpClient *pFC, const uint8_t *local_path,
+							const uint8_t *file_name, uint8_t server);
 int		ftp_put_to_retry_table(const uint8_t *local_path,
 							   const uint8_t *file_name, uint8_t tabindex);
 int 	ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx);

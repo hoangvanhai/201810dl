@@ -559,7 +559,6 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	int log_min = pApp->sCfg.sCom.log_dur > 0 ? pApp->sCfg.sCom.log_dur : 1;
 	int last_min = 0;
-	int err;
 	bool logged = false;
 
 
@@ -622,7 +621,7 @@ void App_TaskPeriodic(task_param_t parg) {
 						pApp->sCfg.sCom.ftp_enable2)
 				{
 					LREP("generate log file\r\n");
-					ASSERT(App_GenerateLogFile(pApp) == FR_OK);
+					ASSERT(App_GenerateLogFile(pApp, SEND_SERVER_ALL) == FR_OK);
 				} else {
 					LREP("disabled generate log file\r\n");
 				}
@@ -913,7 +912,7 @@ void App_TaskStartup(task_param_t arg) {
  *  @return Void.
  *  @note
  */
-void App_CommRecvHandle(const uint8_t *data) {
+void App_SerialComRecvHandle(const uint8_t *data) {
 	uint8_t sendData[30];
 	switch(data[0]) {
 
@@ -1037,7 +1036,7 @@ void App_CommRecvHandle(const uint8_t *data) {
  *  @return Void.
  *  @note
  */
-void App_NetRecvHandle(const uint8_t *data) {
+void App_TcpServerRecvHandle(const uint8_t *data) {
 	uint8_t sendData[30];
 	switch(data[0]) {
 
@@ -1152,6 +1151,115 @@ void App_NetRecvHandle(const uint8_t *data) {
 
 	default:
 		LREP("unhandled msg type: 0x%02x\r\n", data[0]);
+		break;
+	}
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void App_TcpClientRecvHandle(const uint8_t *data, int len) {
+	LREP("data len: %d\r\n", len);
+	if(len <= 0) {
+		ERR("len = %d\r\n", len);
+		return;
+	}
+
+	uint8_t *pdata = (uint8_t*)data;
+
+//	for(int i = 0; i < len; i++) {
+//		LREP("%02x ", pdata[i]);
+//	}
+
+	switch(GET_MSG_TYPE(pdata)) {
+		 case SER_GET_INPUT_ALL: {
+			uint8_t data[4];
+			LREP("do get input all\r\n");
+			if(App_GenerateLogFile(pAppObj, SEND_SERVER_0) == 0) {
+				LREP("generate file ok\r\n");
+				data[0] = SER_CTRL_SUCCESS;
+			} else {
+				LREP("generate file failed\r\n");
+				data[0] = SER_CTRL_FAILED;
+			}
+			Network_TcpClient_SendWLength(SER_GET_INPUT_ALL, data, 1);
+		 }
+		break;
+		 case SER_GET_INPUT_GROUP:
+			LREP("do get input group\r\n");
+
+		break;
+		 case SER_GET_INPUT_CHAN: {
+			uint8_t portName[PORT_NAME_LENGTH + 1];
+			uint8_t data[4];
+			memset(portName, 0, PORT_NAME_LENGTH + 1);
+			Str_Copy_N((CPU_CHAR*)portName, (char*)&pdata[3], PORT_NAME_LENGTH);
+			if(Str_Len((CPU_CHAR*)portName) > 0) {
+				LREP("do get input channel %s\r\n", portName);
+				if(App_GenerateLogFileByName(pAppObj, (char*)portName, SEND_SERVER_0) == 0) {
+					LREP("generate file ok\r\n");
+					data[0] = SER_CTRL_SUCCESS;
+				} else {
+					LREP("generate file failed\r\n");
+					data[0] = SER_CTRL_FAILED;
+				}
+				Network_TcpClient_SendWLength(SER_GET_INPUT_CHAN, data, 1);
+			} else {
+				WARN("get invalid name \r\n");
+			}
+		 }
+
+		break;
+		 case SER_SET_SAMPLE_START: {
+			uint8_t portName[PORT_NAME_LENGTH + 1];
+			uint8_t data[4];
+			memset(portName, 0, PORT_NAME_LENGTH + 1);
+			Str_Copy_N((CPU_CHAR*)portName, (char*)&pdata[3], PORT_NAME_LENGTH);
+			if(Str_Len((CPU_CHAR*)portName) > 0) {
+				LREP("do get sample\r\n");
+				if(App_SetDoPinByName(pAppObj, (const char*)portName, 1)) {
+					LREP("generate file ok\r\n");
+					data[0] = SER_CTRL_SUCCESS;
+				} else {
+					LREP("generate file failed\r\n");
+					data[0] = SER_CTRL_FAILED;
+				}
+				Network_TcpClient_SendWLength(SER_SET_SAMPLE_START, data, 1);
+			} else {
+				WARN("get invalid name \r\n");
+			}
+		 }
+		break;
+		 case LOG_REQ_CALIB_START:
+			LREP("do set calib start\r\n");
+
+		break;
+		 case SER_SET_CALIB_START:
+
+		break;
+		 case LOGGER_LOGGING_IN:
+
+		break;
+		case SER_LOGGING_STATUS:
+		if(pdata[3] == 0x00) {
+			LREP("login = true\r\n");
+			pAppObj->logged = true;
+		} else {
+			LREP("login = false\r\n");
+			pAppObj->logged = false;
+		}
+		break;
+		 case LOGGER_LOGGING_OUT:
+			LREP("loggin out\r\n");
+			pAppObj->logged = false;
+		break;
+	default:
+		WARN("unhandled command {}\n", GET_MSG_TYPE(pdata));
 		break;
 	}
 }
@@ -1280,7 +1388,7 @@ void Clb_TransPC_RecvEvent(void *pData, uint8_t u8Type) {
 
 	switch(u8Type & 0x3F) {
 	case FRM_DATA:
-		App_CommRecvHandle(pFrameInfo->pu8Data);
+		App_SerialComRecvHandle(pFrameInfo->pu8Data);
 		break;
 
 
@@ -1395,8 +1503,8 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 			pSys->eth_stat = (nwkStt.activeIf & NET_IF_ETHERNET) != 0;
 			pSys->curr_out = pAppObj->currOut;
 			pSys->rssi = nwkStt.rssi;
-			Str_Copy_N(pSys->simid, nwkStt.simid, 10);
-			Str_Copy_N(pSys->netid, nwkStt.netid, 10);
+			Str_Copy_N((CPU_CHAR*)pSys->simid, (CPU_CHAR*)nwkStt.simid, 10);
+			Str_Copy_N((CPU_CHAR*)pSys->netid, (CPU_CHAR*)nwkStt.netid, 10);
 
 			LREP("ip %x\r\n", 		pSys->ip);
 			LREP("sdcard1_stat %x\r\n", pSys->sdcard1_stat);
@@ -1962,14 +2070,27 @@ void App_SetFTPCallback(SApp *pApp) {
  *  @return Void.
  *  @note
  */
-void App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic) {
+bool App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic) {
+	bool ret = false;
 	for(int i = 0; i < DIGITAL_OUTPUT_NUM_CHANNEL; i++) {
 		if(Str_Cmp((CPU_CHAR*)pApp->sCfg.sDO[i].name, name) == 0) {
 			pApp->sDO.Node[i].lev = logic;
-			GPIO_DRV_WritePinOutput(pApp->sDO.Node[i].id,
-					(pApp->sCfg.sDO[i].activeType == ACTIVE_HIGH) ? logic : (!logic));
+			if(pApp->sCfg.sDO[i].ctrlType == CTRL_LEVEL) { // ctrl by level
+				GPIO_DRV_WritePinOutput(pApp->sDO.Node[i].id,
+						(pApp->sCfg.sDO[i].activeType == ACTIVE_HIGH) ? logic : (!logic));
+			} else { // ctrl by pulse
+				GPIO_DRV_WritePinOutput(pApp->sDO.Node[i].id,
+						(pApp->sCfg.sDO[i].activeType == ACTIVE_HIGH) ? logic : (!logic));
+				OSA_SleepMs(100); //pApp->sCfg.sDO.duty
+				GPIO_DRV_WritePinOutput(pApp->sDO.Node[i].id,
+						(pApp->sCfg.sDO[i].activeType == ACTIVE_HIGH) ? !logic : (logic));
+			}
+
+
+			ret = true;
 		}
 	}
+	return ret;
 }
 /*****************************************************************************/
 /** @brief
@@ -2097,7 +2218,7 @@ bool App_CheckNameExisted(SApp *pApp, const char *name) {
  *  @return Void.
  *  @note
  */
-int App_GenerateLogFile(SApp *pApp) {
+int App_GenerateLogFile(SApp *pApp, uint8_t server) {
 
 	int retVal = FR_OK;
 
@@ -2226,13 +2347,16 @@ int App_GenerateLogFile(SApp *pApp) {
 						// TODO: send file name to Net module
 #if NETWORK_MODULE_EN > 0 && NETWORK_FTP_CLIENT_EN > 0
 						int err = Network_FtpClient_Send(
-								(uint8_t*)day, (uint8_t*)filename);
+								(uint8_t*)day, (uint8_t*)filename, server);
 						if(err != 0) {
 							WARN("send file to network err = %d\r\n", err);
+							retVal = -1;
 						}
 #endif
 					}
 				}
+			} else {
+				retVal = -2;
 			}
 		}
 
@@ -2255,7 +2379,7 @@ int App_GenerateLogFile(SApp *pApp) {
  *  @return Void.
  *  @note
  */
-int App_GenerateLogFileByName(SApp *pApp, const char *name) {
+int App_GenerateLogFileByName(SApp *pApp, const char *name, uint8_t server) {
 	int retVal = FR_OK;
 
 	if(App_IsSysStatus(pApp, SYS_ERR_SDCARD_1))
@@ -2378,7 +2502,7 @@ int App_GenerateLogFileByName(SApp *pApp, const char *name) {
 					// TODO: send file name to Net module
 #if NETWORK_MODULE_EN > 0 && NETWORK_FTP_CLIENT_EN > 0
 						int err = Network_FtpClient_Send(
-								(uint8_t*)day, (uint8_t*)filename);
+								(uint8_t*)day, (uint8_t*)filename, server);
 						if(err != 0) {
 							WARN("send file to network err = %d\r\n", err);
 						}
@@ -2484,7 +2608,7 @@ void Clb_NetTcpClientConnEvent(Network_Status event,
 void Clb_NetTcpClientRecvData(const uint8_t* data, int length) {
 
 	WARN("client recv data len = %d \r\n", length);
-	//Network_TcpClient_Send(data, length);
+	App_TcpClientRecvHandle(&data[4], length - 4);
 }
 /*****************************************************************************/
 /** @brief
@@ -2548,7 +2672,7 @@ void Clb_NetTcpServerRecvData(const uint8_t* data, int length) {
 //	for(int i = 0; i < length; i++) {
 //		LREP("%x ", data[i]);
 //	}
-	App_NetRecvHandle((uint8_t*)data);
+	App_TcpServerRecvHandle((uint8_t*)data);
 }
 /*****************************************************************************/
 /** @brief

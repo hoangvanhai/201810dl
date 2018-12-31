@@ -76,6 +76,7 @@ typedef struct SApp_ {
 	bool				currOut;
 	bool				stat;
 	bool				reboot;
+	bool				logged;
 	uint16_t			currLevel;
 	semaphore_t			hSem;
 	uint32_t			aiReadCount;
@@ -136,8 +137,9 @@ int				App_SendPCNetworkClient(uint8_t subctrl, uint8_t *data, uint8_t len);
 void			App_SetNetPCCallback(SApp *pApp);
 void 			App_SetFTPCallback(SApp *pApp);
 
-void 			App_CommRecvHandle(const uint8_t *data);
-void 			App_NetRecvHandle(const uint8_t *data);
+void 			App_SerialComRecvHandle(const uint8_t *data);
+void 			App_TcpServerRecvHandle(const uint8_t *data);
+void 			App_TcpClientRecvHandle(const uint8_t *data, int len);
 void			App_CommCalibAi(SApp *pApp, const uint8_t *data);
 void			App_CommCalibCurrPwr(SApp *pApp, const uint8_t *data);
 void 			App_CommTurnOnOffCurr(SApp *pApp, const uint8_t *data);
@@ -156,7 +158,7 @@ int 			App_UpdateTagContent(SApp *pApp);
 void 			App_DiReadAllPort(SApp *pApp);
 void			App_AiReadAllPort(SApp *pApp);
 
-void			App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic);
+bool			App_SetDoPinByName(SApp *pApp, const char *name, uint32_t logic);
 void			App_SetDoPinByIndex(SApp *pApp, uint8_t idx, uint32_t logic);
 
 double			App_GetAIValueByIndex(SAnalogInput *pHandle, uint16_t index);
@@ -164,8 +166,8 @@ double			App_GetMBValueByIndex(SModbusValue *pHandle, uint16_t index);
 bool			App_GetDILevelByIndex(SDigitalInputLog *pHandle, uint16_t index);
 bool			App_CheckNameExisted(SApp *pApp, const char *name);
 
-int 			App_GenerateLogFile(SApp *pApp);
-int 			App_GenerateLogFileByName(SApp *pApp, const char *name);
+int 			App_GenerateLogFile(SApp *pApp, uint8_t server);
+int 			App_GenerateLogFileByName(SApp *pApp, const char *name, uint8_t server);
 int				App_GenerateFakeTime(SApp *pApp);
 
 int				App_InitNetworkModule(SApp *pApp);

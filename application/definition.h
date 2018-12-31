@@ -91,6 +91,8 @@
 #define SER_LOGGING_STATUS          		0x0101
 #define LOGGER_LOGGING_OUT          		0x0102
 
+#define SER_CTRL_SUCCESS					0x00
+#define SER_CTRL_FAILED						0x01
 
 
 #define GET_MSG_TYPE(data)          ((data)[0] << 8 | (data)[1])
@@ -219,6 +221,13 @@ typedef enum EDOCtrlType_ {
     CTRL_PULSE = 0,
     CTRL_LEVEL
 }EDOCtrlType;
+
+enum {
+	SEND_SERVER_NONE = 0,
+	SEND_SERVER_0 	 = 0x01,
+	SEND_SERVER_1 	 = 0x02,
+	SEND_SERVER_ALL  = 0x03,
+};
 
 
 typedef struct SSystemStatus_ {

@@ -398,6 +398,38 @@ int Network_TcpClient_Send(const uint8_t *data, int len) {
 		return -4;
 	}
 }
+
+int Network_TcpClient_SendWLength(uint16_t cmd, const uint8_t *data, int len) {
+	int ret = -1;
+	uint32_t slen = len + 7;
+	if(tcpClient.active) {
+		uint8_t *mem = OSA_FixedMemMalloc(slen);
+
+		mem[0] = (slen >> 24) & 0xFF;
+		mem[1] = (slen >> 16) & 0xFF;
+		mem[2] = (slen >> 8) & 0xFF;
+		mem[3] = (slen) & 0xFF;
+
+		mem[4] = (cmd >> 8) & 0xFF;
+		mem[5] = (cmd) & 0xFF;
+		mem[6] = (uint8_t)len;
+
+		if(data != NULL && len > 0) {
+			memcpy(&mem[7], data, len);
+		}
+
+		if(mem != NULL) {
+			ret = tcp_client_send_nonblocking(&tcpClient, mem, slen);
+		}
+
+		OSA_FixedMemFree(mem);
+
+	} else {
+		ret = -4;
+	}
+
+	return ret;
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -449,9 +481,9 @@ void Clb_Default_DataEvent(const uint8_t *data, int len) {
  *  @note
  */
 int Network_FtpClient_Send(const uint8_t *local_path,
-							const uint8_t *filename) {
+							const uint8_t *filename, uint8_t server) {
 	if(ftpClient.active) {
-		return ftp_add_filename(&ftpClient, local_path, filename);
+		return ftp_add_filename(&ftpClient, local_path, filename, server);
 	} else {
 		return -4;
 	}
@@ -477,8 +509,8 @@ int Network_GetWirelessStatus(void) {
 	ASSERT_NONVOID(ret == 0, -1);
 
 	nwkStt.rssi = g_modem_status.csq;
-	Str_Copy_N(nwkStt.simid, g_modem_status.iccid, 10);
-	Str_Copy_N(nwkStt.netid, g_modem_status.opn, 10);
+	Str_Copy_N((CPU_CHAR*)nwkStt.simid, g_modem_status.iccid, 10);
+	Str_Copy_N((CPU_CHAR*)nwkStt.netid, g_modem_status.opn, 10);
 
 	return ret;
 

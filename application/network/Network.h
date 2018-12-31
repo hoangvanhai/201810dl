@@ -49,10 +49,11 @@ void Network_Register_TcpServer_DataEvent(Network_DataEvent evt, NetworkDataEven
 
 
 int Network_TcpClient_Send(const uint8_t *data, int len);
+int Network_TcpClient_SendWLength(uint16_t cmd, const uint8_t *data, int len);
 int Network_TcpServer_Send(const uint8_t *data, int len);
 
 int Network_FtpClient_Send(const uint8_t *local_path,
-		const uint8_t *filename);
+		const uint8_t *filename,  uint8_t server);
 
 int ftp_client_init(SCommon *pCM);
 

@@ -614,7 +614,8 @@ void ftp_client_sender(void *arg) {
 		if(err == OS_ERR_NONE) {
 			if(pMsg) {
 				for(int i = 0; i < FTP_CLIENT_SERVER_NUM; i++) {
-					if(pFC->server_list[i].enable)
+					// check which server must send to
+					if(pFC->server_list[i].enable && (pMsg->server & (i + 1)))
 						ftp_send_to_server(pFC, i, pMsg);
 				}
 				OSA_FixedMemFree((uint8_t*)pMsg);
@@ -631,7 +632,7 @@ void ftp_client_sender(void *arg) {
 
 
 int	ftp_add_filename(FtpClient *pFC, const uint8_t *local_path,
-		const uint8_t *file_name) {
+		const uint8_t *file_name, uint8_t server) {
 	int retVal = 0;
 
 	LREP("add file: %s%s\r\n", local_path, file_name);
@@ -639,6 +640,8 @@ int	ftp_add_filename(FtpClient *pFC, const uint8_t *local_path,
 	FtpMsg *pMsg = (FtpMsg*)OSA_FixedMemMalloc(sizeof(FtpMsg));
 	if(pMsg) {
 		OS_ERR err;
+
+		pMsg->server = server;
 
 		Str_Copy_N((CPU_CHAR*)pMsg->local_path, (const CPU_CHAR*)local_path,
 				sizeof(pMsg->local_path));
