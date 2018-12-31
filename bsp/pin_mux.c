@@ -299,7 +299,7 @@ void configure_sdhc_pins(uint32_t instance)
 // Connected TWR_MEM
 void configure_sdcard_spi_pins(uint32_t instance)
 {
-  /* SPI2_CS1 */
+  /* SPI2_CS0 */
   PORT_HAL_SetMuxMode(PORTD,11u,kPortMuxAlt2);
   PORT_HAL_SetPullMode(PORTD,11u,kPortPullUp);
   PORT_HAL_SetPullCmd(PORTD,11u,true);

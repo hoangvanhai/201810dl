@@ -207,7 +207,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="platform/composite/src/sdcard/fsl_sdcard_spi.c|middleware/filesystem/fatfs/fsl_sd_disk/src/fsl_sdspi_disk.c|platform/drivers/src/lpuart/fsl_lpuart_dma_driver.c|platform/hal/src/sim/MK64F12|platform/system/src/clock/MK64F12|platform/devices/MK66F18/linker|platform/devices/MK64F12|middleware/filesystem/fatfs/option/ccsbcs.c|middleware/filesystem/fatfs/option/cc950.c|middleware/filesystem/fatfs/option/cc949.c|middleware/filesystem/fatfs/option/cc936.c|middleware/filesystem/fatfs/option/cc932.c|platform/drivers/src/ftm/fsl_ftm_irq.c|middleware/filesystem/fatfs/fsl_usb_disk|middleware/filesystem/mfs|platform/drivers/src/dspi/fsl_dspi_dma_master_driver.c|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0/IAR|platform/drivers/src/pit/fsl_pit_irq.c|platform/drivers/src/dspi/fsl_dspi_dma_slave_driver.c|platform/osa/src/fsl_os_abstraction_ucosii.c|platform/drivers/src/smartcard|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/RealView|platform/osa/src/fsl_os_abstraction_mqx.c|platform/system/src/hwtimer/fsl_hwtimer_systick_irq.c|platform/drivers/src/ewm/fsl_ewm_irq.c|platform/drivers/src/dspi/fsl_dspi_irq.c|rtos/uCOSIII/src/uC-LIB/Ports/ARM-Cortex-M4/RealView|platform/osa/src/fsl_os_abstraction_free_rtos.c|platform/drivers/src/dspi/fsl_dspi_edma_irq.c|rtos/uCOSIII/src/uC-LIB/Ports/ARM-Cortex-M4/IAR|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/IAR|platform/devices/MK64F12/linker|platform/drivers/src/gpio/fsl_gpio_irq.c|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/IAR|middleware/tcpip/lwip/src/include/ipv6|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0/RealView|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/RealView|platform/drivers/src/enet/fsl_enet_irq.c|middleware/tcpip/rtcs|platform/osa/src/fsl_os_abstraction_bm.c|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M0|platform/drivers/src/uart/fsl_uart_dma_driver.c|application/fsl_i2c_irq.c|middleware/tcpip/lwip/src/core/ipv6" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="platform/drivers/src/dspi/fsl_dspi_dma_master_driver.c|platform/composite/src/sdcard/fsl_sdhc_card.c|middleware/filesystem/fatfs/fsl_sd_disk/src/fsl_sd_disk.c|platform/drivers/src/lpuart/fsl_lpuart_dma_driver.c|platform/hal/src/sim/MK64F12|platform/system/src/clock/MK64F12|platform/devices/MK66F18/linker|platform/devices/MK64F12|middleware/filesystem/fatfs/option/ccsbcs.c|middleware/filesystem/fatfs/option/cc950.c|middleware/filesystem/fatfs/option/cc949.c|middleware/filesystem/fatfs/option/cc936.c|middleware/filesystem/fatfs/option/cc932.c|platform/drivers/src/ftm/fsl_ftm_irq.c|middleware/filesystem/fatfs/fsl_usb_disk|middleware/filesystem/mfs|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0/IAR|platform/drivers/src/pit/fsl_pit_irq.c|platform/drivers/src/dspi/fsl_dspi_dma_slave_driver.c|platform/osa/src/fsl_os_abstraction_ucosii.c|platform/drivers/src/smartcard|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/RealView|platform/osa/src/fsl_os_abstraction_mqx.c|platform/system/src/hwtimer/fsl_hwtimer_systick_irq.c|platform/drivers/src/ewm/fsl_ewm_irq.c|rtos/uCOSIII/src/uC-LIB/Ports/ARM-Cortex-M4/RealView|platform/osa/src/fsl_os_abstraction_free_rtos.c|rtos/uCOSIII/src/uC-LIB/Ports/ARM-Cortex-M4/IAR|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/IAR|platform/devices/MK64F12/linker|platform/drivers/src/gpio/fsl_gpio_irq.c|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/IAR|middleware/tcpip/lwip/src/include/ipv6|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0/RealView|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/RealView|platform/drivers/src/enet/fsl_enet_irq.c|middleware/tcpip/rtcs|platform/osa/src/fsl_os_abstraction_bm.c|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M0|platform/drivers/src/uart/fsl_uart_dma_driver.c|application/fsl_i2c_irq.c|middleware/tcpip/lwip/src/core/ipv6" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -280,6 +280,7 @@
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.agreggatereturn.7437797416" name="Warn if struct is returned (-Wagreggate-return)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.agreggatereturn" value="false" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.missingdeclaration.2969183605" name="Warn on undeclared global function (-Wmissing-declaration)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.missingdeclaration" value="false" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors.5113594779" name="Generate errors instead of warnings (-Werror)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors" value="false" valueType="boolean"/>
+							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting.1575851662" name="Create extended listing" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting" value="true" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform.1291356063" isAbstract="false" osList="all" superClass="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform"/>
 							<builder buildPath="${workspace_loc:/libtemplatestatic}/release" id="cdt.managedbuild.builder.gnu.cross.319661062" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" stopOnErr="false" superClass="cdt.managedbuild.builder.gnu.cross"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.851262978" name="Cross ARM GNU Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
@@ -295,14 +296,24 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.5206354267" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../"/>
 									<listOptionValue builtIn="false" value="../bsp"/>
-									<listOptionValue builtIn="false" value="../shell"/>
+									<listOptionValue builtIn="false" value="../library"/>
+									<listOptionValue builtIn="false" value="../library/shell"/>
+									<listOptionValue builtIn="false" value="../library/common"/>
 									<listOptionValue builtIn="false" value="../application"/>
+									<listOptionValue builtIn="false" value="../application/network"/>
+									<listOptionValue builtIn="false" value="../application/network/modem"/>
+									<listOptionValue builtIn="false" value="../application/network/modem/ftp_client"/>
+									<listOptionValue builtIn="false" value="../application/modbus"/>
+									<listOptionValue builtIn="false" value="../application/periodic"/>
+									<listOptionValue builtIn="false" value="../application/interface"/>
+									<listOptionValue builtIn="false" value="../application/filesystem"/>
+									<listOptionValue builtIn="false" value="../application/serialcomm"/>
 									<listOptionValue builtIn="false" value="../platform/osa/inc"/>
 									<listOptionValue builtIn="false" value="../platform/utilities/inc"/>
 									<listOptionValue builtIn="false" value="../platform/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../platform/devices"/>
-									<listOptionValue builtIn="false" value="../platform/devices/MK64F12/include"/>
-									<listOptionValue builtIn="false" value="../platform/devices/MK64F12/startup"/>
+									<listOptionValue builtIn="false" value="../platform/devices/MK66F18/include"/>
+									<listOptionValue builtIn="false" value="../platform/devices/MK66F18/startup"/>
 									<listOptionValue builtIn="false" value="../platform/hal/inc"/>
 									<listOptionValue builtIn="false" value="../platform/drivers/inc"/>
 									<listOptionValue builtIn="false" value="../platform/system/inc"/>
@@ -333,12 +344,14 @@
 									<listOptionValue builtIn="false" value="../platform/drivers/src/wdog"/>
 									<listOptionValue builtIn="false" value="../platform/drivers/src/smartcard"/>
 									<listOptionValue builtIn="false" value="../platform/drivers/src/smartcard/interface"/>
+									<listOptionValue builtIn="false" value="../platform/composite/inc"/>
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/GNU"/>
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/GNU"/>
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/config"/>
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uCOS-III/Source"/>
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uC-CPU"/>
 									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uC-LIB"/>
+									<listOptionValue builtIn="false" value="../rtos/uCOSIII/src/uC-Helper"/>
 									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip"/>
 									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/port"/>
 									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/port/arch"/>
@@ -352,11 +365,14 @@
 									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include/netif"/>
 									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include/posix"/>
 									<listOptionValue builtIn="false" value="../middleware/tcpip/lwip/src/include"/>
+									<listOptionValue builtIn="false" value="../middleware/filesystem/fatfs"/>
+									<listOptionValue builtIn="false" value="../middleware/filesystem/fatfs/fsl_sd_disk"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.9790269020" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="NDEBUG"/>
-									<listOptionValue builtIn="false" value="CPU_MK64FN1M0VLL12"/>
+									<listOptionValue builtIn="false" value="CPU_MK66FN2M0VLQ18"/>
+									<listOptionValue builtIn="false" value="PRINTF_FLOAT_ENABLE"/>
 									<listOptionValue builtIn="false" value="FSL_RTOS_UCOSIII"/>
+									<listOptionValue builtIn="false" value="DEBUG"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.nostdinc.6855942054" name="Do not search system directories (-nostdinc)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.nostdinc" useByScannerDiscovery="true" value="false" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.other.8782333599" name="Other compiler flags" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.other" useByScannerDiscovery="true" value="-fno-common  -ffreestanding  -fno-builtin  -mapcs" valueType="string"/>
@@ -372,9 +388,10 @@
 									<listOptionValue builtIn="false" value="nosys"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.scriptfile.186999497" name="Script files (-T)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.scriptfile" valueType="stringList">
-									<listOptionValue builtIn="false" value="../platform/devices/MK64F12/linker/gcc/MK64FN1M0xxx12_flash.ld"/>
+									<listOptionValue builtIn="false" value="../platform/devices/MK66F18/linker/gcc/MK66FN2M0xxx18_flash.ld"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.other.475514778" name="Other linker flags" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.other" value="-Xlinker -z  -Xlinker muldefs --stats  --specs=nano.specs  -Wall  -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -mapcs  -Xlinker -static  -Xlinker --defsym=__stack_size__=0x2000  -Xlinker --defsym=__heap_size__=0x8000 " valueType="string"/>
+								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.useprintffloat.1340548378" name="Use float with nano printf (-u _printf_float)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.linker.useprintffloat" value="true" valueType="boolean"/>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.linker.input.174833683" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -403,7 +420,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="platform/composite/src/sdcard/fsl_sdcard_spi.c|middleware/filesystem/fatfs/fsl_sd_disk/src/fsl_sdspi_disk.c|platform/drivers/src/lpuart/fsl_lpuart_dma_driver.c|platform/hal/src/sim/MK64F12|platform/system/src/clock/MK64F12|platform/devices/MK66F18/linker|platform/devices/MK64F12|middleware/filesystem/fatfs/option/ccsbcs.c|middleware/filesystem/fatfs/option/cc950.c|middleware/filesystem/fatfs/option/cc949.c|middleware/filesystem/fatfs/option/cc936.c|middleware/filesystem/fatfs/option/cc932.c|platform/drivers/src/ftm/fsl_ftm_irq.c|middleware/filesystem/fatfs/fsl_usb_disk|middleware/filesystem/mfs|platform/drivers/src/dspi/fsl_dspi_dma_master_driver.c|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0/IAR|platform/drivers/src/pit/fsl_pit_irq.c|platform/drivers/src/dspi/fsl_dspi_dma_slave_driver.c|platform/osa/src/fsl_os_abstraction_ucosii.c|platform/drivers/src/smartcard|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/RealView|platform/osa/src/fsl_os_abstraction_mqx.c|platform/system/src/hwtimer/fsl_hwtimer_systick_irq.c|platform/drivers/src/ewm/fsl_ewm_irq.c|platform/drivers/src/dspi/fsl_dspi_irq.c|rtos/uCOSIII/src/uC-LIB/Ports/ARM-Cortex-M4/RealView|platform/osa/src/fsl_os_abstraction_free_rtos.c|platform/drivers/src/dspi/fsl_dspi_edma_irq.c|rtos/uCOSIII/src/uC-LIB/Ports/ARM-Cortex-M4/IAR|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/IAR|platform/devices/MK64F12/linker|platform/drivers/src/gpio/fsl_gpio_irq.c|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/IAR|middleware/tcpip/lwip/src/include/ipv6|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0/RealView|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/RealView|platform/drivers/src/enet/fsl_enet_irq.c|middleware/tcpip/rtcs|platform/osa/src/fsl_os_abstraction_bm.c|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M0|platform/drivers/src/uart/fsl_uart_dma_driver.c|application/fsl_i2c_irq.c|middleware/tcpip/lwip/src/core/ipv6" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="platform/drivers/src/dspi/fsl_dspi_dma_master_driver.c|platform/composite/src/sdcard/fsl_sdhc_card.c|platform/drivers/src/lpuart/fsl_lpuart_dma_driver.c|platform/hal/src/sim/MK64F12|platform/system/src/clock/MK64F12|platform/devices/MK66F18/linker|platform/devices/MK64F12|middleware/filesystem/fatfs/option/ccsbcs.c|middleware/filesystem/fatfs/option/cc950.c|middleware/filesystem/fatfs/option/cc949.c|middleware/filesystem/fatfs/option/cc936.c|middleware/filesystem/fatfs/option/cc932.c|platform/drivers/src/ftm/fsl_ftm_irq.c|middleware/filesystem/fatfs/fsl_usb_disk|middleware/filesystem/mfs|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0/IAR|platform/drivers/src/pit/fsl_pit_irq.c|platform/drivers/src/dspi/fsl_dspi_dma_slave_driver.c|platform/osa/src/fsl_os_abstraction_ucosii.c|platform/drivers/src/smartcard|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/RealView|platform/osa/src/fsl_os_abstraction_mqx.c|platform/system/src/hwtimer/fsl_hwtimer_systick_irq.c|platform/drivers/src/ewm/fsl_ewm_irq.c|rtos/uCOSIII/src/uC-LIB/Ports/ARM-Cortex-M4/RealView|platform/osa/src/fsl_os_abstraction_free_rtos.c|rtos/uCOSIII/src/uC-LIB/Ports/ARM-Cortex-M4/IAR|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/IAR|platform/devices/MK64F12/linker|platform/drivers/src/gpio/fsl_gpio_irq.c|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M4/Generic/IAR|middleware/tcpip/lwip/src/include/ipv6|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M0/RealView|rtos/uCOSIII/src/uC-CPU/ARM-Cortex-M4/RealView|platform/drivers/src/enet/fsl_enet_irq.c|middleware/tcpip/rtcs|platform/osa/src/fsl_os_abstraction_bm.c|rtos/uCOSIII/src/uCOS-III/Ports/ARM-Cortex-M0|platform/drivers/src/uart/fsl_uart_dma_driver.c|application/fsl_i2c_irq.c|middleware/tcpip/lwip/src/core/ipv6" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

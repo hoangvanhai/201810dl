@@ -38,9 +38,9 @@
 #include "fsl_dspi_edma_master_driver.h"
 #include "fsl_sdcard_spi.h"
 #include "fsl_debug_console.h"
+#include "hardware_profile.h"
 
-#define SDSPI_SPI_INSTANCE 2
-#define SDSPI_SPI_PCS   (1 << 0)
+#define SDSPI_SPI_INSTANCE 		BOARD_SDSPI_INSTANCE
 static uint32_t g_card_initialized = 0;
 static sdspi_card_t g_card;
 static sdspi_spi_t g_spi;
@@ -126,7 +126,6 @@ uint32_t spiExchange(sdspi_spi_t *spi, const uint8_t *in, uint8_t *out, uint32_t
 uint8_t spiSendWord(sdspi_spi_t *spi, uint8_t word)
 {
     uint8_t result;
-
     if (kStatus_DSPI_Success != DSPI_DRV_MasterTransferBlocking(spi->spiInstance,
                 NULL, &word, &result, 1, SPI_TRANSFER_TIMEOUT))
     {
@@ -353,10 +352,12 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
 
     g_spi.ops = &g_ops;
     g_spi.spiInstance = SDSPI_SPI_INSTANCE;
-    g_spi.ops->getMaxFrequency = &getSpiMaxFrequency;
-    g_spi.ops->setFrequency = &setSpiFrequency;
-    g_spi.ops->exchange = &spiExchange;
-    g_spi.ops->sendWord = &spiSendWord;
+    g_spi.ops->getMaxFrequency = getSpiMaxFrequency;
+    g_spi.ops->setFrequency = setSpiFrequency;
+    g_spi.ops->exchange = spiExchange;
+    g_spi.ops->sendWord = spiSendWord;
+
+    //LREP("spi max freq = %d\r\n", )
 
         /* SPI DMA mode Init*/
 #if defined SPI_USING_DMA
@@ -425,6 +426,8 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
         return STA_NOINIT;
     }
 
+    LREP("DSPI_DRV_MasterConfigureBus done \r\n");
+
     g_spi.spiState = &g_dspiState;
     g_spi.spiDevice = &g_dspiDevice;
     g_spi.busBaudRate = calculatedBaudRate;
@@ -437,8 +440,11 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
 #if SPI_USING_DMA
         EDMA_DRV_Deinit();
 #endif
+        LREP("SDSPI_DRV_Init failed \r\n");
         return STA_NOINIT;
     }
+
+    LREP("SDSPI_DRV_Init done \r\n");
 
     g_card_initialized = 1;
     return 0;

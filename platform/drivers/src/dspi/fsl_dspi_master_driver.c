@@ -32,6 +32,7 @@
 #include "fsl_dspi_master_driver.h"
 #include "fsl_clock_manager.h"
 #include "fsl_interrupt_manager.h"
+#include "fsl_debug_console.h"
 
 #if FSL_FEATURE_SOC_DSPI_COUNT
 
@@ -332,6 +333,7 @@ dspi_status_t DSPI_DRV_MasterTransferBlocking(uint32_t instance,
     do
     {
         syncStatus = OSA_SemaWait(&dspiState->irqSync, timeout);
+
     }while(syncStatus == kStatus_OSA_Idle);
 
     /* If a timeout occurs, stop the transfer by setting the isTransferInProgress to false and

@@ -85,7 +85,7 @@ void hardware_init(void) {
 #endif
 
 	BOARD_EnableAllFault();
-	BOARD_CreateWDG();
+//	BOARD_CreateWDG();
 }
 
 /*!
