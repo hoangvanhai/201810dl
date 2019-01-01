@@ -334,7 +334,7 @@ dspi_status_t DSPI_DRV_MasterTransferBlocking(uint32_t instance,
     {
         syncStatus = OSA_SemaWait(&dspiState->irqSync, timeout);
 
-    }while(syncStatus == kStatus_OSA_Idle);
+    } while(syncStatus == kStatus_OSA_Idle);
 
     /* If a timeout occurs, stop the transfer by setting the isTransferInProgress to false and
      * disabling interrupts, then return the timeout error status.
@@ -734,6 +734,7 @@ static void DSPI_DRV_MasterCompleteTransfer(uint32_t instance)
 
     if (dspiState->isTransferBlocking)
     {
+    	LREP("dspiState->irqSync\r\n");
         /* Signal the synchronous completion object */
         OSA_SemaPost(&dspiState->irqSync);
     }
@@ -817,6 +818,7 @@ void DSPI_DRV_MasterIRQHandler(uint32_t instance)
                 {
                     *dspiState->receiveBuffer = wordReceived;
                     ++dspiState->receiveBuffer;
+                    LREP("get %x\r\n", wordReceived);
                 }
 
                 --dspiState->remainingReceiveByteCount;

@@ -138,8 +138,6 @@ static sdspi_status_t SDSPI_DRV_SendCommand(sdspi_spi_t *spi,
         return result;
     }
 
-    LREP("wait ready done \r\n");
-
     buffer[0] = SDSPI_MAKE_CMD(req->cmdIndex);
     buffer[1] = req->argument >> 24 & 0xFF;
     buffer[2] = req->argument >> 16 & 0xFF;
@@ -147,10 +145,9 @@ static sdspi_status_t SDSPI_DRV_SendCommand(sdspi_spi_t *spi,
     buffer[4] = req->argument & 0xFF;
     buffer[5] = (SDSPI_DRV_GenerateCRC7(buffer, 5, 0) << 1) | 1;
 
-    LREP("start exchange \r\n");
-
     if (spi->ops->exchange(spi, buffer, NULL, sizeof(buffer)))
     {
+    	LREP("transfer failed \r\n");
         return kStatus_SDSPI_TransferFailed;
     }
 
@@ -170,6 +167,7 @@ static sdspi_status_t SDSPI_DRV_SendCommand(sdspi_spi_t *spi,
 
     if ((response & 0x80))
     {
+    	LREP("get response = %x\r\n", response);
         return kStatus_SDSPI_Failed;
     }
 
@@ -211,6 +209,7 @@ static sdspi_status_t SDSPI_DRV_SendCommand(sdspi_spi_t *spi,
             break;
     }
 
+    LREP("kStatus_SDSPI_NoError\r\n");
 
     return kStatus_SDSPI_NoError;
 }
@@ -227,7 +226,7 @@ static sdspi_status_t SDSPI_DRV_GoIdle(sdspi_spi_t *spi, sdspi_card_t *card)
     sdspi_request_t *req;
     assert(card);
 
-    LREP("enter SDSPI_DRV_GoIdle \r\n");
+    LREP("ENTER SDSPI_DRV_GoIdle \r\n");
 
     req = (sdspi_request_t *)OSA_MemAllocZero(sizeof(sdspi_request_t));
     if (req == NULL)
@@ -235,7 +234,6 @@ static sdspi_status_t SDSPI_DRV_GoIdle(sdspi_spi_t *spi, sdspi_card_t *card)
         return kStatus_SDSPI_OutOfMemory;
     }
 
-    LREP("OSA_MemAllocZero size = %d \r\n", sizeof(sdspi_request_t));
     /*
      * SD card will enter SPI mode if the CS is asserted (negative) during the
      * reception of the reset command (CMD0) and the card is in IDLE state.
@@ -249,13 +247,11 @@ static sdspi_status_t SDSPI_DRV_GoIdle(sdspi_spi_t *spi, sdspi_card_t *card)
 
         req->cmdIndex = kGoIdleState;
         req->respType = kSdSpiRespTypeR1;
-        LREP("SDSPI_DRV_SendCommand \r\n");
         if (kStatus_SDSPI_NoError != SDSPI_DRV_SendCommand(spi, req, SDSPI_TIMEOUT))
         {
             OSA_MemFree(req);
             return kStatus_SDSPI_Failed;
         }
-        LREP("SDSPI_DRV_SendCommand done \r\n");
         if (req->response[0] == SDMMC_SPI_R1_IN_IDLE_STATE)
         {
             break;

@@ -408,7 +408,7 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
     dspiConfig.isSckContinuous = false;
     dspiConfig.pcsPolarity = kDspiPcs_ActiveLow;
     dspiConfig.whichCtar = kDspiCtar0;
-    dspiConfig.whichPcs = kDspiPcs0;
+    dspiConfig.whichPcs = kDspiPcs1;
 
     DSPI_DRV_MasterInit(g_spi.spiInstance, &g_dspiState, &dspiConfig);
 
@@ -426,7 +426,7 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
         return STA_NOINIT;
     }
 
-    LREP("DSPI_DRV_MasterConfigureBus done \r\n");
+    LREP("DSPI_DRV_MasterConfigureBus done = %d \r\n", calculatedBaudRate);
 
     g_spi.spiState = &g_dspiState;
     g_spi.spiDevice = &g_dspiDevice;

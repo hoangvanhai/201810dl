@@ -32,7 +32,7 @@
 #include "fsl_dspi_edma_master_driver.h"
 #include "fsl_clock_manager.h"
 #include "fsl_interrupt_manager.h"
-
+#include "fsl_debug_console.h"
 #if FSL_FEATURE_SOC_DSPI_COUNT
 
 /*******************************************************************************
@@ -1272,6 +1272,7 @@ static void DSPI_DRV_EdmaMasterCompleteTransfer(uint32_t instance)
     if (dspiEdmaState->isTransferBlocking)
     {
         /* Signal the synchronous completion object */
+    	LREP("master post sem \r\n");
         OSA_SemaPost(&dspiEdmaState->irqSync);
     }
 }

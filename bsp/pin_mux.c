@@ -299,10 +299,10 @@ void configure_sdhc_pins(uint32_t instance)
 // Connected TWR_MEM
 void configure_sdcard_spi_pins(uint32_t instance)
 {
-  /* SPI2_CS0 */
-  PORT_HAL_SetMuxMode(PORTD,11u,kPortMuxAlt2);
-  PORT_HAL_SetPullMode(PORTD,11u,kPortPullUp);
-  PORT_HAL_SetPullCmd(PORTD,11u,true);
+  /* SPI2_CS1 */
+  PORT_HAL_SetMuxMode(PORTD,15u,kPortMuxAlt2);
+  PORT_HAL_SetPullMode(PORTD,15u,kPortPullUp);
+  PORT_HAL_SetPullCmd(PORTD,15u,true);
 
   /* SPI2_SCK */
   PORT_HAL_SetMuxMode(PORTD,12u,kPortMuxAlt2);
@@ -318,12 +318,10 @@ void configure_sdcard_spi_pins(uint32_t instance)
   PORT_HAL_SetPullCmd(PORTD,14u,true);
 
   /* Pin_Card_detection*/
-  PORT_HAL_SetMuxMode(PORTD,15u,kPortMuxAsGpio);
+    PORT_HAL_SetMuxMode(PORTD,11u,kPortMuxAsGpio);
+  //  PORT_HAL_SetPullMode(PORTD,11u,kPortPullUp);
+  //  PORT_HAL_SetPullCmd(PORTD,11u,true);
 
-  /* Pin_Card_write_protection*/
-//  PORT_HAL_SetMuxMode(PORTC,13u,kPortMuxAsGpio);
-//  PORT_HAL_SetPullMode(PORTC,13u,kPortPullUp);
-//  PORT_HAL_SetPullCmd(PORTC,13u,true);
 }
 
 void configure_uart_pins(uint32_t instance)

@@ -887,7 +887,7 @@ void App_TaskStartup(task_param_t arg) {
 
 			//WDOG_DRV_Refresh();
 		} else {
-			BOARD_CheckPeripheralFault();
+			//BOARD_CheckPeripheralFault();
 			/* Feed dog to prevent WDG reset */
 			WDOG_DRV_Refresh();
 		}
