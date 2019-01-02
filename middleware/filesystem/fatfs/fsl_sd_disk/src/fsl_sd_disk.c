@@ -40,6 +40,8 @@
 static sdhc_card_t g_sdhcCard;
 static sdhc_host_t g_sdhcHost;
 
+static void show_card_info(sdhc_card_t *card, bool showDetail);
+
 #if _USE_WRITE
 DRESULT sdcard_disk_write(uint8_t pdrv, const uint8_t *buff, uint32_t sector, uint8_t count)
 {
@@ -229,7 +231,7 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
     config.cdType = kSdhcCardDetectGpio;
 #elif defined CD_USING_DAT3
     config.cdType = kSdhcCardDetectDat3;
-    config.cardDetectCallback = sdhc_card_detection;
+    config.cardDetectCallback = external_card_detection;
 #elif defined CD_USING_POLL_DAT3
     config.cdType = kSdhcCardDetectPollDat3;
 #else
@@ -281,5 +283,71 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
         ASSERT(false);
         return STA_NOINIT;
     }
+
+    LREP("SDHC_DRV_Init successfully \r\n");
+
+    show_card_info(&g_sdhcCard, false);
+
     return 0;
 }
+
+
+
+static void show_card_info(sdhc_card_t *card, bool showDetail)
+{
+    double temp;
+
+    LREP("\r\n------- External Card Information -------\r\n");
+
+    // show card type
+    LREP("Card Type: ");
+    switch(card->cardType)
+    {
+        case kCardTypeMmc:
+        	LREP("MMC");
+            break;
+        case kCardTypeSd:
+            if (card->caps & SDMMC_CARD_CAPS_SDHC)
+            {
+            	LREP("SDHC");
+            }
+            else if (card->caps & SDMMC_CARD_CAPS_SDXC)
+            {
+            	LREP("SDXC");
+            }
+            else
+            {
+            	LREP("SDSC");
+            }
+            break;
+        case kCardTypeSdio:
+        	LREP("SDIO");
+            break;
+        default:
+        	LREP("Unknown");
+            break;
+    }
+    LREP("\r\n");
+
+    // calculate and show capacity of the card
+    LREP("Card Capacity: ");
+    temp = 1000000000 / card->blockSize;
+    temp = ((float)card->blockCount / (float)temp);
+    if (temp > 1.0)
+    {
+    	LREP("%.02f GB\r\n", temp);
+    }
+    else
+    {
+    	LREP("%.02f MB\r\n", temp * 1000);
+    }
+
+    // show Max. clock speed supported by the host
+    LREP("Host Clock Max Rate: %d MHz\r\n", (int)(card->host->maxClock / 1000000));
+
+    // show current clock speed of operation
+    LREP("Card setup clock rate: %d MHz\r\n", (int)(card->host->clock / 1000000));
+
+    LREP("------- End Information -------\r\n\r\n");
+}
+

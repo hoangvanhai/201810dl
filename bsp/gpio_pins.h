@@ -57,7 +57,7 @@
 #include "fsl_gpio_driver.h"
 
 /*! @brief Configuration structure 3 for input pins */
-extern const gpio_input_pin_user_config_t sdhcCdPin[];
+extern const gpio_input_pin_user_config_t cardDetectPin[];
 
 extern const gpio_input_pin_user_config_t DigitalInputPin[];
 
@@ -69,7 +69,8 @@ extern const gpio_input_pin_user_config_t sdcardCardDectionPin[];
 
 /*! @brief Pin names */
 enum _gpio_pins_pinNames {
-	kGpioSdhc0Cd                = GPIO_MAKE_PIN(GPIOD_IDX, 6U),
+	kGpioExtCd                  = GPIO_MAKE_PIN(GPIOD_IDX, 6U),
+	kGpioIntCd                  = GPIO_MAKE_PIN(GPIOD_IDX, 11U),
 	kGpioMbRs485                = GPIO_MAKE_PIN(GPIOC_IDX, 2U),
 
 	DigitalInput0				= GPIO_MAKE_PIN(GPIOB_IDX, 19U),

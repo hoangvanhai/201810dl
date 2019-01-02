@@ -37,7 +37,8 @@
 #include "fsl_rnga_driver.h"
 #include "fsl_rcm_hal.h"
 #include "fsl_lpuart_driver.h"
-
+#include "app.h"
+extern void external_card_detection(void);
 
 #if BOARD_USE_VERSION == BOARD_FRDM_K64F
 /* Configuration for enter RUN mode. Core clock = 120MHz. */
@@ -171,10 +172,10 @@ void BOARD_ClockInit(void)
 }
 
 /* The function to indicate whether a card is detected or not */
-bool BOARD_IsSDCardDetected(void)
+bool BOARD_IsExtSDCardDetected(void)
 {
-    GPIO_Type * gpioBase = g_gpioBase[GPIO_EXTRACT_PORT(kGpioSdhc0Cd)];
-    uint32_t pin = GPIO_EXTRACT_PIN(kGpioSdhc0Cd);
+    GPIO_Type * gpioBase = g_gpioBase[GPIO_EXTRACT_PORT(kGpioExtCd)];
+    uint32_t pin = GPIO_EXTRACT_PIN(kGpioExtCd);
 
     if(GPIO_HAL_ReadPinInput(gpioBase, pin) == false)
     {
@@ -187,10 +188,10 @@ bool BOARD_IsSDCardDetected(void)
 }
 
 
-bool BOARD_IsSPISDCardDetected(void)
+bool BOARD_IsIntSDCardDetected(void)
 {
-    GPIO_Type * gpioBase = g_gpioBase[GPIO_EXTRACT_PORT(kGpioSdhc0Cd)];
-    uint32_t pin = GPIO_EXTRACT_PIN(kGpioSdhc0Cd);
+    GPIO_Type * gpioBase = g_gpioBase[GPIO_EXTRACT_PORT(kGpioIntCd)];
+    uint32_t pin = GPIO_EXTRACT_PIN(kGpioIntCd);
 
     if(GPIO_HAL_ReadPinInput(gpioBase, pin) == false)
     {
@@ -446,23 +447,28 @@ void BOARD_GpioWritePin(uint32_t pinName, bool value) {
 
 void BOARD_CheckPeripheralFault() {
 	if(!GPIO_DRV_ReadPinInput(LcdVccOcf)) {
-		ERR("LCD POWER FAULT \r\n");
+		//ERR("LCD POWER FAULT \r\n");
 	}
 
 	if(!GPIO_DRV_ReadPinInput(LanPsuOcp)) {
-		ERR("ETHERNET POWER FAULT \r\n");
+		//ERR("ETHERNET POWER FAULT \r\n");
 	}
 
 	if(!GPIO_DRV_ReadPinInput(IoVccOcf)) {
-		ERR("IO POWER FAULT \r\n");
+		//ERR("IO POWER FAULT \r\n");
 	}
 
 	if(!GPIO_DRV_ReadPinInput(ModbusPsuOcp)) {
-		ERR("MODBUS POWER FAULT \r\n");
+		//ERR("MODBUS POWER FAULT \r\n");
 	}
 
 	if(!GPIO_DRV_ReadPinInput(SimVccOcf)) {
-		ERR("WIRELESS POWER FAULT \r\n");
+		//ERR("WIRELESS POWER FAULT \r\n");
+	}
+
+	int status = BOARD_IsExtSDCardDetected();
+	if(status != pAppObj->eStatus.Bits.bExtCD) {
+		external_card_detection();
 	}
 }
 

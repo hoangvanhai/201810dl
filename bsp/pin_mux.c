@@ -57,19 +57,6 @@
 #include "fsl_sim_hal.h"
 #include "pin_mux.h"
 
-//void configure_can_pins(uint32_t instance)
-//{
-//  switch(instance) {
-//    case CAN0_IDX:                       /* CAN0 */
-//      /* Affects PORTB_PCR19 register */
-//      PORT_HAL_SetMuxMode(PORTB,19u,kPortMuxAlt2);
-//      /* Affects PORTB_PCR18 register */
-//      PORT_HAL_SetMuxMode(PORTB,18u,kPortMuxAlt2);
-//      break;
-//    default:
-//      break;
-//  }
-//}
 
 void configure_enet_pins(uint32_t instance)
 {
@@ -98,90 +85,6 @@ void configure_enet_pins(uint32_t instance)
 	PORT_HAL_SetMuxMode(PORTE,26u,kPortMuxAlt2);		// RMII TxEN
 }
 
-//void configure_ftm_pins(uint32_t instance)
-//{
-//  switch(instance) {
-//	case FTM0_IDX:                       /* FTM3 */
-//		/* Affects PORTD_PCR1 register */
-//		PORT_HAL_SetDriveStrengthMode(PORTC,1u,kPortLowDriveStrength);
-//		PORT_HAL_SetMuxMode(PORTC,1u,kPortMuxAlt4);
-//		PORT_HAL_SetSlewRateMode(PORTC,1u,kPortSlowSlewRate);
-//		break;
-//    case FTM3_IDX:                       /* FTM3 */
-//		/* Affects PORTD_PCR1 register */
-//		PORT_HAL_SetDriveStrengthMode(PORTD,1u,kPortLowDriveStrength);
-//		PORT_HAL_SetMuxMode(PORTD,1u,kPortMuxAlt6);
-//		PORT_HAL_SetSlewRateMode(PORTD,1u,kPortSlowSlewRate);
-//		break;
-//
-//    default:
-//      break;
-//  }
-//}
-
-//void configure_gpio_pins(uint32_t instance)
-//{
-//  switch(instance) {
-//    case PORTA_IDX:                      /* PORTA_IDX */
-//      /* Affects PORTA_PCR4 register */
-//      PORT_HAL_SetPassiveFilterCmd(PORTA,4u,false);
-//      PORT_HAL_SetMuxMode(PORTA,4u,kPortMuxAsGpio);
-//      PORT_HAL_SetPullMode(PORTA,4u,kPortPullUp);
-//      PORT_HAL_SetPullCmd(PORTA,4u,true);
-//      /* Affects PORTA_PCR6 register */
-//      PORT_HAL_SetMuxMode(PORTA,6u,kPortMuxAsGpio);
-//      /* Affects PORTA_PCR8 register */
-//      PORT_HAL_SetMuxMode(PORTA,8u,kPortMuxAsGpio);
-//      break;
-//    case PORTB_IDX:                      /* PORTB_IDX */
-//      /* Affects PORTB_PCR6 register */
-//      PORT_HAL_SetMuxMode(PORTB,6u,kPortMuxAsGpio);
-//      /* Affects PORTB_PCR8 register */
-//      PORT_HAL_SetMuxMode(PORTB,8u,kPortMuxAsGpio);
-//      /* Affects PORTB_PCR20 register */
-//      PORT_HAL_SetMuxMode(PORTB,20u,kPortMuxAsGpio);
-//      /* Affects PORTB_PCR21 register */
-//      PORT_HAL_SetMuxMode(PORTB,21u,kPortMuxAsGpio);
-//      break;
-//    case PORTC_IDX:                      /* PORTC_IDX */
-//      /* Affects PORTC_PCR6 register */
-//      PORT_HAL_SetPassiveFilterCmd(PORTC,6u,false);
-//      PORT_HAL_SetMuxMode(PORTC,6u,kPortMuxAsGpio);
-//      PORT_HAL_SetPullMode(PORTC,6u,kPortPullUp);
-//      PORT_HAL_SetPullCmd(PORTC,6u,true);
-//      /* Affects PORTC_PCR8 register */
-//      PORT_HAL_SetMuxMode(PORTC,8u,kPortMuxAsGpio);
-//      /* Affects PORTC_PCR9 register */
-//      PORT_HAL_SetMuxMode(PORTC,9u,kPortMuxAsGpio);
-//      break;
-//    case PORTD_IDX:                      /* PORTD_IDX */
-//     /* Affects PORTD_PCR14 register */
-//      PORT_HAL_SetMuxMode(PORTD,14u,kPortMuxAsGpio);
-//      break;
-//    case PORTE_IDX:                      /* PORTE_IDX */
-//      /* Affects PORTE_PCR6 register */
-//      PORT_HAL_SetDriveStrengthMode(PORTE,6u,kPortLowDriveStrength);
-//      PORT_HAL_SetMuxMode(PORTE,6u,kPortMuxAsGpio);
-//      PORT_HAL_SetSlewRateMode(PORTE,6u,kPortSlowSlewRate);
-//      /* Affects PORTE_PCR7 register */
-//      PORT_HAL_SetDriveStrengthMode(PORTE,7u,kPortLowDriveStrength);
-//      PORT_HAL_SetMuxMode(PORTE,7u,kPortMuxAsGpio);
-//      PORT_HAL_SetSlewRateMode(PORTE,7u,kPortSlowSlewRate);
-//      /* Affects PORTE_PCR8 register */
-//      PORT_HAL_SetDriveStrengthMode(PORTE,8u,kPortLowDriveStrength);
-//      PORT_HAL_SetMuxMode(PORTE,8u,kPortMuxAsGpio);
-//      PORT_HAL_SetSlewRateMode(PORTE,8u,kPortSlowSlewRate);
-//      /* Affects PORTE_PCR9 register */
-//      PORT_HAL_SetDriveStrengthMode(PORTE,9u,kPortLowDriveStrength);
-//      PORT_HAL_SetMuxMode(PORTE,9u,kPortMuxAsGpio);
-//      PORT_HAL_SetSlewRateMode(PORTE,9u,kPortSlowSlewRate);
-//      /* Affects PORTE_PCR12 register */
-//      PORT_HAL_SetMuxMode(PORTE,12u,kPortMuxAsGpio);
-//      break;
-//    default:
-//      break;
-//  }
-//}
 
 void configure_i2c_pins(uint32_t instance)
 {
@@ -209,118 +112,66 @@ void configure_i2c_pins(uint32_t instance)
   }
 }
 
-//void configure_i2s_pins(uint32_t instance)
-//{
-//  /* Affects PORTC_PCR6 register */
-//  PORT_HAL_SetMuxMode(PORTC,6u,kPortMuxAlt6);
-//  /* Affects PORTC_PCR5 register */
-//  PORT_HAL_SetMuxMode(PORTC,5u,kPortMuxAlt4);
-//  /* Affects PORTB_PCR18 register */
-//  PORT_HAL_SetMuxMode(PORTB,18u,kPortMuxAlt4);
-//  /* Affects PORTB_PCR19 register */
-//  PORT_HAL_SetMuxMode(PORTB,19u,kPortMuxAlt4);
-//  /* Affects PORTC_PCR1 register */
-//  PORT_HAL_SetMuxMode(PORTC,1u,kPortMuxAlt6);
-//}
-
-//void configure_rtc_pins(uint32_t instance)
-//{
-//  /* Affects PORTE_PCR26 register */
-//  PORT_HAL_SetMuxMode(PORTE,26u,kPortMuxAlt6);
-//}
 
 void configure_sdhc_pins(uint32_t instance)
 {
-  /* Affects PORTE_PCR3 register */
-  PORT_HAL_SetMuxMode(PORTE,3u,kPortMuxAlt4);
-  PORT_HAL_SetPullMode(PORTE,3u,kPortPullUp);
-  PORT_HAL_SetPullCmd(PORTE,3u,true);
-  PORT_HAL_SetDriveStrengthMode(PORTE,3u,kPortHighDriveStrength);
+	/* Affects PORTE_PCR3 register */
+	PORT_HAL_SetMuxMode(PORTE,3u,kPortMuxAlt4);
+	PORT_HAL_SetPullMode(PORTE,3u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTE,3u,true);
+	PORT_HAL_SetDriveStrengthMode(PORTE,3u,kPortHighDriveStrength);
 
-  /* Affects PORTE_PCR1 register */
-  PORT_HAL_SetMuxMode(PORTE,1u,kPortMuxAlt4);
-  PORT_HAL_SetPullMode(PORTE,1u,kPortPullUp);
-  PORT_HAL_SetPullCmd(PORTE,1u,true);
-  PORT_HAL_SetDriveStrengthMode(PORTE,1u,kPortHighDriveStrength);
+	/* Affects PORTE_PCR1 register */
+	PORT_HAL_SetMuxMode(PORTE,1u,kPortMuxAlt4);
+	PORT_HAL_SetPullMode(PORTE,1u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTE,1u,true);
+	PORT_HAL_SetDriveStrengthMode(PORTE,1u,kPortHighDriveStrength);
 
-  /* Affects PORTE_PCR0 register */
-  PORT_HAL_SetMuxMode(PORTE,0u,kPortMuxAlt4);
-  PORT_HAL_SetPullMode(PORTE,0u,kPortPullUp);
-  PORT_HAL_SetPullCmd(PORTE,0u,true);
-  PORT_HAL_SetDriveStrengthMode(PORTE,0u,kPortHighDriveStrength);
+	/* Affects PORTE_PCR0 register */
+	PORT_HAL_SetMuxMode(PORTE,0u,kPortMuxAlt4);
+	PORT_HAL_SetPullMode(PORTE,0u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTE,0u,true);
+	PORT_HAL_SetDriveStrengthMode(PORTE,0u,kPortHighDriveStrength);
 
-  /* Affects PORTE_PCR5 register */
-  PORT_HAL_SetMuxMode(PORTE,5u,kPortMuxAlt4);
-  PORT_HAL_SetPullMode(PORTE,5u,kPortPullUp);
-  PORT_HAL_SetPullCmd(PORTE,5u,true);
-  PORT_HAL_SetDriveStrengthMode(PORTE,5u,kPortHighDriveStrength);
+	/* Affects PORTE_PCR5 register */
+	PORT_HAL_SetMuxMode(PORTE,5u,kPortMuxAlt4);
+	PORT_HAL_SetPullMode(PORTE,5u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTE,5u,true);
+	PORT_HAL_SetDriveStrengthMode(PORTE,5u,kPortHighDriveStrength);
 
-  /* Affects PORTE_PCR4 register */
-  PORT_HAL_SetMuxMode(PORTE,4u,kPortMuxAlt4);
-  PORT_HAL_SetPullMode(PORTE,4u,kPortPullUp);
-  PORT_HAL_SetPullCmd(PORTE,4u,true);
-  PORT_HAL_SetDriveStrengthMode(PORTE,4u,kPortHighDriveStrength);
+	/* Affects PORTE_PCR4 register */
+	PORT_HAL_SetMuxMode(PORTE,4u,kPortMuxAlt4);
+	PORT_HAL_SetPullMode(PORTE,4u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTE,4u,true);
+	PORT_HAL_SetDriveStrengthMode(PORTE,4u,kPortHighDriveStrength);
 
-  /* Affects PORTE_PCR2 register */
-  PORT_HAL_SetMuxMode(PORTE,2u,kPortMuxAlt4);
-  PORT_HAL_SetPullMode(PORTE,2u,kPortPullUp);
-  PORT_HAL_SetPullCmd(PORTE,2u,true);
-  PORT_HAL_SetDriveStrengthMode(PORTE,2u,kPortHighDriveStrength);
+	/* Affects PORTE_PCR2 register */
+	PORT_HAL_SetMuxMode(PORTE,2u,kPortMuxAlt4);
+	PORT_HAL_SetPullMode(PORTE,2u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTE,2u,true);
+	PORT_HAL_SetDriveStrengthMode(PORTE,2u,kPortHighDriveStrength);
 }
-
-//void configure_spi_pins(uint32_t instance)
-//{
-//  switch(instance) {
-//    case SPI0_IDX:                       /* SPI0 */
-//      /* Affects PORTD_PCR0 register */
-//      PORT_HAL_SetMuxMode(PORTD,0u,kPortMuxAlt2);
-//      /* Affects PORTD_PCR3 register */
-//      PORT_HAL_SetMuxMode(PORTD,3u,kPortMuxAlt2);
-//      /* Affects PORTD_PCR1 register */
-//      PORT_HAL_SetMuxMode(PORTD,1u,kPortMuxAlt2);
-//      /* Affects PORTD_PCR2 register */
-//      PORT_HAL_SetMuxMode(PORTD,2u,kPortMuxAlt2);
-//      break;
-//    case SPI1_IDX:                       /* SPI1 */
-//      /* Affects PORTB_PCR10 register */
-//      PORT_HAL_SetMuxMode(PORTB,10u,kPortMuxAlt2);
-//      /* Affects PORTB_PCR17 register */
-//      PORT_HAL_SetMuxMode(PORTB,17u,kPortMuxAlt2);
-//      /* Affects PORTB_PCR11 register */
-//      PORT_HAL_SetMuxMode(PORTB,11u,kPortMuxAlt2);
-//      /* Affects PORTB_PCR16 register */
-//      PORT_HAL_SetMuxMode(PORTB,16u,kPortMuxAlt2);
-//      break;
-//    default:
-//      break;
-//  }
-//}
 
 // Connected TWR_MEM
 void configure_sdcard_spi_pins(uint32_t instance)
 {
-  /* SPI2_CS1 */
-  PORT_HAL_SetMuxMode(PORTD,15u,kPortMuxAlt2);
-  PORT_HAL_SetPullMode(PORTD,15u,kPortPullUp);
-  PORT_HAL_SetPullCmd(PORTD,15u,true);
+	/* SPI2_CS1 */
+	PORT_HAL_SetMuxMode(PORTD,15u,kPortMuxAlt2);
+	PORT_HAL_SetPullMode(PORTD,15u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTD,15u,true);
 
-  /* SPI2_SCK */
-  PORT_HAL_SetMuxMode(PORTD,12u,kPortMuxAlt2);
+	/* SPI2_SCK */
+	PORT_HAL_SetMuxMode(PORTD,12u,kPortMuxAlt2);
 
-  /* SPI2_SOUT */
-  PORT_HAL_SetMuxMode(PORTD,13u,kPortMuxAlt2);
-  PORT_HAL_SetPullMode(PORTD,13u,kPortPullUp);
-  PORT_HAL_SetPullCmd(PORTD,16u,true);
+	/* SPI2_SOUT */
+	PORT_HAL_SetMuxMode(PORTD,13u,kPortMuxAlt2);
+	PORT_HAL_SetPullMode(PORTD,13u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTD,16u,true);
 
-  /* SPI2_SIN */
-  PORT_HAL_SetMuxMode(PORTD,14u,kPortMuxAlt2);
-  PORT_HAL_SetPullMode(PORTD,14u,kPortPullUp);
-  PORT_HAL_SetPullCmd(PORTD,14u,true);
-
-  /* Pin_Card_detection*/
-    PORT_HAL_SetMuxMode(PORTD,11u,kPortMuxAsGpio);
-  //  PORT_HAL_SetPullMode(PORTD,11u,kPortPullUp);
-  //  PORT_HAL_SetPullCmd(PORTD,11u,true);
+	/* SPI2_SIN */
+	PORT_HAL_SetMuxMode(PORTD,14u,kPortMuxAlt2);
+	PORT_HAL_SetPullMode(PORTD,14u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTD,14u,true);
 
 }
 

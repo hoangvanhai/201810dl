@@ -82,24 +82,19 @@ extern const shell_command_t cmd_table[];
 void App_Init(SApp *pApp) {
 
 	int err;
-	pApp->eStatus = SYS_ERR_NONE;
-	pApp->stat = false;
-	pApp->reboot = false;
-	pApp->sdhcPlugged = false;
-	pApp->spiPlugged = false;
-	pApp->logged = false;
+	pApp->eStatus.all = 0;
 
-	err = App_InitFS(pApp);
+	err = App_InitIntFS(pApp);
 
 	if(err == FR_OK) {
-		pApp->sdhcPlugged = true;
+		pApp->eStatus.Bits.bIntSdcardWorking = true;
 		LREP("app init FS successfully \r\n");
 	} else {
 		LREP("app init FS failed err = %d \r\n", err);
-		App_SetSysStatus(pApp, SYS_ERR_SDCARD_1);
+		pApp->eStatus.Bits.bIntSdcardWorking = false;
 	}
 
-	if(!App_GetSdcard1Error(pApp)) {
+	if(pApp->eStatus.Bits.bIntSdcardWorking) {
 		err = App_LoadConfig(pApp, CONFIG_FILE_PATH);
 		if(err == FR_OK) {
 			LREP("app load config successfully \r\n");
@@ -108,18 +103,15 @@ void App_Init(SApp *pApp) {
 		}
 	} else {
 		ASSERT(false);
-		LREP("sdcard 1 not found, init default config for dry running\r\n");
+		LREP("internal sdcard not found, init default config for dry running\r\n");
 		App_GenDefaultConfig(&pApp->sCfg);
 	}
 
-	if(BOARD_IsSDCardDetected()) {
-		if(App_InitExFs(pApp) == FR_OK) {
-			LREP("app mount ex sdcard successfully\r\n");
-		} else {
-			App_SetSysStatus(pApp, SYS_ERR_SDCARD_2);
-		}
+	if(App_InitExtFs(pApp) == FR_OK) {
+		LREP("app mount ext sdcard successfully\r\n");
+		pApp->eStatus.Bits.bExtSdcardWorking = true;
 	} else {
-		LREP("ex sdcard is not plugged\r\n");
+		pApp->eStatus.Bits.bExtSdcardWorking = false;
 	}
 
 	App_InitDI(pApp);
@@ -462,7 +454,7 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial) {
 	case LOGGER_SET | LOGGER_WRITE_DONE:
 		LREP("write config done\r\n");
 		App_SaveConfig(pApp, CONFIG_FILE_PATH);
-		pApp->reboot = true;
+		pApp->eStatus.Bits.bReboot = true;
 	break;
 
 	default:
@@ -526,9 +518,14 @@ int App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type) {
  *  @return Void.
  *  @note
  */
-int	App_InitFS(SApp *pApp) {
+int	App_InitIntFS(SApp *pApp) {
 
 	int retVal;
+
+	pApp->eStatus.Bits.bIntCD = BOARD_IsIntSDCardDetected();
+
+	if(!pApp->eStatus.Bits.bIntCD)
+		return FR_NOT_READY;
 
 	LREP("start init FS\r\n");
 
@@ -564,26 +561,20 @@ int	App_InitFS(SApp *pApp) {
  *  @note
  */
 
-int App_InitExFs(SApp *pApp) {
-	int retVal;
-	LREP("start init Ex FS \r\n");
-	memset(&pApp->sFS1, 0, sizeof(FATFS));
-	retVal = f_mount(&pApp->sFS1, "1:", 1);
-	if(!check_obj_existed("1:/logger")) {
-		retVal = f_mkdir("1:/logger");
-		if(retVal != FR_OK) {
-			LREP("mkdir err = %d\r\n", retVal);
-		} else {
-			LREP("mkdir successful !\r\n");
-		}
-	} else {
-		LREP("directory 1:/conf existed \r\n");
+int App_InitExtFs(SApp *pApp) {
+
+	pApp->eStatus.Bits.bExtCD = BOARD_IsExtSDCardDetected();
+	if(!pApp->eStatus.Bits.bExtCD) {
+		return FR_NOT_READY;
 	}
-	return retVal;
+	LREP("start init Ext FS \r\n");
+	memset(&pApp->sFS1, 0, sizeof(FATFS));
+
+	return f_mount(&pApp->sFS1, "1:", 1);
 }
 
 
-void App_WriteExFs(SApp *pApp) {
+void App_WriteExtFs(SApp *pApp) {
 	int retVal;
 	UINT	written;
 	FIL		fil;
@@ -625,11 +616,9 @@ void App_TaskPeriodic(task_param_t parg) {
 	int last_min = 0;
 	bool logged = false;
 
-
 	pApp->sDateTime.tm_mday = 1;
 	pApp->sDateTime.tm_mon = 1;
 	pApp->sDateTime.tm_year = 2018;
-
 
 	ASSERT(DAC_InitRefCurr() == kStatus_I2C_Success);
 
@@ -668,7 +657,11 @@ void App_TaskPeriodic(task_param_t parg) {
 						pApp->sCfg.sCom.ftp_enable2)
 				{
 					LREP("generate log file\r\n");
-					ASSERT(App_GenerateLogFile(pApp, SEND_SERVER_ALL) == FR_OK);
+					int retVal = App_GenerateLogFile(pApp, SEND_SERVER_ALL);
+					if(retVal != FR_OK) {
+						LREP("generate error = %d\r\n", retVal);
+					}
+
 				} else {
 					LREP("disabled generate log file\r\n");
 				}
@@ -716,6 +709,8 @@ void App_TaskShell(task_param_t param)
 void App_TaskModbus(task_param_t param)
 {
 	SApp *pApp = (SApp *)param;
+
+	GPIO_DRV_SetPinOutput(ModbusPsuEn);
 
 	App_InitModbus(pApp);
 
@@ -887,48 +882,31 @@ void App_TaskStartup(task_param_t arg) {
 		if(err == OS_ERR_NONE) {
 
 			/* Check all pending command */
-			if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_2)) {
-				if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_2)) {
-					bool status = BOARD_IsSPISDCardDetected();
-					if(pAppObj->spiPlugged != status) {
-						LREP("card 1 event = %d\r\n", pAppObj->spiPlugged);
+			if(App_IsCtrlCodePending(pApp, CTRL_INIT_INT_SDCARD)) {
 
-
-					}
-					App_ClearCtrlCode(pApp, CTRL_INIT_SDCARD_2);
-				}
 			}
 
-			if(App_IsCtrlCodePending(pApp, CTRL_INIT_SDCARD_2)) {
-				bool status = BOARD_IsSDCardDetected();
-				if(pAppObj->sdhcPlugged != status) {
-					LREP("card 2 event = %d\r\n", pAppObj->sdhcPlugged);
 
-					if(!pAppObj->sdhcPlugged) {
-						NVIC_SystemReset();
-					} else {
-						LREP("recv ctrl init sdcard 2\r\n");
-						int err = App_InitFS(pApp);
+			if(App_IsCtrlCodePending(pApp, CTRL_INIT_EXT_SDCARD)) {
+				bool status = BOARD_IsExtSDCardDetected();
+				if(pApp->eStatus.Bits.bExtCD != status) {
+					pAppObj->eStatus.Bits.bExtCD = status;
+					LREP("Ext card event = %d\r\n", pApp->eStatus.Bits.bExtCD);
+					if(pAppObj->eStatus.Bits.bExtCD) {
+						LREP("recv ctrl init ext sdcard\r\n");
+						int err = App_InitExtFs(pApp);
 						if(err != FR_OK) {
-							App_SetSysStatus(pApp, SYS_ERR_SDCARD_2);
-							pApp->sdhcPlugged = false;
+							pApp->eStatus.Bits.bExtSdcardWorking = true;
 						} else {
-							pApp->sdhcPlugged = true;
-							App_ClearSysStatus(pApp, SYS_ERR_SDCARD_2);
-							ASSERT(App_LoadConfig(pApp, CONFIG_FILE_PATH) == FR_OK);
+							pApp->eStatus.Bits.bExtSdcardWorking = false;
 						}
 					}
 				}
-				App_ClearCtrlCode(pApp, CTRL_INIT_SDCARD_2);
+				App_ClearCtrlCode(pApp, CTRL_INIT_EXT_SDCARD);
 			}
 
 			if(App_IsCtrlCodePending(pApp, CTRL_INIT_MODBUS)) {
 				LREP("recv ctrl init modbus\r\n");
-				if(App_InitModbus(pApp) == MB_SUCCESS) {
-					App_ClearSysStatus(pApp, SYS_ERR_MODBUS);
-				} else {
-					App_SetSysStatus(pApp, SYS_ERR_MODBUS);
-				}
 
 				App_ClearCtrlCode(pApp, CTRL_INIT_MODBUS);
 			}
@@ -942,7 +920,7 @@ void App_TaskStartup(task_param_t arg) {
 
 			//WDOG_DRV_Refresh();
 		} else {
-			//BOARD_CheckPeripheralFault();
+			BOARD_CheckPeripheralFault();
 			/* Feed dog to prevent WDG reset */
 			WDOG_DRV_Refresh();
 		}
@@ -1295,15 +1273,15 @@ void App_TcpClientRecvHandle(const uint8_t *data, int len) {
 		case SER_LOGGING_STATUS:
 		if(pdata[3] == 0x00) {
 			LREP("login = true\r\n");
-			pAppObj->logged = true;
+			pAppObj->eStatus.Bits.bLogged = true;
 		} else {
 			LREP("login = false\r\n");
-			pAppObj->logged = false;
+			pAppObj->eStatus.Bits.bLogged = false;
 		}
 		break;
 		 case LOGGER_LOGGING_OUT:
 			LREP("loggin out\r\n");
-			pAppObj->logged = false;
+			pAppObj->eStatus.Bits.bLogged = false;
 		break;
 	default:
 		WARN("unhandled command {}\n", GET_MSG_TYPE(pdata));
@@ -1489,7 +1467,7 @@ void Clb_TransPC_SentEvent(void *pData, uint8_t u8Type) {
 	switch(u8Type & 0x3F) {
 	case FRM_DATA:
 		if(pFrame->pu8Data[0] == (LOGGER_SET | LOGGER_WRITE_SUCCESS)) {
-			if(pAppObj->reboot) {
+			if(pAppObj->eStatus.Bits.bReboot) {
 				NVIC_SystemReset();
 			}
 		}
@@ -1544,11 +1522,11 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 
 			memcpy(&pSys->time, &pAppObj->sDateTime, sizeof(SDateTime));
 			pSys->ip = eth0.ip_addr;
-			pSys->sdcard1_stat = 0;
-			pSys->sdcard2_stat = pAppObj->sdhcPlugged;
+			pSys->sdcard1_stat = pAppObj->eStatus.Bits.bIntSdcardWorking;
+			pSys->sdcard2_stat = pAppObj->eStatus.Bits.bExtSdcardWorking;
 			pSys->sim_stat = (nwkStt.activeIf & NET_IF_WIRELESS) != 0;
 			pSys->eth_stat = (nwkStt.activeIf & NET_IF_ETHERNET) != 0;
-			pSys->curr_out = pAppObj->currOut;
+			pSys->curr_out = pAppObj->eStatus.Bits.bCurrOut;
 			pSys->rssi = nwkStt.rssi;
 			Str_Copy_N((CPU_CHAR*)pSys->simid, (CPU_CHAR*)nwkStt.simid, 10);
 			Str_Copy_N((CPU_CHAR*)pSys->netid, (CPU_CHAR*)nwkStt.netid, 10);
@@ -2282,7 +2260,7 @@ int App_GenerateLogFile(SApp *pApp, uint8_t server) {
 
 	int retVal = FR_OK;
 
-	if(App_IsSysStatus(pApp, SYS_ERR_SDCARD_1))
+	if(!pApp->eStatus.Bits.bIntSdcardWorking)
 		return -1;
 
 	FIL file;
@@ -2401,11 +2379,16 @@ int App_GenerateLogFile(SApp *pApp, uint8_t server) {
 
 				OSA_FixedMemFree((uint8_t*)row);
 
+				LREP("count = %d\r\n", rowCount);
+
 				if(retVal == FR_OK && rowCount > 0) {
+					LREP("close file\r\n");
 					retVal = f_close(&file);
-					if(retVal == FR_OK){
+					//if(retVal == FR_OK)
+					{
 						// TODO: send file name to Net module
 #if NETWORK_MODULE_EN > 0 && NETWORK_FTP_CLIENT_EN > 0
+						LREP("start push file\r\n");
 						int err = Network_FtpClient_Send(
 								(uint8_t*)day, (uint8_t*)filename, server);
 						if(err != 0) {
@@ -2414,6 +2397,8 @@ int App_GenerateLogFile(SApp *pApp, uint8_t server) {
 						}
 #endif
 					}
+				} else {
+					LREP("create file but error = %d \r\n", retVal);
 				}
 			} else {
 				retVal = -2;
@@ -2442,7 +2427,7 @@ int App_GenerateLogFile(SApp *pApp, uint8_t server) {
 int App_GenerateLogFileByName(SApp *pApp, const char *name, uint8_t server) {
 	int retVal = FR_OK;
 
-	if(App_IsSysStatus(pApp, SYS_ERR_SDCARD_1))
+	if(!pApp->eStatus.Bits.bIntSdcardWorking)
 		return -1;
 
 	if(!App_CheckNameExisted(pApp, name))
@@ -2623,10 +2608,10 @@ int	App_GenerateFakeTime(SApp *pApp) {
  *  @return Void.
  *  @note
  */
-void sdhc_card_detection(void)
+void external_card_detection(void)
 {
 	OS_ERR err;
-	App_SetCtrlCode(pAppObj, CTRL_INIT_SDCARD_2);
+	App_SetCtrlCode(pAppObj, CTRL_INIT_EXT_SDCARD);
     OSSemPost(&pAppObj->hSem, OS_OPT_POST_1, &err);
 }
 
@@ -2643,7 +2628,7 @@ void Clb_NetTcpClientConnEvent(Network_Status event,
 	switch(event) {
 	case Status_Connected:
 		WARN("Event connected\r\n");
-		if(!pAppObj->logged)
+		if(!pAppObj->eStatus.Bits.bLogged)
 		{
 			uint8_t len = SYS_CTRL_USRNAME_LENGTH + SYS_CTRL_PASSWD_LENGTH;
 			uint8_t *mem = OSA_FixedMemMalloc(len);
@@ -2661,11 +2646,11 @@ void Clb_NetTcpClientConnEvent(Network_Status event,
 		}
 		break;
 	case Status_Disconnected:
-		pAppObj->logged = false;
+		pAppObj->eStatus.Bits.bLogged = false;
 		WARN("Event disconnected\r\n");
 		break;
 	case Status_Network_Down:
-		pAppObj->logged = false;
+		pAppObj->eStatus.Bits.bLogged = false;
 		WARN("Event network down\r\n");
 		break;
 	case Status_Connecting:
@@ -2797,7 +2782,7 @@ void Clb_NetTcpServerSentData(const uint8_t* data, int length) {
 		}
 	}
 
-	if(pAppObj->reboot) {
+	if(pAppObj->eStatus.Bits.bReboot) {
 		NVIC_SystemReset();
 	}
 

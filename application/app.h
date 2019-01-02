@@ -50,7 +50,7 @@
 
 /**************************** Type Definitions *******************************/
 typedef struct SApp_ {
-	ESysStatus			eStatus;
+	USysErrStatus		eStatus;
 	ECtrlCode			eCtrlCode;
 	STransPC			sTransPc;
 	semaphore_t			semTransPc;
@@ -71,12 +71,6 @@ typedef struct SApp_ {
 	SSysCfg				sCfg;
 	uint32_t			pcCounter;
 	uint32_t			uiCounter;
-	bool				sdhcPlugged;
-	bool				spiPlugged;
-	bool				currOut;
-	bool				stat;
-	bool				reboot;
-	bool				logged;
 	uint16_t			currLevel;
 	semaphore_t			hSem;
 	uint32_t			aiReadCount;
@@ -84,15 +78,6 @@ typedef struct SApp_ {
 }SApp;
 
 /***************** Macros (Inline Functions) Definitions *********************/
-
-//#define APP_TASK_INIT_HANDLER(p, task) 		(p)->task##_task_handler = &((p)->TCB_##task)
-#define App_SetSysStatus(pApp, state)    	(pApp)->eStatus |= (state)
-#define App_ClearSysStatus(pApp, state)  	(pApp)->eStatus &= ~(state)
-#define App_IsSysStatus(pApp, state)		((pApp)->eStatus & state)
-
-#define App_GetSdcard1Error(pApp)			((pApp)->eStatus & SYS_ERR_SDCARD_1)
-#define App_GetSdcard2Error(pApp)			((pApp)->eStatus & SYS_ERR_SDCARD_2)
-
 
 #define App_SetCtrlCode(pApp, code)			((pApp)->eCtrlCode |= code)
 #define App_ClearCtrlCode(pApp, code)		((pApp)->eCtrlCode &= ~(code))
@@ -111,9 +96,9 @@ int 			App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial);
 int				App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type);
 
 /* File system */
-int				App_InitFS(SApp *pApp);
-int 			App_InitExFs(SApp *pApp);
-void			App_WriteExFs(SApp *pApp);
+int				App_InitIntFS(SApp *pApp);
+int 			App_InitExtFs(SApp *pApp);
+void			App_WriteExtFs(SApp *pApp);
 
 /* task body */
 void			App_InitTaskHandle(SApp *pApp);

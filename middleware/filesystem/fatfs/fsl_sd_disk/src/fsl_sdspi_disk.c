@@ -52,6 +52,8 @@ static dspi_device_t g_dspiDevice;
 
 #define SPI_USING_DMA	1
 
+static void show_spicard_info(sdspi_card_t *card, bool showDetail);
+
 /*
  * spi interfaces
  */
@@ -340,9 +342,9 @@ static void reset_all_states()
 
 DSTATUS sdspi_disk_initialize(uint8_t pdrv)
 {
-#if SPI_USING_DMA
-    edma_user_config_t dmaConfig;
-#endif
+//#if SPI_USING_DMA
+//    edma_user_config_t dmaConfig;
+//#endif
     uint32_t calculatedBaudRate;
 
     if (pdrv != SD_SPI)
@@ -394,9 +396,9 @@ DSTATUS sdspi_disk_initialize(uint8_t pdrv)
     if (DSPI_DRV_EdmaMasterConfigureBus(g_spi.spiInstance, &g_edmaDspiDevice, &calculatedBaudRate)
         != kStatus_DSPI_Success)
     {
-        LREP("\r  edma configure bus failed\n");
-
+        LREP("edma configure bus failed\n");
     }
+
     g_spi.spiState = &g_edmaDspiMasterState;
     g_spi.spiDevice = &g_edmaDspiDevice;
     g_spi.busBaudRate = calculatedBaudRate;
@@ -441,10 +443,67 @@ DSTATUS sdspi_disk_initialize(uint8_t pdrv)
 #if SPI_USING_DMA
         EDMA_DRV_Deinit();
 #endif
-        LREP("SDSPI_DRV_Init failed \r\n");
         return STA_NOINIT;
     }
+
+    LREP("SDSPI_DRV_Init successfully\r\n");
+
+    show_spicard_info(&g_card, false);
 
     g_card_initialized = 1;
     return 0;
 }
+
+
+static void show_spicard_info(sdspi_card_t *card, bool showDetail)
+{
+    double temp;
+
+    LREP("\r\n------- Internal Card Information -------\r\n");
+
+    // show card type
+    LREP("Card Type: ");
+    switch(card->cardType)
+    {
+        case kCardTypeMmc:
+        	LREP("MMC");
+            break;
+        case kCardTypeSd:
+            if (card->caps & SDSPI_CAPS_SDHC)
+            {
+            	LREP("SDHC");
+            }
+            else if (card->caps & SDSPI_CAPS_SDXC)
+            {
+            	LREP("SDXC");
+            }
+            else
+            {
+            	LREP("SDSC");
+            }
+            break;
+        case kCardTypeSdio:
+        	LREP("SDIO");
+            break;
+        default:
+        	LREP("Unknown");
+            break;
+    }
+    LREP("\r\n");
+
+    // calculate and show capacity of the card
+    LREP("Card Capacity: ");
+    temp = 1000000000 / card->blockSize;
+    temp = ((float)card->blockCount / (float)temp);
+    if (temp > 1.0)
+    {
+    	LREP("%.02f GB\r\n", temp);
+    }
+    else
+    {
+    	LREP("%.02f MB\r\n", temp * 1000);
+    }
+
+    LREP("------- End Information -------\r\n\r\n");
+}
+

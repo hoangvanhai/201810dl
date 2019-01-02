@@ -212,7 +212,7 @@ void  App_OS_InitHook (void)
 
 void  App_OS_StatTaskHook (void)
 {
-	if(pAppObj->stat) {
+	if(pAppObj->eStatus.Bits.bStatitics) {
 
 		LREP("\rcpu usage %d\t", OSStatTaskCPUUsage);
 //		LREP("%10s used %4d free %4d\r\n", "ui",

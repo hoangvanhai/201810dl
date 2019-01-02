@@ -76,7 +76,7 @@ const SHELL_COMMAND_STRUCT Shell_commands[] = {
 };
 
 #ifdef BOARD_SDHC_INSTANCE
-  #define CDET_PIN sdhcCdPin
+  #define CDET_PIN cardDetectPin
 #else
   #define CDET_PIN sdcardCdPin
 #endif

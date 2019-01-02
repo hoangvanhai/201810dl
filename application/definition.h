@@ -157,25 +157,39 @@ enum MbDataType {
     Float_32bits
 };
 
-typedef enum ESysStatus_ {
-    SYS_ERR_NONE		= 0 << 0,
-    SYS_ERR_RTC			= 1 << 1,
-    SYS_ERR_SDCARD_1	= 1 << 2,
-    SYS_ERR_SDCARD_2	= 1 << 3,
-    SYS_ERR_MODBUS		= 1 << 10,
-    SYS_ERR_SPC			= 1 << 11,
-    SYS_ERR_NET_PC		= 1 << 11,
-    SYS_ERR_NET_FTP 	= 1 << 12,
-    SYS_ERR_ETHER_CONN 	= 1 << 13,
-    SYS_ERR_3G_CONN 	= 1 << 14,
-    SYS_ERR_SUI			= 1 << 15,
-}ESysStatus;
+
+typedef union USysStatus_ {
+	uint32_t 	all;
+    struct
+    {
+        unsigned bRtcWoring       	:	1; // 1 indicate working properly 0 working with error
+        unsigned bIntSdcardWorking 	:	1;
+        unsigned bExtSdcardWorking 	:	1;
+        unsigned bModbusRtuWorking 	:	1;
+        unsigned bModbusTcpWorking 	:	1;
+        unsigned bPcCommWorking    	:	1;
+        unsigned bUiCommWorking    	:	1;
+        unsigned bTcpServerWorking 	:	1;
+        unsigned bTcpClientWorking 	:	1;
+        unsigned bWirelessWorking  	:   1;
+		unsigned bEthernetWorking	:	1;
+		unsigned bFtpWorking		:	1;
+		unsigned bLogged			: 	1;
+		unsigned bCurrOut			:   1;
+		unsigned bStatitics			: 	1;
+		unsigned bReboot			: 	1;
+		unsigned bExtCD				: 	1;
+		unsigned bIntCD				:	1; //18
+		unsigned bReserves			: 	14;
+    }Bits;
+
+}USysErrStatus;
 
 
 typedef enum EControlCode_ {
     CTRL_NONE = 0,
-    CTRL_INIT_SDCARD_1 = 	1 << 1,
-    CTRL_INIT_SDCARD_2 = 	1 << 2,
+    CTRL_INIT_INT_SDCARD = 	1 << 1,
+    CTRL_INIT_EXT_SDCARD = 	1 << 2,
     CTRL_INIT_MODBUS = 		1 << 3,
 	CTRL_SEND_HEADER = 		1 << 4,
 	CTRL_GET_WL_STT = 		1 << 5,

@@ -58,20 +58,13 @@ void hardware_init(void) {
 	CLOCK_SYS_SetEnetRmiiSrc(0, 		kClockRmiiSrcExt);
 	CLOCK_SYS_SetSdhcSrc(0, 			kClockTimeSrcCoreSysClk);
 
-
-
-
 #elif BOARD_USE_VERSION == BOARD_FRDM_K64F
 
 #endif
 
-	GPIO_DRV_Init(sdhcCdPin, NULL);
     GPIO_DRV_Init(DigitalInputPin, NULL);
     GPIO_DRV_Init(NULL, DigitalOutputPin);
     GPIO_DRV_Init(NULL, SelectAnalogPin);
-
-
-    GPIO_DRV_SetPinOutput(ModbusPsuEn);
 
     /* Init board clock */
 	BOARD_ClockInit();

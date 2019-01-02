@@ -688,8 +688,8 @@ void control(int32_t argc, char**argv) {
 			OSA_SleepMs(100);
 		}
 	} else if(strcmp(argv[1], "stat") == 0) {
-		pAppObj->stat = !pAppObj->stat;
-		LREP("stat %d\r\n", pAppObj->stat);
+		pAppObj->eStatus.Bits.bStatitics = !pAppObj->eStatus.Bits.bStatitics;
+		LREP("stat %d\r\n", pAppObj->eStatus.Bits.bStatitics);
 	} else if(strcmp(argv[1], "server") == 0) {
 		for(int i = 0; i < 1000; i++)
 		{

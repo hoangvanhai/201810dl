@@ -55,17 +55,24 @@
 
 #if 1
 
-const gpio_input_pin_user_config_t sdhcCdPin[] = {
-  {
-    .pinName = kGpioSdhc0Cd,
-    .config.isPullEnable = true,
-    .config.pullSelect = kPortPullDown,
-    .config.isPassiveFilterEnabled = false,
-    .config.interrupt = kPortIntEitherEdge
-  },
-  {
-    .pinName = GPIO_PINS_OUT_OF_RANGE,
-  }
+const gpio_input_pin_user_config_t cardDetectPin[] = {
+	{
+		.pinName = kGpioExtCd,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullDown,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntEitherEdge
+	},
+	{
+		.pinName = kGpioIntCd,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullDown,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntEitherEdge
+	},
+	{
+	.pinName = GPIO_PINS_OUT_OF_RANGE,
+	}
 };
 
 
@@ -352,6 +359,20 @@ const gpio_input_pin_user_config_t DigitalInputPin[] = {
 	},
 	{
 		.pinName = SimVccOcf,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = kGpioExtCd,
+		.config.isPullEnable = true,
+		.config.pullSelect = kPortPullUp,
+		.config.isPassiveFilterEnabled = false,
+		.config.interrupt = kPortIntDisabled
+	},
+	{
+		.pinName = kGpioIntCd,
 		.config.isPullEnable = true,
 		.config.pullSelect = kPortPullUp,
 		.config.isPassiveFilterEnabled = false,

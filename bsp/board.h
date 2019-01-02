@@ -57,8 +57,8 @@ void BOARD_ClockInit(void);
 void BOARD_InitOsc0(void);
 
 /* Function to initialize RTC external clock base on board configuration. */
-bool BOARD_IsSDCardDetected(void);
-bool BOARD_IsSPISDCardDetected(void);
+bool BOARD_IsExtSDCardDetected(void);
+bool BOARD_IsIntSDCardDetected(void);
 void BOARD_CheckPeripheralFault(void);
 void BOARD_EnableAllFault(void);
 int BOARD_GetFaultType(void);
