@@ -35,6 +35,8 @@
 
 #include "fsl_sdmmc_card.h"
 #include "fsl_sdcard_spi.h"
+#include "fsl_debug_console.h"
+
 
 /* rate unit is divided by 1000 */
 static const uint32_t g_transpeedru[] =
@@ -144,6 +146,7 @@ static sdspi_status_t SDSPI_DRV_SendCommand(sdspi_spi_t *spi,
 
     if (spi->ops->exchange(spi, buffer, NULL, sizeof(buffer)))
     {
+    	LREP("exchange failed \r\n");
         return kStatus_SDSPI_TransferFailed;
     }
 
@@ -163,10 +166,12 @@ static sdspi_status_t SDSPI_DRV_SendCommand(sdspi_spi_t *spi,
 
     if ((response & 0x80))
     {
+    	LREP("response = %x\r\n", response);
         return kStatus_SDSPI_Failed;
     }
 
     req->response[0] = response;
+
     switch(req->respType)
     {
         case kSdSpiRespTypeR1:
@@ -384,6 +389,9 @@ static sdspi_status_t SDSPI_DRV_SendIfCond(sdspi_spi_t *spi,
     memcpy(response, req->response, sizeof(req->response));
 
     OSA_MemFree(req);
+
+    LREP("return kStatus_SDSPI_NoError\r\n");
+
     return kStatus_SDSPI_NoError;
 }
 
@@ -732,6 +740,8 @@ sdspi_status_t SDSPI_DRV_Init(sdspi_spi_t *spi, sdspi_card_t *card)
         return kStatus_SDSPI_Failed;
     }
 
+    LREP("SDSPI_DRV_GoIdle done \r\n");
+
     acmd41Arg = 0;
     if (kStatus_SDSPI_NoError !=
             SDSPI_DRV_SendIfCond(spi, card, 0xAA, response))
@@ -744,8 +754,16 @@ sdspi_status_t SDSPI_DRV_Init(sdspi_spi_t *spi, sdspi_card_t *card)
     }
     else
     {
+    	LREP("response: \r\n");
+    	for(int i = 0; i < 5; i++) {
+    		LREP("%x ", response[i]);
+    	}
+
+    	LREP("kStatus_SDSPI_Failed \r\n");
         return kStatus_SDSPI_Failed;
     }
+
+    LREP("SDSPI_DRV_SendIfCond done \r\n");
 
     startTime = OSA_TimeGetMsec();
     do
@@ -775,6 +793,8 @@ sdspi_status_t SDSPI_DRV_Init(sdspi_spi_t *spi, sdspi_card_t *card)
         }
     } while(acmd41resp[0] == SDMMC_SPI_R1_IN_IDLE_STATE);
 
+    LREP("SDSPI_DRV_AppSendOpCond done \r\n");
+
     if (likelyMmc)
     {
         card->cardType = kCardTypeMmc;
@@ -802,6 +822,8 @@ sdspi_status_t SDSPI_DRV_Init(sdspi_spi_t *spi, sdspi_card_t *card)
         card->version = kSdCardVersion_1_x;
     }
 
+    LREP("SDSPI_DRV_ReadOcr done \r\n");
+
     /* Force to use 512-byte length block, no matter which version  */
     if (kStatus_SDSPI_NoError != SDSPI_DRV_SetBlockSize(spi, 512))
     {
@@ -812,6 +834,8 @@ sdspi_status_t SDSPI_DRV_Init(sdspi_spi_t *spi, sdspi_card_t *card)
     {
         return kStatus_SDSPI_Failed;
     }
+
+    LREP("SDSPI_DRV_InitSd done \r\n");
 
     return kStatus_SDSPI_NoError;
 }

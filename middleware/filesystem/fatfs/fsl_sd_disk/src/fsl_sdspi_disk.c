@@ -39,7 +39,7 @@
 #include "fsl_sdcard_spi.h"
 #include "fsl_debug_console.h"
 
-#define SDSPI_SPI_INSTANCE 0
+#define SDSPI_SPI_INSTANCE 1
 #define SDSPI_SPI_PCS   (1 << 0)
 static uint32_t g_card_initialized = 0;
 static sdspi_card_t g_card;
@@ -131,6 +131,7 @@ uint8_t spiSendWord(sdspi_spi_t *spi, uint8_t word)
                 NULL, &word, &result, 1, SPI_TRANSFER_TIMEOUT))
     {
         result = 0xFF;
+        LREP("error result = %d\r\n", result);
     }
 
     return result;

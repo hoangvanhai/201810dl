@@ -802,8 +802,8 @@ void App_TaskStartup(task_param_t arg) {
 		} else {
 			//LEP("Feed dog \r\n");
 			/* Feed dog to prevent WDG reset */
-			//WDOG_DRV_Refresh();
-			App_AiReadAllPort(pApp);
+			WDOG_DRV_Refresh();
+			//App_AiReadAllPort(pApp);
 		}
 
 

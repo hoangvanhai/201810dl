@@ -43,9 +43,10 @@ void hardware_init(void) {
   CLOCK_SYS_EnablePortClock(PORTD_IDX);
   CLOCK_SYS_EnablePortClock(PORTE_IDX);
 
-  CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
+//  CLOCK_SYS_EnableSdhcClock(BOARD_SDHC_INSTANCE);
 
-  configure_sdhc_pins(BOARD_SDHC_INSTANCE);
+//  configure_sdhc_pins(BOARD_SDHC_INSTANCE);
+  configure_sdcard_spi_pins(0);
   configure_i2c_pins(BOARD_I2C_RTC_INSTANCE);
 //  configure_ftm_pins(FTM0_IDX);
   /* Init board clock */
