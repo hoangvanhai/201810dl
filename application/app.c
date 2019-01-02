@@ -607,6 +607,18 @@ void App_WriteExtFs(SApp *pApp) {
  *  @return Void.
  *  @note
  */
+int	App_DeinitExtFs(SApp *pApp){
+	return f_unmount("1:");
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 
 void App_TaskPeriodic(task_param_t parg) {
 
@@ -842,8 +854,6 @@ void App_TaskStartup(task_param_t arg) {
 
 	App_CreateAppEvent(pApp);
 
-
-
 	App_CreateAppTask(pApp);
 
 	App_OS_SetAllHooks();
@@ -853,10 +863,7 @@ void App_TaskStartup(task_param_t arg) {
     OSStatReset(&err);
 #endif
 
-
     BOARD_CheckPeripheralFault();
-
-
 
 #if NETWORK_MODULE_EN > 0
     uint32_t timeNow = sys_now();
@@ -874,7 +881,7 @@ void App_TaskStartup(task_param_t arg) {
 
 	Network_InitFtpModule(&pApp->sCfg.sCom);
 	WARN("FTP client wakeup spend %d ms\r\n", sys_now() - timeNow);
-	ERR("FTP CLIENT INIT DONE\r\n");
+	WARN("FTP CLIENT INIT DONE\r\n");
 #endif
 
 	while(1) {
@@ -900,6 +907,10 @@ void App_TaskStartup(task_param_t arg) {
 						} else {
 							pApp->eStatus.Bits.bExtSdcardWorking = false;
 						}
+					} else {
+						LREP("unmount external card\r\n");
+						App_DeinitExtFs(pApp);
+						pApp->eStatus.Bits.bExtSdcardWorking = false;
 					}
 				}
 				App_ClearCtrlCode(pApp, CTRL_INIT_EXT_SDCARD);
