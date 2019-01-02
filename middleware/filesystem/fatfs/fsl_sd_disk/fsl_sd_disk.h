@@ -51,6 +51,14 @@ DRESULT sdcard_disk_read(uint8_t pdrv, uint8_t *buf, uint32_t sector, uint8_t co
 DRESULT sdcard_disk_write(uint8_t pdrv, const uint8_t *buf, uint32_t sector, uint8_t count);
 DRESULT sdcard_disk_ioctl(uint8_t pdrv, uint8_t cmd, void *buff);
 
+
+DSTATUS sdspi_disk_initialize(uint8_t pdrv);
+DSTATUS sdspi_disk_status(uint8_t pdrv);
+DRESULT sdspi_disk_read(uint8_t pdrv, uint8_t *buf, uint32_t sector, uint8_t count);
+DRESULT sdspi_disk_write(uint8_t pdrv, const uint8_t *buf, uint32_t sector, uint8_t count);
+DRESULT sdspi_disk_ioctl(uint8_t pdrv, uint8_t cmd, void *buff);
+
+
 #if defined(__cplusplus)
 }
 #endif

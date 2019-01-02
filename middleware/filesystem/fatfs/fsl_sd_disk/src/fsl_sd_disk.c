@@ -43,7 +43,7 @@ static sdhc_host_t g_sdhcHost;
 #if _USE_WRITE
 DRESULT sdcard_disk_write(uint8_t pdrv, const uint8_t *buff, uint32_t sector, uint8_t count)
 {
-    if (pdrv != SD)
+    if (pdrv != SD_HC)
     {
         return RES_PARERR;
     }
@@ -61,7 +61,7 @@ DRESULT sdcard_disk_write(uint8_t pdrv, const uint8_t *buff, uint32_t sector, ui
 
 DRESULT sdcard_disk_read(uint8_t pdrv, uint8_t *buff, uint32_t sector, uint8_t count)
 {
-    if (pdrv != SD)
+    if (pdrv != SD_HC)
     {
         return RES_PARERR;
     }
@@ -82,7 +82,7 @@ DRESULT sdcard_disk_ioctl(uint8_t pdrv, uint8_t cmd, void *buff)
 {
     DRESULT res = RES_OK;
 
-    if (pdrv != SD)
+    if (pdrv != SD_HC)
     {
         return RES_PARERR;
     }
@@ -190,7 +190,7 @@ DRESULT sdcard_disk_ioctl(uint8_t pdrv, uint8_t cmd, void *buff)
 
 DSTATUS sdcard_disk_status(uint8_t pdrv)
 {
-    if (pdrv != SD)
+    if (pdrv != SD_HC)
     {
         return STA_NOINIT;
     }
@@ -207,7 +207,7 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
     sdhc_status_t status;
 #endif
 
-    if (pdrv != SD)
+    if (pdrv != SD_HC)
     {
         return STA_NOINIT;
     }

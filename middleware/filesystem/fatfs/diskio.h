@@ -45,7 +45,10 @@ extern "C" {
 
 /* Definitions of physical drive number for each media */
 #define USB                                             0
-#define SD                                              0
+#define SD_SPI                                          0
+#define SD_HC                                           1
+
+
 #define SD_DISK_ENABLE									1
 #define CD_USING_GPIO
 //#define CD_USING_DAT3

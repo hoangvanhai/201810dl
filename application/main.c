@@ -59,14 +59,6 @@ const char *logo_msg = { "\r\n\n"
  *  @return Void.
  *  @note
  */
-#if 1
-
-
-//void delay_us(uint32_t us) {
-//	while(us--) {
-//		__NOP();
-//	}
-//}
 
 int main(void)
 {
@@ -266,6 +258,4 @@ int App_CreateAppEvent(SApp *pApp) {
 	return error == OS_ERR_NONE;
 }
 
-
-#endif
 

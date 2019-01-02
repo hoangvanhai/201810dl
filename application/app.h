@@ -112,6 +112,8 @@ int				App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type);
 
 /* File system */
 int				App_InitFS(SApp *pApp);
+int 			App_InitExFs(SApp *pApp);
+void			App_WriteExFs(SApp *pApp);
 
 /* task body */
 void			App_InitTaskHandle(SApp *pApp);

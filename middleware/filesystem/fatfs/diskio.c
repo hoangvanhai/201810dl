@@ -62,8 +62,11 @@ DSTATUS disk_initialize (
         return msd_disk_initialize(pdrv);
 #endif
 #if SD_DISK_ENABLE
-    case SD:
+    case SD_HC:
         return sdcard_disk_initialize(pdrv);
+
+    case SD_SPI:
+    	return sdspi_disk_initialize(pdrv);
 #endif
     default:
         return STA_NOINIT;
@@ -93,8 +96,11 @@ DSTATUS disk_status (
         return msd_disk_status(pdrv);
 #endif
 #if SD_DISK_ENABLE
-    case SD:
+    case SD_HC:
         return sdcard_disk_status(pdrv);
+
+    case SD_SPI:
+    	return sdspi_disk_status(pdrv);
 #endif
     }
     return stat;
@@ -128,8 +134,10 @@ DRESULT disk_read (
         return msd_disk_read(pdrv, buff, sector, count);
 #endif
 #if SD_DISK_ENABLE
-    case SD:
+    case SD_HC:
         return sdcard_disk_read(pdrv, buff, sector, count);
+    case SD_SPI:
+    	return sdspi_disk_read(pdrv, buff, sector, count);
 #endif
     }
     return res;
@@ -165,8 +173,11 @@ DRESULT disk_write (
         return msd_disk_write(pdrv, (uint8_t*)buff, sector, count);
 #endif
 #if SD_DISK_ENABLE
-    case SD:
+    case SD_HC:
         return sdcard_disk_write(pdrv, buff, sector, count);
+
+    case SD_SPI:
+    	return sdspi_disk_write(pdrv, buff, sector, count);
 #endif
     }
     return res;
@@ -201,8 +212,10 @@ DRESULT disk_ioctl (
         return msd_disk_ioctl(pdrv, cmd, buff);
 #endif
 #if SD_DISK_ENABLE
-    case SD:
+    case SD_HC:
         return sdcard_disk_ioctl(pdrv, cmd, buff);
+    case SD_SPI:
+    	return sdcard_disk_ioctl(pdrv, cmd, buff);
 #endif
     }
     return res;

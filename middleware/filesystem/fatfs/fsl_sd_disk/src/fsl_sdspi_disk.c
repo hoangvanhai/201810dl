@@ -142,9 +142,9 @@ uint8_t spiSendWord(sdspi_spi_t *spi, uint8_t word)
 #endif /*None DMA operation*/
 
 #if _USE_WRITE
-DRESULT sdcard_disk_write(uint8_t pdrv, const uint8_t *buff, uint32_t sector, uint8_t count)
+DRESULT sdspi_disk_write(uint8_t pdrv, const uint8_t *buff, uint32_t sector, uint8_t count)
 {
-    if (pdrv != SD)
+    if (pdrv != SD_SPI)
     {
         return RES_PARERR;
     }
@@ -160,9 +160,9 @@ DRESULT sdcard_disk_write(uint8_t pdrv, const uint8_t *buff, uint32_t sector, ui
 }
 #endif
 
-DRESULT sdcard_disk_read(uint8_t pdrv, uint8_t *buff, uint32_t sector, uint8_t count)
+DRESULT sdspi_disk_read(uint8_t pdrv, uint8_t *buff, uint32_t sector, uint8_t count)
 {
-    if (pdrv != SD)
+    if (pdrv != SD_SPI)
     {
         return RES_PARERR;
     }
@@ -179,11 +179,11 @@ DRESULT sdcard_disk_read(uint8_t pdrv, uint8_t *buff, uint32_t sector, uint8_t c
 }
 
 #if _USE_IOCTL
-DRESULT sdcard_disk_ioctl(uint8_t pdrv, uint8_t cmd, void *buff)
+DRESULT sdspi_disk_ioctl(uint8_t pdrv, uint8_t cmd, void *buff)
 {
     DRESULT res = RES_OK;
 
-    if (pdrv != SD)
+    if (pdrv != SD_SPI)
     {
         return RES_PARERR;
     }
@@ -310,9 +310,9 @@ DRESULT sdcard_disk_ioctl(uint8_t pdrv, uint8_t cmd, void *buff)
 }
 #endif
 
-DSTATUS sdcard_disk_status(uint8_t pdrv)
+DSTATUS sdspi_disk_status(uint8_t pdrv)
 {
-    if (pdrv != SD)
+    if (pdrv != SD_SPI)
     {
         return STA_NOINIT;
     }
@@ -338,14 +338,14 @@ static void reset_all_states()
 #endif
 }
 
-DSTATUS sdcard_disk_initialize(uint8_t pdrv)
+DSTATUS sdspi_disk_initialize(uint8_t pdrv)
 {
 #if SPI_USING_DMA
     edma_user_config_t dmaConfig;
 #endif
     uint32_t calculatedBaudRate;
 
-    if (pdrv != SD)
+    if (pdrv != SD_SPI)
     {
         return STA_NOINIT;
     }

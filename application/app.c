@@ -112,6 +112,16 @@ void App_Init(SApp *pApp) {
 		App_GenDefaultConfig(&pApp->sCfg);
 	}
 
+	if(BOARD_IsSDCardDetected()) {
+		if(App_InitExFs(pApp) == FR_OK) {
+			LREP("app mount ex sdcard successfully\r\n");
+		} else {
+			App_SetSysStatus(pApp, SYS_ERR_SDCARD_2);
+		}
+	} else {
+		LREP("ex sdcard is not plugged\r\n");
+	}
+
 	App_InitDI(pApp);
 	App_InitDO(pApp);
 	DAC_InterfaceInit();
@@ -524,7 +534,7 @@ int	App_InitFS(SApp *pApp) {
 
 	memset(&pApp->sFS0, 0, sizeof(FATFS));
 
-	retVal = f_mount(&pApp->sFS0, "", 0);
+	retVal = f_mount(&pApp->sFS0, "0:", 0);
 
 	if(retVal != FR_OK) {
 		return retVal;
@@ -544,6 +554,60 @@ int	App_InitFS(SApp *pApp) {
 
 	return retVal;
 }
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+
+int App_InitExFs(SApp *pApp) {
+	int retVal;
+	LREP("start init Ex FS \r\n");
+	memset(&pApp->sFS1, 0, sizeof(FATFS));
+	retVal = f_mount(&pApp->sFS1, "1:", 1);
+	if(!check_obj_existed("1:/logger")) {
+		retVal = f_mkdir("1:/logger");
+		if(retVal != FR_OK) {
+			LREP("mkdir err = %d\r\n", retVal);
+		} else {
+			LREP("mkdir successful !\r\n");
+		}
+	} else {
+		LREP("directory 1:/conf existed \r\n");
+	}
+	return retVal;
+}
+
+
+void App_WriteExFs(SApp *pApp) {
+	int retVal;
+	UINT	written;
+	FIL		fil;
+
+	retVal = f_open(&fil, "1:/test_file.txt", FA_CREATE_ALWAYS | FA_WRITE);
+	if (retVal != FR_OK) {
+		LREP("create file error: %d\r\n", retVal);
+		return;
+	}
+
+	const char* msg = "this is test string write to external sdhc card\r\n";
+
+	retVal = f_write(&fil, (void*)msg, strlen(msg), (UINT*)&written);
+
+	if(retVal == FR_OK) {
+		LREP("write to ex sd card success\r\n");
+	} else {
+		LREP("f_write return error: %d\r\n", retVal);
+	}
+
+	/* Close the file */
+	f_close(&fil);
+}
+
 /*****************************************************************************/
 /** @brief
  *
