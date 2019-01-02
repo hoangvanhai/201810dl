@@ -86,7 +86,7 @@
 #define APP_TASK_PC_EN						0
 #define APP_TASK_UI_EN						0
 #define APP_TASK_AI_EN						0
-#define APP_TASK_PERIODIC_EN				0
+#define APP_TASK_PERIODIC_EN				1
 #define APP_TASK_SHELL_EN					1
 
 

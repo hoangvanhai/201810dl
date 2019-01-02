@@ -85,8 +85,20 @@ void hardware_init(void) {
     }
 #endif
 
+
+    rnga_user_config_t rngaConfig;
+
+	// Initialize RNGA
+	rngaConfig.isIntMasked         = true;
+	rngaConfig.highAssuranceEnable = true;
+
+	RNGA_DRV_Init(0, &rngaConfig);
+
+
 	BOARD_EnableAllFault();
-//	BOARD_CreateWDG();
+	BOARD_CreateWDG();
+
+
 }
 
 /*!

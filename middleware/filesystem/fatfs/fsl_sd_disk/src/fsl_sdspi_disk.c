@@ -60,6 +60,7 @@ uint32_t getSpiMaxFrequency(sdspi_spi_t *spi)
 
 uint32_t setSpiFrequency(sdspi_spi_t *spi, uint32_t frequency)
 {
+
     uint32_t calculatedBaudRate;
     calculatedBaudRate = DSPI_HAL_SetBaudRate(g_dspiBase[spi->spiInstance],
             ((dspi_master_state_t *)(spi->spiState))->whichCtar,
@@ -69,6 +70,8 @@ uint32_t setSpiFrequency(sdspi_spi_t *spi, uint32_t frequency)
     {
         return 1;
     }
+
+    LREP("req freq %d set freq %d\r\n", frequency, calculatedBaudRate);
     return 0;
 }
 
@@ -426,8 +429,6 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
         return STA_NOINIT;
     }
 
-    LREP("DSPI_DRV_MasterConfigureBus done = %d \r\n", calculatedBaudRate);
-
     g_spi.spiState = &g_dspiState;
     g_spi.spiDevice = &g_dspiDevice;
     g_spi.busBaudRate = calculatedBaudRate;
@@ -443,8 +444,6 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
         LREP("SDSPI_DRV_Init failed \r\n");
         return STA_NOINIT;
     }
-
-    LREP("SDSPI_DRV_Init done \r\n");
 
     g_card_initialized = 1;
     return 0;

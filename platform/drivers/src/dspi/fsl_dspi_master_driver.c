@@ -734,7 +734,6 @@ static void DSPI_DRV_MasterCompleteTransfer(uint32_t instance)
 
     if (dspiState->isTransferBlocking)
     {
-    	LREP("dspiState->irqSync\r\n");
         /* Signal the synchronous completion object */
         OSA_SemaPost(&dspiState->irqSync);
     }
@@ -818,7 +817,6 @@ void DSPI_DRV_MasterIRQHandler(uint32_t instance)
                 {
                     *dspiState->receiveBuffer = wordReceived;
                     ++dspiState->receiveBuffer;
-                    LREP("get %x\r\n", wordReceived);
                 }
 
                 --dspiState->remainingReceiveByteCount;

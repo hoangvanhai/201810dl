@@ -209,8 +209,6 @@ static sdspi_status_t SDSPI_DRV_SendCommand(sdspi_spi_t *spi,
             break;
     }
 
-    LREP("kStatus_SDSPI_NoError\r\n");
-
     return kStatus_SDSPI_NoError;
 }
 
@@ -225,8 +223,6 @@ static sdspi_status_t SDSPI_DRV_GoIdle(sdspi_spi_t *spi, sdspi_card_t *card)
     uint32_t i, j;
     sdspi_request_t *req;
     assert(card);
-
-    LREP("ENTER SDSPI_DRV_GoIdle \r\n");
 
     req = (sdspi_request_t *)OSA_MemAllocZero(sizeof(sdspi_request_t));
     if (req == NULL)
@@ -734,14 +730,11 @@ sdspi_status_t SDSPI_DRV_Init(sdspi_spi_t *spi, sdspi_card_t *card)
         return kStatus_SDSPI_Failed;
     }
 
-    LREP("setFrequency done \r\n");
 
     if (kStatus_SDSPI_NoError != SDSPI_DRV_GoIdle(spi, card))
     {
         return kStatus_SDSPI_Failed;
     }
-
-    LREP("SDSPI_DRV_GoIdle done \r\n");
 
     acmd41Arg = 0;
     if (kStatus_SDSPI_NoError !=
@@ -757,8 +750,6 @@ sdspi_status_t SDSPI_DRV_Init(sdspi_spi_t *spi, sdspi_card_t *card)
     {
         return kStatus_SDSPI_Failed;
     }
-
-    LREP("SDSPI_DRV_SendIfCond done \r\n");
 
     startTime = OSA_TimeGetMsec();
     do
@@ -786,10 +777,9 @@ sdspi_status_t SDSPI_DRV_Init(sdspi_spi_t *spi, sdspi_card_t *card)
                 break;
             }
         }
-        LREP(".");
+
     } while(acmd41resp[0] == SDMMC_SPI_R1_IN_IDLE_STATE);
 
-    LREP("SDSPI_DRV_AppSendOpCond done \r\n");
 
     if (likelyMmc)
     {
@@ -818,22 +808,16 @@ sdspi_status_t SDSPI_DRV_Init(sdspi_spi_t *spi, sdspi_card_t *card)
         card->version = kSdCardVersion_1_x;
     }
 
-    LREP("SDSPI_DRV_ReadOcr done \r\n");
-
     /* Force to use 512-byte length block, no matter which version  */
     if (kStatus_SDSPI_NoError != SDSPI_DRV_SetBlockSize(spi, 512))
     {
         return kStatus_SDSPI_Failed;
     }
 
-    LREP("SDSPI_DRV_SetBlockSize done \r\n");
-
     if (kStatus_SDSPI_NoError != SDSPI_DRV_InitSd(spi, card))
     {
         return kStatus_SDSPI_Failed;
     }
-
-    LREP(" done SDSPI_DRV_InitSd\r\n");
 
     return kStatus_SDSPI_NoError;
 }

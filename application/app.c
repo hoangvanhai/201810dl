@@ -529,7 +529,6 @@ int	App_InitFS(SApp *pApp) {
 	if(retVal != FR_OK) {
 		return retVal;
 	}
-	LREP("f_mount passed \r\n");
 	if(!check_obj_existed("conf")) {
 		retVal = f_mkdir("conf");
 		if(retVal != FR_OK) {
@@ -584,14 +583,6 @@ void App_TaskPeriodic(task_param_t parg) {
 	} else {
 		ASSERT(FALSE);
 	}
-
-	rnga_user_config_t rngaConfig;
-
-	// Initialize RNGA
-	rngaConfig.isIntMasked         = true;
-	rngaConfig.highAssuranceEnable = true;
-
-	RNGA_DRV_Init(0, &rngaConfig);
 
 	LREP("log min = %d\r\n", log_min);
 
