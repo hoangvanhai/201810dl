@@ -62,11 +62,11 @@ const char *logo_msg = { "\r\n\n"
 #if 1
 
 
-void delay_us(uint32_t us) {
-	while(us--) {
-		__NOP();
-	}
-}
+//void delay_us(uint32_t us) {
+//	while(us--) {
+//		__NOP();
+//	}
+//}
 
 int main(void)
 {

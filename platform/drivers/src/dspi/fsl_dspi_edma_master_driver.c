@@ -1272,7 +1272,6 @@ static void DSPI_DRV_EdmaMasterCompleteTransfer(uint32_t instance)
     if (dspiEdmaState->isTransferBlocking)
     {
         /* Signal the synchronous completion object */
-    	LREP("master post sem \r\n");
         OSA_SemaPost(&dspiEdmaState->irqSync);
     }
 }

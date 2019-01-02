@@ -50,6 +50,8 @@ static dspi_device_t g_dspiDevice;
 
 #define SPI_TRANSFER_TIMEOUT 1000
 
+#define SPI_USING_DMA	1
+
 /*
  * spi interfaces
  */
@@ -359,8 +361,6 @@ DSTATUS sdcard_disk_initialize(uint8_t pdrv)
     g_spi.ops->setFrequency = setSpiFrequency;
     g_spi.ops->exchange = spiExchange;
     g_spi.ops->sendWord = spiSendWord;
-
-    //LREP("spi max freq = %d\r\n", )
 
         /* SPI DMA mode Init*/
 #if defined SPI_USING_DMA
