@@ -284,7 +284,7 @@ int	App_GenDefaultConfig(SSysCfg *pHandle) {
 	pHandle->sCom.modbus_brate = 9600;
 
 	pHandle->sCom.ftp_enable1 = TRUE;
-	pHandle->sCom.ftp_enable2 = TRUE;
+	pHandle->sCom.ftp_enable2 = FALSE;
 
 	pHandle->sCom.dev_hwaddr[0] = defaultMAC_ADDR0;
 	pHandle->sCom.dev_hwaddr[1] = defaultMAC_ADDR1;
@@ -638,7 +638,7 @@ void App_TaskPeriodic(task_param_t parg) {
 	OSA_SleepMs(10);
 
 	if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-		if(pApp->sDateTime.tm_year != 2018) {
+		if(pApp->sDateTime.tm_year == 1990) {
 			RTC_SetDateTime(0, 0, 1, 1, 2018);
 		}
 		LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
@@ -671,7 +671,7 @@ void App_TaskPeriodic(task_param_t parg) {
 					LREP("generate log file\r\n");
 					int retVal = App_GenerateLogFile(pApp, SEND_SERVER_ALL);
 					if(retVal != FR_OK) {
-						LREP("generate error = %d\r\n", retVal);
+						LREP("err = %d\r\n", retVal);
 					}
 
 				} else {
@@ -903,9 +903,9 @@ void App_TaskStartup(task_param_t arg) {
 						LREP("recv ctrl init ext sdcard\r\n");
 						int err = App_InitExtFs(pApp);
 						if(err != FR_OK) {
-							pApp->eStatus.Bits.bExtSdcardWorking = true;
-						} else {
 							pApp->eStatus.Bits.bExtSdcardWorking = false;
+						} else {
+							pApp->eStatus.Bits.bExtSdcardWorking = true;
 						}
 					} else {
 						LREP("unmount external card\r\n");
@@ -1533,20 +1533,20 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 
 			memcpy(&pSys->time, &pAppObj->sDateTime, sizeof(SDateTime));
 			pSys->ip = eth0.ip_addr;
-			pSys->sdcard1_stat = pAppObj->eStatus.Bits.bIntSdcardWorking;
-			pSys->sdcard2_stat = pAppObj->eStatus.Bits.bExtSdcardWorking;
-			pSys->sim_stat = (nwkStt.activeIf & NET_IF_WIRELESS) != 0;
-			pSys->eth_stat = (nwkStt.activeIf & NET_IF_ETHERNET) != 0;
+			pSys->int_sd = pAppObj->eStatus.Bits.bIntSdcardWorking;
+			pSys->ext_sd = pAppObj->eStatus.Bits.bExtSdcardWorking;
+			pSys->sim = (nwkStt.activeIf & NET_IF_WIRELESS) != 0;
+			pSys->eth = (nwkStt.activeIf & NET_IF_ETHERNET) != 0;
 			pSys->curr_out = pAppObj->eStatus.Bits.bCurrOut;
 			pSys->rssi = nwkStt.rssi;
 			Str_Copy_N((CPU_CHAR*)pSys->simid, (CPU_CHAR*)nwkStt.simid, 10);
 			Str_Copy_N((CPU_CHAR*)pSys->netid, (CPU_CHAR*)nwkStt.netid, 10);
 
 			LREP("ip %x\r\n", 		pSys->ip);
-			LREP("sdcard1_stat %x\r\n", pSys->sdcard1_stat);
-			LREP("sdcard2_stat %x\r\n", pSys->sdcard2_stat);
-			LREP("sim_stat %x\r\n", pSys->sim_stat);
-			LREP("eth_stat %x\r\n", pSys->eth_stat);
+			LREP("int_sd %x\r\n", pSys->int_sd);
+			LREP("ext_sd %x\r\n", pSys->ext_sd);
+			LREP("sim %x\r\n", pSys->sim);
+			LREP("eth %x\r\n", pSys->eth);
 			LREP("rssi %d\r\n", pSys->rssi);
 			LREP("simd %s\r\n", pSys->simid);
 			LREP("netid %s\r\n", pSys->netid);
@@ -2365,10 +2365,7 @@ int App_GenerateLogFile(SApp *pApp, uint8_t server) {
 			if(row != NULL) {
 				UINT written;
 				uint8_t rowCount = 0;
-				//sprintf(row, "%-12s %12s %12s %15s %12s\r\n",
-				//"Thong so", "Gia tri", "Don vi", "Thoi gian", "Trang thai");
-				//retVal = f_write(&file, row, Str_Len(row), &written);
-				//LREP("%s", row);
+
 				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 					if(pApp->sCfg.sTag[i].report) {
 						memset(row, 0, 256);
@@ -2390,16 +2387,15 @@ int App_GenerateLogFile(SApp *pApp, uint8_t server) {
 
 				OSA_FixedMemFree((uint8_t*)row);
 
-				LREP("count = %d\r\n", rowCount);
-
 				if(retVal == FR_OK && rowCount > 0) {
-					LREP("close file\r\n");
+					/* NOTE: with SPI card, single close file return error FR_DISK_ERR,
+					 double close file return success */
 					retVal = f_close(&file);
-					//if(retVal == FR_OK)
+					if(retVal != FR_OK) retVal = f_close(&file);
+					if(retVal == FR_OK)
 					{
 						// TODO: send file name to Net module
 #if NETWORK_MODULE_EN > 0 && NETWORK_FTP_CLIENT_EN > 0
-						LREP("start push file\r\n");
 						int err = Network_FtpClient_Send(
 								(uint8_t*)day, (uint8_t*)filename, server);
 						if(err != 0) {
@@ -2407,9 +2403,11 @@ int App_GenerateLogFile(SApp *pApp, uint8_t server) {
 							retVal = -1;
 						}
 #endif
+					} else {
+						WARN("close file err = %d\r\n", retVal);
 					}
 				} else {
-					LREP("create file but error = %d \r\n", retVal);
+					WARN("create file but err = %d \r\n", retVal);
 				}
 			} else {
 				retVal = -2;

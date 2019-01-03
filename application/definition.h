@@ -245,11 +245,11 @@ enum {
 
 
 typedef struct SSystemStatus_ {
-	uint8_t		eth_stat;
+	uint8_t		eth;
 	ip_addr_t	ip;
-	uint8_t		sim_stat;
-	uint8_t		sdcard1_stat;
-	uint8_t		sdcard2_stat;
+	uint8_t		sim;
+	uint8_t		int_sd;
+	uint8_t		ext_sd;
 	uint8_t		curr_out;
 	uint8_t		simid[22];
 	uint8_t		netid[22];

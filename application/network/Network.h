@@ -30,7 +30,6 @@ typedef enum ActiveIf {
 typedef struct NetworkStt {
 	SCommon		*sSettings;
 	EActiveIf 	activeIf;
-	OS_TMR		hTimerCheckLinkStatus;
 	uint8_t		rssi;
 	uint8_t		simid[22];
 	uint8_t		netid[22];

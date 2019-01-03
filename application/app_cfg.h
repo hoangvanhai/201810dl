@@ -30,17 +30,20 @@
 // task prio
 #define TASK_MODBUS_PRIO          			3U
 #define TASK_PERIODIC_PRIO					4U
-#define TASK_SERIALCOMM_PRIO				5U
-#define TASK_UI_PRIO         				6U
-#define TASK_AI_PRIO         				7U
-#define TASK_STARTUP_PRIO					8U
-#define TASK_SHELL_PRIO         			9U
 
-#define TASK_FTP_CLIENT_SENDER_PRIO			10U
-#define TASK_TCP_CLIENT_SENDER_PRIO			11U
-#define TASK_TCP_CLIENT_LISTEN_PRIO			12U
-#define TASK_TCP_SERVER_SENDER_PRIO			13U
-#define TASK_TCP_SERVER_LISTEN_PRIO			14U
+#define TASK_FTP_CLIENT_SENDER_PRIO			5U
+#define TASK_TCP_CLIENT_SENDER_PRIO			6U
+#define TASK_TCP_CLIENT_LISTEN_PRIO			7U
+#define TASK_TCP_SERVER_SENDER_PRIO			8U
+#define TASK_TCP_SERVER_LISTEN_PRIO			9U
+#define TASK_SERIALCOMM_PRIO				10U
+
+#define TASK_UI_PRIO         				11U
+#define TASK_AI_PRIO         				12U
+#define TASK_STARTUP_PRIO					13U
+#define TASK_SHELL_PRIO         			14U
+
+
 
 
 // task size
@@ -74,9 +77,9 @@
 
 
 
-#define NETWORK_MODULE_EN					0
-#define NETWORK_FTP_CLIENT_EN				0
-#define NETWORK_FTP_CLIENT_WLESS_EN			0
+#define NETWORK_MODULE_EN					1
+#define NETWORK_FTP_CLIENT_EN				1
+#define NETWORK_FTP_CLIENT_WLESS_EN			1
 #define NETWORK_TCP_CLIENT_EN				1
 #define NETWORK_TCP_SERVER_EN				1
 

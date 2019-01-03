@@ -148,14 +148,17 @@ DRESULT sdspi_disk_write(uint8_t pdrv, const uint8_t *buff, uint32_t sector, uin
 {
     if (pdrv != SD_SPI)
     {
+    	ERR("W INVALID DRV %d\r\n", pdrv);
         return RES_PARERR;
     }
     if (g_card.cardType == 0 || g_card.cardType == kCardTypeUnknown)
     {
+    	ERR("W NOTRDY %d\r\n", pdrv);
         return RES_NOTRDY;
     }
     if (kStatus_SDSPI_NoError != SDSPI_DRV_WriteBlocks(&g_spi, &g_card, (uint8_t *)buff, sector, count))
     {
+    	ASSERT(0);
         return RES_ERROR;
     }
     return RES_OK;
@@ -166,15 +169,18 @@ DRESULT sdspi_disk_read(uint8_t pdrv, uint8_t *buff, uint32_t sector, uint8_t co
 {
     if (pdrv != SD_SPI)
     {
+    	ERR("R INVALID DRV %d\r\n", pdrv);
         return RES_PARERR;
     }
 
     if (g_card.cardType == 0 || g_card.cardType == kCardTypeUnknown)
     {
+    	ERR("R NOTRDY %d\r\n", pdrv);
         return RES_NOTRDY;
     }
     if (kStatus_SDSPI_NoError != SDSPI_DRV_ReadBlocks(&g_spi, &g_card, buff, sector, count))
     {
+    	ASSERT(0);
         return RES_ERROR;
     }
     return RES_OK;

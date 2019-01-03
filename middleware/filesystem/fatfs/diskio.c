@@ -165,7 +165,6 @@ DRESULT disk_write (
 )
 {
     DRESULT res = RES_PARERR;
-
     switch (pdrv)
     {
 #if USB_DISK_ENABLE

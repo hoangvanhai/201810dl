@@ -47,10 +47,12 @@ DRESULT sdcard_disk_write(uint8_t pdrv, const uint8_t *buff, uint32_t sector, ui
 {
     if (pdrv != SD_HC)
     {
+    	ERR("W INVALID DRV %d\r\n", pdrv);
         return RES_PARERR;
     }
     if (g_sdhcCard.cardType == 0 || g_sdhcCard.cardType == kCardTypeUnknown)
     {
+    	ERR("W DRV NOTRDY %d\r\n", pdrv);
         return RES_NOTRDY;
     }
     if (kStatus_SDHC_NoError != SDCARD_DRV_WriteBlocks(&g_sdhcCard, (uint8_t *)buff, sector, count))
@@ -65,15 +67,18 @@ DRESULT sdcard_disk_read(uint8_t pdrv, uint8_t *buff, uint32_t sector, uint8_t c
 {
     if (pdrv != SD_HC)
     {
+    	ERR("R INVALID DRV %d\r\n", pdrv);
         return RES_PARERR;
     }
 
     if (g_sdhcCard.cardType == 0 || g_sdhcCard.cardType == kCardTypeUnknown)
     {
+    	ERR("R DRV NOTRDY %d\r\n", pdrv);
         return RES_NOTRDY;
     }
     if (kStatus_SDHC_NoError != SDCARD_DRV_ReadBlocks(&g_sdhcCard, buff, sector, count))
     {
+    	ASSERT(0);
         return RES_ERROR;
     }
     return RES_OK;
