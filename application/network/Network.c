@@ -326,6 +326,7 @@ int ftp_client_init(SCommon *pCM) {
 
 #if NETWORK_FTP_CLIENT_WLESS_EN > 0
 	GPIO_DRV_SetPinOutput(SimVccEn);
+
     modem_init();
     modem_ftp_init(&ftpClient);
 #endif

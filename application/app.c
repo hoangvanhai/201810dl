@@ -925,7 +925,7 @@ void App_TaskStartup(task_param_t arg) {
 			if(App_IsCtrlCodePending(pApp, CTRL_GET_WL_STT)) {
 				LREP("recv ctrl get wireless status\r\n");
 
-				//Network_GetWirelessStatus();
+				Network_GetWirelessStatus();
 				App_ClearCtrlCode(pApp, CTRL_GET_WL_STT);
 			}
 
@@ -1700,13 +1700,17 @@ int	App_ModbusDoRead(SApp *pApp){
 				//LREP("MBT ");
 				debug_putchar('M');
 			} else {
-				pApp->sMB.Node[i].status = TAG_STT_OK;
-					float readValue;
-					MBMaster_Parse((const uint8_t*)data,
-							pApp->sMB.Node[i].data_format,
-							pApp->sMB.Node[i].data_order, &readValue);
 
-					pApp->sMB.Node[i].value = readValue;
+					float readValue;
+					if(MBMaster_Parse((const uint8_t*)data,
+							pApp->sMB.Node[i].data_format,
+							pApp->sMB.Node[i].data_order, &readValue) == 1) {
+						pApp->sMB.Node[i].value = readValue;
+					pApp->sMB.Node[i].status = TAG_STT_OK;
+					} else {
+						ASSERT(FALSE);
+						pApp->sMB.Node[i].status = TAG_STT_MB_FAILED;
+					}
 
 			}
 		}

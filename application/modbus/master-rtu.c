@@ -97,6 +97,7 @@ uint16_t MBMaster_Parse(const uint8_t* data, uint8_t data_format, uint8_t data_o
 	}
 
 	recvObjNum = data[MB_DATA_COUNT_IDX] / dataSize;
+	ASSERT_NONVOID(recvObjNum == 1, recvObjNum);
 
 	for(int i = 0, j = 0; i < recvObjNum; i++, j+=dataSize) {
 		switch(data_format) {
