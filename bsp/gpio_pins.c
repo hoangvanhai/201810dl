@@ -55,27 +55,6 @@
 
 #if 1
 
-const gpio_input_pin_user_config_t cardDetectPin[] = {
-	{
-		.pinName = kGpioExtCd,
-		.config.isPullEnable = true,
-		.config.pullSelect = kPortPullDown,
-		.config.isPassiveFilterEnabled = false,
-		.config.interrupt = kPortIntEitherEdge
-	},
-	{
-		.pinName = kGpioIntCd,
-		.config.isPullEnable = true,
-		.config.pullSelect = kPortPullDown,
-		.config.isPassiveFilterEnabled = false,
-		.config.interrupt = kPortIntEitherEdge
-	},
-	{
-	.pinName = GPIO_PINS_OUT_OF_RANGE,
-	}
-};
-
-
 
 const gpio_output_pin_user_config_t DigitalOutputPin[] = {
 	{
@@ -199,6 +178,13 @@ const gpio_output_pin_user_config_t DigitalOutputPin[] = {
 	},
 	{
 		.pinName = SimVccEn,
+		.config.outputLogic = 0,
+		.config.slewRate = kPortSlowSlewRate,
+		.config.isOpenDrainEnabled = false,
+		.config.driveStrength = kPortLowDriveStrength,
+	},
+	{
+		.pinName = Led1,
 		.config.outputLogic = 0,
 		.config.slewRate = kPortSlowSlewRate,
 		.config.isOpenDrainEnabled = false,

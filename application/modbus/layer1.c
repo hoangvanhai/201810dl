@@ -328,7 +328,7 @@ static void modbus_rx_handle(uint32_t instance, void * uartState) {
 
 	//LREP("%02x ", state->rxBuff[0]);
 	if(FIFO_Push(&pThisL1->sRecvFIFO, state->rxBuff[0]) == FALSE) {
-		LREP("push fifo error \r\n");
+		LREP("modbus push fifo error \r\n");
 		//FIFO_Reset(&pThisL1->sRecvFIFO);
 	}
 }

@@ -399,7 +399,7 @@ inline void TransL1_RX_Interrupt_Handle(uint32_t instance, void* uartState)
 
 	//debug_putchar('.');
 	if(FIFO_Push(&pTransL1->sRecvFIFO, state->rxBuff[0]) == FALSE) {
-		LREP("push fifo error \r\n");
+		LREP("trans push fifo error \r\n");
 		//FIFO_Reset(&pTransL1->sRecvFIFO);
 	}
 

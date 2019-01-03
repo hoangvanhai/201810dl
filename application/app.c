@@ -925,7 +925,7 @@ void App_TaskStartup(task_param_t arg) {
 			if(App_IsCtrlCodePending(pApp, CTRL_GET_WL_STT)) {
 				LREP("recv ctrl get wireless status\r\n");
 
-				Network_GetWirelessStatus();
+				//Network_GetWirelessStatus();
 				App_ClearCtrlCode(pApp, CTRL_GET_WL_STT);
 			}
 
@@ -1523,7 +1523,7 @@ void Clb_TransUI_SentEvent(void *pDatam, uint8_t u8Type) {
 void Clb_TimerControl(void *p_tmr, void *p_arg) {
 	static uint8_t counter = 0;
 
-//	App_GenerateFakeTime(pAppObj);
+	GPIO_DRV_TogglePinOutput(Led1);
 
 	if(counter % 10 == 0) {
 		pAppObj->uiCounter = 0;

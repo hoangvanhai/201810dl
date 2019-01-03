@@ -57,15 +57,12 @@
 #include "fsl_gpio_driver.h"
 
 /*! @brief Configuration structure 3 for input pins */
-extern const gpio_input_pin_user_config_t cardDetectPin[];
 
 extern const gpio_input_pin_user_config_t DigitalInputPin[];
 
 extern const gpio_output_pin_user_config_t DigitalOutputPin[];
 
 extern const gpio_output_pin_user_config_t SelectAnalogPin[];
-
-extern const gpio_input_pin_user_config_t sdcardCardDectionPin[];
 
 /*! @brief Pin names */
 enum _gpio_pins_pinNames {
@@ -117,6 +114,8 @@ enum _gpio_pins_pinNames {
 	ModbusPsuEn					= GPIO_MAKE_PIN(GPIOB_IDX, 17U),
 	SimVccEn					= GPIO_MAKE_PIN(GPIOA_IDX, 6U),
 	SimVccOcf					= GPIO_MAKE_PIN(GPIOA_IDX, 10U),
+
+	Led1						= GPIO_MAKE_PIN(GPIOA_IDX, 11U),
 
 };
 
