@@ -175,6 +175,28 @@ void configure_sdcard_spi_pins(uint32_t instance)
 
 }
 
+void configure_flash_spi_pins(uint32_t instance)
+{
+	/* SPI2_CS0 */
+	PORT_HAL_SetMuxMode(PORTD,11u,kPortMuxAlt2);
+	PORT_HAL_SetPullMode(PORTD,11u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTD,11u,true);
+
+	/* SPI2_SCK */
+	PORT_HAL_SetMuxMode(PORTD,12u,kPortMuxAlt2);
+
+	/* SPI2_SOUT */
+	PORT_HAL_SetMuxMode(PORTD,13u,kPortMuxAlt2);
+	PORT_HAL_SetPullMode(PORTD,13u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTD,16u,true);
+
+	/* SPI2_SIN */
+	PORT_HAL_SetMuxMode(PORTD,14u,kPortMuxAlt2);
+	PORT_HAL_SetPullMode(PORTD,14u,kPortPullUp);
+	PORT_HAL_SetPullCmd(PORTD,14u,true);
+
+}
+
 void configure_uart_pins(uint32_t instance)
 {
   switch(instance) {

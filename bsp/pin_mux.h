@@ -65,6 +65,8 @@ void configure_uart_pins(uint32_t instance);
 
 void configure_sdcard_spi_pins(uint32_t instance);
 
+void configure_flash_spi_pins(uint32_t instance);
+
 
 /* END pin_mux. */
 #endif /* #ifndef __pins_H_ */
