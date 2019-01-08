@@ -22,5 +22,6 @@ int current_directory();
 int remove_directory(char *path);
 int delete_node (TCHAR* path, UINT sz_buff, FILINFO* fno);
 int cat(char *path);
+int show_content_recursive(char *path);
 
 #endif /* FILESYSTEM_TASK_FILESYSTEM_H_ */

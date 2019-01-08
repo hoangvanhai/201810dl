@@ -266,47 +266,47 @@ int remove_directory(char *path) {
  *  @note
  */
 
-int delete_node (
-    TCHAR* path,    /* Path name buffer with the sub-directory to delete */
-    UINT sz_buff,   /* Size of path name buffer (items) */
-    FILINFO* fno    /* Name read buffer */
-)
-{
-    UINT i, j;
-    FRESULT fr;
-    DIR dir;
-
-
-    fr = f_opendir(&dir, path); /* Open the directory */
-    if (fr != FR_OK) return fr;
-
-    for (i = 0; path[i]; i++) ; /* Get current path length */
-    path[i++] = _T('/');
-
-    for (;;) {
-        fr = f_readdir(&dir, fno);  /* Get a directory item */
-        if (fr != FR_OK || !fno->fname[0]) break;   /* End of directory? */
-        j = 0;
-        do {    /* Make a path name */
-            if (i + j >= sz_buff) { /* Buffer over flow? */
-                fr = 100; break;    /* Fails with 100 when buffer overflow */
-            }
-            path[i + j] = fno->fname[j];
-        } while (fno->fname[j++]);
-        if (fno->fattrib & AM_DIR) {    /* Item is a directory */
-            fr = delete_node(path, sz_buff, fno);
-        } else {                        /* Item is a file */
-            fr = f_unlink(path);
-        }
-        if (fr != FR_OK) break;
-    }
-
-    path[--i] = 0;  /* Restore the path name */
-    f_closedir(&dir);
-
-    if (fr == FR_OK) fr = f_unlink(path);  /* Delete the empty directory */
-    return fr;
-}
+//int delete_node (
+//    TCHAR* path,    /* Path name buffer with the sub-directory to delete */
+//    UINT sz_buff,   /* Size of path name buffer (items) */
+//    FILINFO* fno    /* Name read buffer */
+//)
+//{
+//    UINT i, j;
+//    FRESULT fr;
+//    DIR dir;
+//
+//
+//    fr = f_opendir(&dir, path); /* Open the directory */
+//    if (fr != FR_OK) return fr;
+//
+//    for (i = 0; path[i]; i++) ; /* Get current path length */
+//    path[i++] = _T('/');
+//
+//    for (;;) {
+//        fr = f_readdir(&dir, fno);  /* Get a directory item */
+//        if (fr != FR_OK || !fno->fname[0]) break;   /* End of directory? */
+//        j = 0;
+//        do {    /* Make a path name */
+//            if (i + j >= sz_buff) { /* Buffer over flow? */
+//                fr = 100; break;    /* Fails with 100 when buffer overflow */
+//            }
+//            path[i + j] = fno->fname[j];
+//        } while (fno->fname[j++]);
+//        if (fno->fattrib & AM_DIR) {    /* Item is a directory */
+//            fr = delete_node(path, sz_buff, fno);
+//        } else {                        /* Item is a file */
+//            fr = f_unlink(path);
+//        }
+//        if (fr != FR_OK) break;
+//    }
+//
+//    path[--i] = 0;  /* Restore the path name */
+//    f_closedir(&dir);
+//
+//    if (fr == FR_OK) fr = f_unlink(path);  /* Delete the empty directory */
+//    return fr;
+//}
 
 /*****************************************************************************/
 /** @brief
@@ -346,8 +346,47 @@ int cat(char *path) {
 }
 
 
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int show_content_recursive(char *path) {
+	UINT i, j;
+	FRESULT fr;
+	DIR dir;
+	static FILINFO fno;
 
+#if _USE_LFN
+	fno.fname = 0; /* Disable LFN output */
+#endif
+	fr = f_opendir(&dir, path);
+	if (fr == FR_OK) {
+		for (i = 0; path[i]; i++) ;
+		path[i++] = '/';
+		for (;;) {
+			fr = f_readdir(&dir, &fno);
+			if (fr != FR_OK || !fno.fname[0]) break;
+			if (FF_FS_RPATH && fno.fname[0] == '.') continue;
+			j = 0;
+			do
+				path[i+j] = fno.fname[j];
+			while (fno.fname[j++]);
+			if (fno.fattrib & AM_DIR) {
+				fr = show_content(path);
+				if (fr != FR_OK) break;
+			}
+			if (fr != FR_OK) break;
+		}
+		path[--i] = '\0';
+		f_closedir(&dir);
+	}
 
+	return fr;
+}
 
 
 

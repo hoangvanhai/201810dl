@@ -163,27 +163,59 @@ typedef union USysStatus_ {
     struct
     {
         unsigned bRtcWoring       	:	1; // 1 indicate working properly 0 working with error
+        unsigned bIntSdcardPlugged	: 	1;
         unsigned bIntSdcardWorking 	:	1;
+
+        unsigned bExtSdcardPlugged	:	1;
         unsigned bExtSdcardWorking 	:	1;
+
         unsigned bModbusRtuWorking 	:	1;
         unsigned bModbusTcpWorking 	:	1;
+
         unsigned bPcCommWorking    	:	1;
         unsigned bUiCommWorking    	:	1;
+
         unsigned bTcpServerWorking 	:	1;
         unsigned bTcpClientWorking 	:	1;
+
+        unsigned bWireLessPlugged	:	1;
         unsigned bWirelessWorking  	:   1;
+
+        unsigned bEthernetPlugged	:	1;
 		unsigned bEthernetWorking	:	1;
+
 		unsigned bFtpWorking		:	1;
+
 		unsigned bLogged			: 	1;
+
 		unsigned bCurrOut			:   1;
+
 		unsigned bStatitics			: 	1;
 		unsigned bReboot			: 	1;
-		unsigned bExtCD				: 	1;
-		unsigned bIntCD				:	1; //18
-		unsigned bReserves			: 	14;
+		unsigned bCopying			: 	1;
+
+		unsigned bReserves			: 	11;
     }Bits;
 
-}USysErrStatus;
+}USysHwStat;
+
+typedef struct SSysFwStat_ {
+	ip_addr_t	eth_ip;
+	ip_addr_t	wl_ip;
+	float		ext_sd_cap;
+	float		int_sd_cap;
+	float		curr_lev;
+	uint8_t		wl_simid[22];
+	uint8_t		wl_netid[22];
+	uint8_t		wl_rssi;
+}SSysFwStat;
+
+
+typedef struct SComStatus_ {
+	USysHwStat 		hwStat;
+	SSysFwStat		fwStat;
+	struct	tm 		time;
+}SComStatus;
 
 
 typedef enum EControlCode_ {
@@ -244,18 +276,6 @@ enum {
 };
 
 
-typedef struct SSystemStatus_ {
-	uint8_t		eth;
-	ip_addr_t	ip;
-	uint8_t		sim;
-	uint8_t		int_sd;
-	uint8_t		ext_sd;
-	uint8_t		curr_out;
-	uint8_t		simid[22];
-	uint8_t		netid[22];
-	uint8_t		rssi;
-	struct		tm time;
-}SSystemStatus;
 
 
 

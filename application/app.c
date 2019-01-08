@@ -82,19 +82,19 @@ extern const shell_command_t cmd_table[];
 void App_Init(SApp *pApp) {
 
 	int err;
-	pApp->eStatus.all = 0;
+	pApp->sStatus.hwStat.all = 0;
 
 	err = App_InitIntFS(pApp);
 
 	if(err == FR_OK) {
-		pApp->eStatus.Bits.bIntSdcardWorking = true;
+		pApp->sStatus.hwStat.Bits.bIntSdcardWorking = true;
 		LREP("app init FS successfully \r\n");
 	} else {
 		LREP("app init FS failed err = %d \r\n", err);
-		pApp->eStatus.Bits.bIntSdcardWorking = false;
+		pApp->sStatus.hwStat.Bits.bIntSdcardWorking = false;
 	}
 
-	if(pApp->eStatus.Bits.bIntSdcardWorking) {
+	if(pApp->sStatus.hwStat.Bits.bIntSdcardWorking) {
 		err = App_LoadConfig(pApp, CONFIG_FILE_PATH);
 		if(err == FR_OK) {
 			LREP("app load config successfully \r\n");
@@ -109,21 +109,22 @@ void App_Init(SApp *pApp) {
 
 	if(App_InitExtFs(pApp) == FR_OK) {
 		LREP("app mount ext sdcard successfully\r\n");
-		pApp->eStatus.Bits.bExtSdcardWorking = true;
+		pApp->sStatus.hwStat.Bits.bExtSdcardWorking = true;
 	} else {
-		pApp->eStatus.Bits.bExtSdcardWorking = false;
+		pApp->sStatus.hwStat.Bits.bExtSdcardWorking = false;
 	}
 
 	App_InitDI(pApp);
 	App_InitDO(pApp);
 	DAC_InterfaceInit();
 
-    LREP("sizeof(SCommon) %d\r\n", 		sizeof(SCommon));
-    LREP("sizeof(STag) %d\r\n", 		sizeof(STag));
-    LREP("sizeof(SInputPort) %d\r\n", 	sizeof(SInputPort));
-    LREP("sizeof(SCtrlPort) %d\r\n",	sizeof(SCtrlPort));
-    LREP("sizeof(STagValue) %d\r\n", 	sizeof(STagNode));
-    LREP("sizeof(SSysCfg) %d\r\n", 		sizeof(SSysCfg));
+    LREP("sizeof(SCommon) 	%d\r\n", 		sizeof(SCommon));
+    LREP("sizeof(STag) 		%d\r\n", 		sizeof(STag));
+    LREP("sizeof(SInputPort) 	%d\r\n", 	sizeof(SInputPort));
+    LREP("sizeof(SCtrlPort) 	%d\r\n",	sizeof(SCtrlPort));
+    LREP("sizeof(STagValue) 	%d\r\n", 	sizeof(STagNode));
+    LREP("sizeof(SSysCfg) 	%d\r\n", 		sizeof(SSysCfg));
+    LREP("sizeof(SComStatus) 	%d\r\n", 		sizeof(SComStatus));
 }
 
 /*****************************************************************************/
@@ -454,7 +455,7 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial) {
 	case LOGGER_SET | LOGGER_WRITE_DONE:
 		LREP("write config done\r\n");
 		App_SaveConfig(pApp, CONFIG_FILE_PATH);
-		pApp->eStatus.Bits.bReboot = true;
+		pApp->sStatus.hwStat.Bits.bReboot = true;
 	break;
 
 	default:
@@ -522,9 +523,9 @@ int	App_InitIntFS(SApp *pApp) {
 
 	int retVal;
 
-	pApp->eStatus.Bits.bIntCD = BOARD_IsIntSDCardDetected();
+	pApp->sStatus.hwStat.Bits.bIntSdcardPlugged = BOARD_IsIntSDCardDetected();
 
-	if(!pApp->eStatus.Bits.bIntCD)
+	if(!pApp->sStatus.hwStat.Bits.bIntSdcardPlugged)
 		return FR_NOT_READY;
 
 	LREP("start init FS\r\n");
@@ -563,8 +564,8 @@ int	App_InitIntFS(SApp *pApp) {
 
 int App_InitExtFs(SApp *pApp) {
 
-	pApp->eStatus.Bits.bExtCD = BOARD_IsExtSDCardDetected();
-	if(!pApp->eStatus.Bits.bExtCD) {
+	pApp->sStatus.hwStat.Bits.bExtSdcardPlugged = BOARD_IsExtSDCardDetected();
+	if(!pApp->sStatus.hwStat.Bits.bExtSdcardPlugged) {
 		return FR_NOT_READY;
 	}
 	LREP("start init Ext FS \r\n");
@@ -598,7 +599,27 @@ void App_WriteExtFs(SApp *pApp) {
 	/* Close the file */
 	f_close(&fil);
 }
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int	App_DoCopyIntToExt(SApp *pApp) {
+	int err;
+	// check command in cmd.txt
+	if(!check_obj_existed("1:/copy.txt")) {
+		LREP("file copy.txt not found \r\n");
+		err = -1;
+	} else {
+		LREP("found copy.txt\r\n");
+		show_content_recursive("/");
+	}
 
+	return err;
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -628,23 +649,23 @@ void App_TaskPeriodic(task_param_t parg) {
 	int last_min = 0;
 	bool logged = false;
 
-	pApp->sDateTime.tm_mday = 1;
-	pApp->sDateTime.tm_mon = 1;
-	pApp->sDateTime.tm_year = 2018;
+	pApp->sStatus.time.tm_mday = 1;
+	pApp->sStatus.time.tm_mon = 1;
+	pApp->sStatus.time.tm_year = 2018;
 
 	ASSERT(DAC_InitRefCurr() == kStatus_I2C_Success);
 
-	ASSERT(RTC_InitDateTime(&pApp->sDateTime) == 0);
+	ASSERT(RTC_InitDateTime(&pApp->sStatus.time) == 0);
 	OSA_SleepMs(10);
 
-	if(RTC_GetTimeDate(&pApp->sDateTime) == 0) {
-		if(pApp->sDateTime.tm_year == 1990) {
+	if(RTC_GetTimeDate(&pApp->sStatus.time) == 0) {
+		if(pApp->sStatus.time.tm_year == 1990) {
 			RTC_SetDateTime(0, 0, 1, 1, 2018);
 		}
 		LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
-				pApp->sDateTime.tm_year, pApp->sDateTime.tm_mon,
-				pApp->sDateTime.tm_mday, pApp->sDateTime.tm_hour,
-				pApp->sDateTime.tm_min, pApp->sDateTime.tm_sec);
+				pApp->sStatus.time.tm_year, pApp->sStatus.time.tm_mon,
+				pApp->sStatus.time.tm_mday, pApp->sStatus.time.tm_hour,
+				pApp->sStatus.time.tm_min, pApp->sStatus.time.tm_sec);
 	} else {
 		ASSERT(FALSE);
 	}
@@ -653,15 +674,15 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	while(1) {
 		OSA_SleepMs(1000);
-		ASSERT(RTC_GetTimeDate(&pApp->sDateTime) == kStatus_I2C_Success);
+		ASSERT(RTC_GetTimeDate(&pApp->sStatus.time) == kStatus_I2C_Success);
 
 		App_DiReadAllPort(pApp);
 		App_UpdateTagContent(pApp);
 
-        if(pApp->sDateTime.tm_min != last_min && logged) {
+        if(pApp->sStatus.time.tm_min != last_min && logged) {
             logged = false;
         }
-		if((logged == false) && (pApp->sDateTime.tm_min % log_min == 0)) {
+		if((logged == false) && (pApp->sStatus.time.tm_min % log_min == 0)) {
 			// To ensure has valid data before log to file
 			if(pApp->aiReadCount > 0 && pApp->mbReadCount > 0)
 			{
@@ -677,7 +698,7 @@ void App_TaskPeriodic(task_param_t parg) {
 				} else {
 					LREP("disabled generate log file\r\n");
 				}
-				last_min = pApp->sDateTime.tm_min;
+				last_min = pApp->sStatus.time.tm_min;
 				logged = true;
 			}
 		}
@@ -806,7 +827,7 @@ void App_TaskUserInterface(task_param_t param)
 	TransUI_Init(&pApp->sTransUi, BOARD_TRANSUI_UART_INSTANCE,
 			BOARD_TRANSUI_UART_BAUD, &pApp->semTransUi);
 
-	LREP("UI PORT: %d _______\r\n", BOARD_TRANSUI_UART_INSTANCE);
+	//LREP("UI PORT: %d _______\r\n", BOARD_TRANSUI_UART_INSTANCE);
 
 	OSTmrCreate(&pApp->hCtrlTimer,
 				(CPU_CHAR *)"timer",
@@ -824,7 +845,7 @@ void App_TaskUserInterface(task_param_t param)
 		/* Timer was created but NOT started */
 		LREP("timer started ok\r\n");
 	} else {
-		LREP("timer start failed err = %d\r\n", err);
+		ASSERT(FALSE);
 	}
 
 	while(1) {
@@ -896,24 +917,36 @@ void App_TaskStartup(task_param_t arg) {
 
 			if(App_IsCtrlCodePending(pApp, CTRL_INIT_EXT_SDCARD)) {
 				bool status = BOARD_IsExtSDCardDetected();
-				if(pApp->eStatus.Bits.bExtCD != status) {
-					pAppObj->eStatus.Bits.bExtCD = status;
-					LREP("Ext card event = %d\r\n", pApp->eStatus.Bits.bExtCD);
-					if(pAppObj->eStatus.Bits.bExtCD) {
+				if(pApp->sStatus.hwStat.Bits.bExtSdcardPlugged != status) {
+					pAppObj->sStatus.hwStat.Bits.bExtSdcardPlugged = status;
+					LREP("Ext card event = %d\r\n", pApp->sStatus.hwStat.Bits.bExtSdcardPlugged);
+					if(pAppObj->sStatus.hwStat.Bits.bExtSdcardPlugged) {
 						LREP("recv ctrl init ext sdcard\r\n");
 						int err = App_InitExtFs(pApp);
 						if(err != FR_OK) {
-							pApp->eStatus.Bits.bExtSdcardWorking = false;
+							pApp->sStatus.hwStat.Bits.bExtSdcardWorking = false;
 						} else {
-							pApp->eStatus.Bits.bExtSdcardWorking = true;
+							pApp->sStatus.hwStat.Bits.bExtSdcardWorking = true;
+							OSA_SleepMs(100);
+							// TODO: copy data from internal sd card to external
+
+							App_DoCopyIntToExt(pApp);
+
+
 						}
 					} else {
 						LREP("unmount external card\r\n");
 						App_DeinitExtFs(pApp);
-						pApp->eStatus.Bits.bExtSdcardWorking = false;
+						pApp->sStatus.hwStat.Bits.bExtSdcardWorking = false;
 					}
 				}
 				App_ClearCtrlCode(pApp, CTRL_INIT_EXT_SDCARD);
+				App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
+						(uint8_t*)&pAppObj->sStatus, sizeof(SComStatus), false);
+
+
+
+
 			}
 
 			if(App_IsCtrlCodePending(pApp, CTRL_INIT_MODBUS)) {
@@ -923,7 +956,7 @@ void App_TaskStartup(task_param_t arg) {
 			}
 
 			if(App_IsCtrlCodePending(pApp, CTRL_GET_WL_STT)) {
-				LREP("recv ctrl get wireless status\r\n");
+				//LREP("recv ctrl get wireless status\r\n");
 
 				//Network_GetWirelessStatus();
 				App_ClearCtrlCode(pApp, CTRL_GET_WL_STT);
@@ -984,13 +1017,13 @@ void App_SerialComRecvHandle(const uint8_t *data) {
 		break;
 	case LOGGER_SET | LOGGER_TIME:
 
-		memcpy((uint8_t*)&pAppObj->sDateTime, &data[2], sizeof(SDateTime));
+		memcpy((uint8_t*)&pAppObj->sStatus.time, &data[2], sizeof(SDateTime));
 		 LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
-				 pAppObj->sDateTime.tm_year, pAppObj->sDateTime.tm_mon,
-				 pAppObj->sDateTime.tm_mday, pAppObj->sDateTime.tm_hour,
-				 pAppObj->sDateTime.tm_min,  pAppObj->sDateTime.tm_sec);
+				 pAppObj->sStatus.time.tm_year, pAppObj->sStatus.time.tm_mon,
+				 pAppObj->sStatus.time.tm_mday, pAppObj->sStatus.time.tm_hour,
+				 pAppObj->sStatus.time.tm_min,  pAppObj->sStatus.time.tm_sec);
 
-		 App_SetDateTime(pAppObj, pAppObj->sDateTime);
+		 App_SetDateTime(pAppObj, pAppObj->sStatus.time);
 
 		 App_SendPC(pAppObj, LOGGER_SET | LOGGER_TIME, NULL, 0, false);
 		break;
@@ -1108,12 +1141,12 @@ void App_TcpServerRecvHandle(const uint8_t *data) {
 		break;
 	case LOGGER_SET | LOGGER_TIME:
 
-		memcpy((uint8_t*)&pAppObj->sDateTime, &data[2], sizeof(SDateTime));
+		memcpy((uint8_t*)&pAppObj->sStatus.time, &data[2], sizeof(SDateTime));
 		 LREP("Current Time: %04d/%02d/%02d %02d:%02d:%02d\r\n",
-				 pAppObj->sDateTime.tm_year, pAppObj->sDateTime.tm_mon,
-				 pAppObj->sDateTime.tm_mday, pAppObj->sDateTime.tm_hour,
-				 pAppObj->sDateTime.tm_min,  pAppObj->sDateTime.tm_sec);
-		 App_SetDateTime(pAppObj, pAppObj->sDateTime);
+				 pAppObj->sStatus.time.tm_year, pAppObj->sStatus.time.tm_mon,
+				 pAppObj->sStatus.time.tm_mday, pAppObj->sStatus.time.tm_hour,
+				 pAppObj->sStatus.time.tm_min,  pAppObj->sStatus.time.tm_sec);
+		 App_SetDateTime(pAppObj, pAppObj->sStatus.time);
 
 		 App_SendPCNetworkClient(LOGGER_SET | LOGGER_TIME, NULL, 0);
 		break;
@@ -1284,15 +1317,15 @@ void App_TcpClientRecvHandle(const uint8_t *data, int len) {
 		case SER_LOGGING_STATUS:
 		if(pdata[3] == 0x00) {
 			LREP("login = true\r\n");
-			pAppObj->eStatus.Bits.bLogged = true;
+			pAppObj->sStatus.hwStat.Bits.bLogged = true;
 		} else {
 			LREP("login = false\r\n");
-			pAppObj->eStatus.Bits.bLogged = false;
+			pAppObj->sStatus.hwStat.Bits.bLogged = false;
 		}
 		break;
 		 case LOGGER_LOGGING_OUT:
 			LREP("loggin out\r\n");
-			pAppObj->eStatus.Bits.bLogged = false;
+			pAppObj->sStatus.hwStat.Bits.bLogged = false;
 		break;
 	default:
 		WARN("unhandled command {}\n", GET_MSG_TYPE(pdata));
@@ -1389,25 +1422,26 @@ void App_CommTurnOnOffCurr(SApp *pApp, const uint8_t *data) {
 	uint8_t point = data[2];
 	if(point > 5 || point < 0) {
 		if(point == 0xFF) {
+			pApp->sStatus.hwStat.Bits.bCurrOut = false;
 			GPIO_DRV_SetPinOutput(RefCurrEn); // turn off
+			App_SendUI(pApp, LOGGER_GET | LOGGER_SYSTEM_STATUS,
+					(uint8_t*)&pApp->sStatus, sizeof(SComStatus), false);
 		}
 		return;
 	}
 
+	pApp->sStatus.hwStat.Bits.bCurrOut = true;
 	GPIO_DRV_ClearPinOutput(RefCurrEn);
 	ASSERT_VOID(pApp->sCfg.sCurrOutCoeff[point] < 3000);
 	uint16_t lev = (int)(pApp->sCfg.sCurrOutCoeff[point]);
+	pApp->sStatus.fwStat.curr_lev = pApp->sCfg.sCurrOutCoeff[point];
 	LREP("generate lev = %d\r\n", lev);
 	DAC_SetRefLevel(lev, false);
+
+	App_SendUI(pApp, LOGGER_GET | LOGGER_SYSTEM_STATUS,
+						(uint8_t*)&pApp->sStatus, sizeof(SComStatus), false);
 }
-/*****************************************************************************/
-/** @brief
- *
- *
- *  @param
- *  @return Void.
- *  @note
- */
+
 /*****************************************************************************/
 /** @brief
  *
@@ -1478,7 +1512,7 @@ void Clb_TransPC_SentEvent(void *pData, uint8_t u8Type) {
 	switch(u8Type & 0x3F) {
 	case FRM_DATA:
 		if(pFrame->pu8Data[0] == (LOGGER_SET | LOGGER_WRITE_SUCCESS)) {
-			if(pAppObj->eStatus.Bits.bReboot) {
+			if(pAppObj->sStatus.hwStat.Bits.bReboot) {
 				NVIC_SystemReset();
 			}
 		}
@@ -1525,110 +1559,76 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 
 	GPIO_DRV_TogglePinOutput(Led1);
 
-	if(counter % 10 == 0) {
+	if(counter % 20 == 0) {
 		pAppObj->uiCounter = 0;
-		SSystemStatus *pSys = (SSystemStatus*)OSA_FixedMemMalloc(sizeof(SSystemStatus));
-		if(pSys != NULL) {
-			memset(pSys, 0, sizeof(SSystemStatus));
 
-			memcpy(&pSys->time, &pAppObj->sDateTime, sizeof(SDateTime));
-			pSys->ip = eth0.ip_addr;
-			pSys->int_sd = pAppObj->eStatus.Bits.bIntSdcardWorking;
-			pSys->ext_sd = pAppObj->eStatus.Bits.bExtSdcardWorking;
-			pSys->sim = (nwkStt.activeIf & NET_IF_WIRELESS) != 0;
-			pSys->eth = (nwkStt.activeIf & NET_IF_ETHERNET) != 0;
-			pSys->curr_out = pAppObj->eStatus.Bits.bCurrOut;
-			pSys->rssi = nwkStt.rssi;
-			Str_Copy_N((CPU_CHAR*)pSys->simid, (CPU_CHAR*)nwkStt.simid, 10);
-			Str_Copy_N((CPU_CHAR*)pSys->netid, (CPU_CHAR*)nwkStt.netid, 10);
-
-			LREP("ip %x\r\n", 		pSys->ip);
-			LREP("int_sd %x\r\n", pSys->int_sd);
-			LREP("ext_sd %x\r\n", pSys->ext_sd);
-			LREP("sim %x\r\n", pSys->sim);
-			LREP("eth %x\r\n", pSys->eth);
-			LREP("rssi %d\r\n", pSys->rssi);
-			LREP("simd %s\r\n", pSys->simid);
-			LREP("netid %s\r\n", pSys->netid);
-
-			App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
-					(uint8_t*)pSys, sizeof(SSystemStatus), false);
-
-			OSA_FixedMemFree((uint8_t*)pSys);
-		}
+		App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
+						(uint8_t*)&pAppObj->sStatus, sizeof(SComStatus), false);
 
 		OS_ERR err;
 		App_SetCtrlCode(pAppObj, CTRL_GET_WL_STT);
 	    OSSemPost(&pAppObj->hSem, OS_OPT_POST_1, &err);
-
 		LREP("send system status\r\n");
 	}
 
-//	if(pAppObj->uiCounter < SYSTEM_NUM_TAG) {
-//		uint8_t *mem = OSA_FixedMemMalloc(sizeof(STagHeader) + 1);
-//		if(mem != NULL) {
-//			STagHeader *hdr = (STagHeader*)((uint8_t*)mem + 1);
-//			mem[0] = (uint8_t)pAppObj->uiCounter;
-//			hdr->id = pAppObj->sCfg.sTag[pAppObj->uiCounter].id;
-//			hdr->enable = pAppObj->sCfg.sTag[pAppObj->uiCounter].enable;
-//			hdr->min = pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_min;
-//			hdr->max = pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_max;
-//			hdr->alarm_value = pAppObj->sCfg.sTag[pAppObj->uiCounter].alarm_value;
-//			hdr->alarm_enable = pAppObj->sCfg.sTag[pAppObj->uiCounter].alarm_enable;
-//			Str_Copy_N((CPU_CHAR*)hdr->name,
-//					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].name,
-//					sizeof(hdr->name));
-//			Str_Copy_N((CPU_CHAR*)hdr->raw_unit,
-//					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_unit,
-//					sizeof(hdr->raw_unit));
-//			Str_Copy_N((CPU_CHAR*)hdr->std_unit,
-//					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].std_unit,
-//					sizeof(hdr->std_unit));
-//			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_HEADER,
-//					(uint8_t*)mem, sizeof(STagHeader) + 1, false);
-//
-//			//LREP("send header %d\r\n", pAppObj->uiCounter);
-//			OSA_FixedMemFree(mem);
-//			pAppObj->uiCounter++;
-//		}
-//	}
+	if(pAppObj->uiCounter < SYSTEM_NUM_TAG) {
+		uint8_t *mem = OSA_FixedMemMalloc(sizeof(STagHeader) + 1);
+		if(mem != NULL) {
+			STagHeader *hdr = (STagHeader*)((uint8_t*)mem + 1);
+			mem[0] = (uint8_t)pAppObj->uiCounter;
+			hdr->id = pAppObj->sCfg.sTag[pAppObj->uiCounter].id;
+			hdr->enable = pAppObj->sCfg.sTag[pAppObj->uiCounter].enable;
+			hdr->min = pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_min;
+			hdr->max = pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_max;
+			hdr->alarm_value = pAppObj->sCfg.sTag[pAppObj->uiCounter].alarm_value;
+			hdr->alarm_enable = pAppObj->sCfg.sTag[pAppObj->uiCounter].alarm_enable;
+			Str_Copy_N((CPU_CHAR*)hdr->name,
+					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].name,
+					sizeof(hdr->name));
+			Str_Copy_N((CPU_CHAR*)hdr->raw_unit,
+					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].raw_unit,
+					sizeof(hdr->raw_unit));
+			Str_Copy_N((CPU_CHAR*)hdr->std_unit,
+					(CPU_CHAR*)pAppObj->sCfg.sTag[pAppObj->uiCounter].std_unit,
+					sizeof(hdr->std_unit));
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_HEADER,
+					(uint8_t*)mem, sizeof(STagHeader) + 1, false);
 
-	//else
+			//LREP("send header %d\r\n", pAppObj->uiCounter);
+			OSA_FixedMemFree(mem);
+			pAppObj->uiCounter++;
+		}
+	}
 
 	{
-//		STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
-//		if(pMem != NULL) {
-//			for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
-//				pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
-//				pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
-//				pMem->Node[i].meas_stt[0] = pAppObj->sTagValue.Node[i].meas_stt[0];
-//				pMem->Node[i].meas_stt[1] = pAppObj->sTagValue.Node[i].meas_stt[1];
-//				pMem->Node[i].meas_stt[2] = pAppObj->sTagValue.Node[i].meas_stt[2];
-//			}
-//			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_VALUE,
-//					(uint8_t*)pMem, sizeof(STagVArray), false);
-//
-//			OSA_FixedMemFree((uint8_t*)pMem);
-//		}
+		if(counter % 4 == 0) {
+			STagVArray *pMem = (STagVArray*)OSA_FixedMemMalloc(sizeof(STagVArray));
+			if(pMem != NULL) {
+				for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
+					pMem->Node[i].raw_value = pAppObj->sTagValue.Node[i].raw_value;
+					pMem->Node[i].std_value = pAppObj->sTagValue.Node[i].std_value;
+					pMem->Node[i].meas_stt[0] = pAppObj->sTagValue.Node[i].meas_stt[0];
+					pMem->Node[i].meas_stt[1] = pAppObj->sTagValue.Node[i].meas_stt[1];
+					pMem->Node[i].meas_stt[2] = pAppObj->sTagValue.Node[i].meas_stt[2];
+					//LREP("status %d = %s\r\n", i, pMem->Node[i].meas_stt);
+				}
+				App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_VALUE,
+						(uint8_t*)pMem, sizeof(STagVArray), false);
 
-
-		if(counter % 3 == 0) {
+				OSA_FixedMemFree((uint8_t*)pMem);
+			}
+		} else if(counter % 4 == 1) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_AI,
 				  (uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput), false);
-//			LREP("send ai\r\n");
-		} else if (counter % 3 == 1) {
+		} else if (counter % 4 == 2) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_DO,
 				  (uint8_t*)&pAppObj->sDO, sizeof(SDigitalOutputLog), false);
-//			LREP("send do\r\n");
 		}
 
-		if(counter % 3 == 2) {
+		if(counter % 4 == 3) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_DI,
 				  (uint8_t*)&pAppObj->sDI, sizeof(SDigitalInputLog), false);
-//			LREP("send di\r\n");
 		}
-
-
 	}
 
 	//LREP("counter = %d\r\n", counter);
@@ -1973,15 +1973,15 @@ inline int	App_InitDateTime(SApp *pApp) {
 
 	int retVal;
 
-	retVal = RTC_InitDateTime(&pApp->sDateTime);
+	retVal = RTC_InitDateTime(&pApp->sStatus.time);
 	ASSERT_NONVOID(retVal == 0, retVal);
 
 	OSA_SleepMs(100);
 
-	retVal = RTC_GetTimeDate(&pApp->sDateTime);
+	retVal = RTC_GetTimeDate(&pApp->sStatus.time);
 
 	if(retVal == 0) {
-		if(pApp->sDateTime.tm_year == 1990) {
+		if(pApp->sStatus.time.tm_year == 1990) {
 			RTC_SetDateTime(0, 0, 1, 1, 2018);
 		}
 
@@ -2001,7 +2001,7 @@ inline int	App_InitDateTime(SApp *pApp) {
  *  @note
  */
 inline SDateTime	App_GetDateTime(SApp *pApp) {
-	return pApp->sDateTime;
+	return pApp->sStatus.time;
 }
 
 /*****************************************************************************/
@@ -2013,8 +2013,8 @@ inline SDateTime	App_GetDateTime(SApp *pApp) {
  *  @note
  */
 inline int App_SetDateTime(SApp *pApp, SDateTime time) {
-	pApp->sDateTime = time;
-	return RTC_SetTimeDate(&pApp->sDateTime);
+	pApp->sStatus.time = time;
+	return RTC_SetTimeDate(&pApp->sStatus.time);
 }
 
 /*****************************************************************************/
@@ -2275,7 +2275,7 @@ int App_GenerateLogFile(SApp *pApp, uint8_t server) {
 
 	int retVal = FR_OK;
 
-	if(!pApp->eStatus.Bits.bIntSdcardWorking)
+	if(!pApp->sStatus.hwStat.Bits.bIntSdcardWorking)
 		return -1;
 
 	FIL file;
@@ -2313,16 +2313,16 @@ int App_GenerateLogFile(SApp *pApp, uint8_t server) {
 
 
 
-	sprintf(year, "%04d", pApp->sDateTime.tm_year);
-	sprintf(mon, "%04d/%02d", pApp->sDateTime.tm_year,
-			pApp->sDateTime.tm_mon);
-	sprintf(day, "%04d/%02d/%02d", pApp->sDateTime.tm_year,
-			pApp->sDateTime.tm_mon, pApp->sDateTime.tm_mday);
+	sprintf(year, "%04d", pApp->sStatus.time.tm_year);
+	sprintf(mon, "%04d/%02d", pApp->sStatus.time.tm_year,
+			pApp->sStatus.time.tm_mon);
+	sprintf(day, "%04d/%02d/%02d", pApp->sStatus.time.tm_year,
+			pApp->sStatus.time.tm_mon, pApp->sStatus.time.tm_mday);
 
-	sprintf(time, "%04d%02d%02d%02d%02d%02d", pApp->sDateTime.tm_year,
-			pApp->sDateTime.tm_mon, pApp->sDateTime.tm_mday,
-			pApp->sDateTime.tm_hour, pApp->sDateTime.tm_min,
-			pApp->sDateTime.tm_sec);
+	sprintf(time, "%04d%02d%02d%02d%02d%02d", pApp->sStatus.time.tm_year,
+			pApp->sStatus.time.tm_mon, pApp->sStatus.time.tm_mday,
+			pApp->sStatus.time.tm_hour, pApp->sStatus.time.tm_min,
+			pApp->sStatus.time.tm_sec);
 
 	if(!check_obj_existed(year)) {
 		retVal = f_mkdir(year);
@@ -2440,7 +2440,7 @@ int App_GenerateLogFile(SApp *pApp, uint8_t server) {
 int App_GenerateLogFileByName(SApp *pApp, const char *name, uint8_t server) {
 	int retVal = FR_OK;
 
-	if(!pApp->eStatus.Bits.bIntSdcardWorking)
+	if(!pApp->sStatus.hwStat.Bits.bIntSdcardWorking)
 		return -1;
 
 	if(!App_CheckNameExisted(pApp, name))
@@ -2479,16 +2479,16 @@ int App_GenerateLogFileByName(SApp *pApp, const char *name, uint8_t server) {
 		return -4;
 	}
 
-	sprintf(year, "%04d", pApp->sDateTime.tm_year);
-	sprintf(mon, "%04d/%02d", pApp->sDateTime.tm_year,
-			pApp->sDateTime.tm_mon);
-	sprintf(day, "%04d/%02d/%02d", pApp->sDateTime.tm_year,
-			pApp->sDateTime.tm_mon, pApp->sDateTime.tm_mday);
+	sprintf(year, "%04d", pApp->sStatus.time.tm_year);
+	sprintf(mon, "%04d/%02d", pApp->sStatus.time.tm_year,
+			pApp->sStatus.time.tm_mon);
+	sprintf(day, "%04d/%02d/%02d", pApp->sStatus.time.tm_year,
+			pApp->sStatus.time.tm_mon, pApp->sStatus.time.tm_mday);
 
-	sprintf(time, "%04d%02d%02d%02d%02d%02d", pApp->sDateTime.tm_year,
-			pApp->sDateTime.tm_mon, pApp->sDateTime.tm_mday,
-			pApp->sDateTime.tm_hour, pApp->sDateTime.tm_min,
-			pApp->sDateTime.tm_sec);
+	sprintf(time, "%04d%02d%02d%02d%02d%02d", pApp->sStatus.time.tm_year,
+			pApp->sStatus.time.tm_mon, pApp->sStatus.time.tm_mday,
+			pApp->sStatus.time.tm_hour, pApp->sStatus.time.tm_min,
+			pApp->sStatus.time.tm_sec);
 
 	if(!check_obj_existed(year)) {
 		retVal = f_mkdir(year);
@@ -2589,26 +2589,26 @@ int App_GenerateLogFileByName(SApp *pApp, const char *name, uint8_t server) {
  *  @note
  */
 int	App_GenerateFakeTime(SApp *pApp) {
-	pApp->sDateTime.tm_sec++;
+	pApp->sStatus.time.tm_sec++;
 
-	if(pApp->sDateTime.tm_sec > 59) {
-		pApp->sDateTime.tm_sec = 0;
-		pApp->sDateTime.tm_min++;
+	if(pApp->sStatus.time.tm_sec > 59) {
+		pApp->sStatus.time.tm_sec = 0;
+		pApp->sStatus.time.tm_min++;
 	}
 
-	if(pApp->sDateTime.tm_min > 59) {
-		pApp->sDateTime.tm_min = 0;
-		pApp->sDateTime.tm_hour++;
+	if(pApp->sStatus.time.tm_min > 59) {
+		pApp->sStatus.time.tm_min = 0;
+		pApp->sStatus.time.tm_hour++;
 	}
 
-	if(pApp->sDateTime.tm_hour > 23) {
-		pApp->sDateTime.tm_hour = 0;
-		pApp->sDateTime.tm_mday++;
+	if(pApp->sStatus.time.tm_hour > 23) {
+		pApp->sStatus.time.tm_hour = 0;
+		pApp->sStatus.time.tm_mday++;
 	}
 
-	if(pApp->sDateTime.tm_mday > 30) {
-		pApp->sDateTime.tm_mday = 0;
-		pApp->sDateTime.tm_mon++;
+	if(pApp->sStatus.time.tm_mday > 30) {
+		pApp->sStatus.time.tm_mday = 0;
+		pApp->sStatus.time.tm_mon++;
 	}
 
 	return 0;
@@ -2641,7 +2641,7 @@ void Clb_NetTcpClientConnEvent(Network_Status event,
 	switch(event) {
 	case Status_Connected:
 		WARN("Event connected\r\n");
-		if(!pAppObj->eStatus.Bits.bLogged)
+		if(!pAppObj->sStatus.hwStat.Bits.bLogged)
 		{
 			uint8_t len = SYS_CTRL_USRNAME_LENGTH + SYS_CTRL_PASSWD_LENGTH;
 			uint8_t *mem = OSA_FixedMemMalloc(len);
@@ -2659,11 +2659,11 @@ void Clb_NetTcpClientConnEvent(Network_Status event,
 		}
 		break;
 	case Status_Disconnected:
-		pAppObj->eStatus.Bits.bLogged = false;
+		pAppObj->sStatus.hwStat.Bits.bLogged = false;
 		WARN("Event disconnected\r\n");
 		break;
 	case Status_Network_Down:
-		pAppObj->eStatus.Bits.bLogged = false;
+		pAppObj->sStatus.hwStat.Bits.bLogged = false;
 		WARN("Event network down\r\n");
 		break;
 	case Status_Connecting:
@@ -2795,7 +2795,7 @@ void Clb_NetTcpServerSentData(const uint8_t* data, int length) {
 		}
 	}
 
-	if(pAppObj->eStatus.Bits.bReboot) {
+	if(pAppObj->sStatus.hwStat.Bits.bReboot) {
 		NVIC_SystemReset();
 	}
 

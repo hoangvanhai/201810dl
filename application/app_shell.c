@@ -214,8 +214,8 @@ void setdate(int32_t argc, char **argv)
 		day = atoi(argv[1]);
 		month = atoi(argv[2]);
 		year = atoi(argv[3]);
-		if(RTC_SetDateTime(pAppObj->sDateTime.tm_min,
-				pAppObj->sDateTime.tm_hour, day, month, year) == kStatus_I2C_Success) {
+		if(RTC_SetDateTime(pAppObj->sStatus.time.tm_min,
+				pAppObj->sStatus.time.tm_hour, day, month, year) == kStatus_I2C_Success) {
 			LREP("set date successful year = %d\r\n", year);
 		}
 	} else {
@@ -238,9 +238,9 @@ void settime(int32_t argc, char **argv)
 		int min, hour;
 		min = atoi(argv[1]);
 		hour = atoi(argv[2]);
-		RTC_SetDateTime(min, hour, pAppObj->sDateTime.tm_mday,
-						pAppObj->sDateTime.tm_mon,
-						pAppObj->sDateTime.tm_year);
+		RTC_SetDateTime(min, hour, pAppObj->sStatus.time.tm_mday,
+						pAppObj->sStatus.time.tm_mon,
+						pAppObj->sStatus.time.tm_year);
 	} else {
 		LREP("argument not supported\r\n\n");
 	}
@@ -417,12 +417,12 @@ void print_comm(SCommon *pHandle) {
 void status(int32_t argc, char **argv) {
 	if(strcmp(argv[1], "time") == 0) {
 		LREP("Current Time: %02d/%02d/%d %02d:%02d:%02d\r\n\r\n",
-					pAppObj->sDateTime.tm_mday,
-					pAppObj->sDateTime.tm_mon,
-					pAppObj->sDateTime.tm_year,
-					pAppObj->sDateTime.tm_hour,
-					pAppObj->sDateTime.tm_min,
-					pAppObj->sDateTime.tm_sec);
+					pAppObj->sStatus.time.tm_mday,
+					pAppObj->sStatus.time.tm_mon,
+					pAppObj->sStatus.time.tm_year,
+					pAppObj->sStatus.time.tm_hour,
+					pAppObj->sStatus.time.tm_min,
+					pAppObj->sStatus.time.tm_sec);
 	} else if(strcmp(argv[1], "conf") == 0) {
 		//LREP("sizeof name = %d\r\n", sizeof(pAppObj->sCfg.sTag[0].name));
 		print_sys(&pAppObj->sCfg);
@@ -688,8 +688,8 @@ void control(int32_t argc, char**argv) {
 			OSA_SleepMs(100);
 		}
 	} else if(strcmp(argv[1], "stat") == 0) {
-		pAppObj->eStatus.Bits.bStatitics = !pAppObj->eStatus.Bits.bStatitics;
-		LREP("stat %d\r\n", pAppObj->eStatus.Bits.bStatitics);
+		pAppObj->sStatus.hwStat.Bits.bStatitics = !pAppObj->sStatus.hwStat.Bits.bStatitics;
+		LREP("stat %d\r\n", pAppObj->sStatus.hwStat.Bits.bStatitics);
 	} else if(strcmp(argv[1], "server") == 0) {
 		for(int i = 0; i < 1000; i++)
 		{
@@ -745,7 +745,9 @@ void control(int32_t argc, char**argv) {
 			DAC_InterfaceSetLevel(lev);
 			ERR("set ref level = %d \r\n", lev);
 		}
-}
+	} else if(strcmp(argv[1], "lr") == 0) {
+		show_content_recursive("/");
+	}
 }
 
 

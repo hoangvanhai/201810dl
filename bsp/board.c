@@ -281,14 +281,28 @@ void BOARD_EnableAllFault(void) {
 					SCB_SHCSR_MEMFAULTENA_Msk;
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void BOARD_DisableAllFault(void) {
 
 	SCB->SHCSR &= 	(~SCB_SHCSR_USGFAULTENA_Msk) |
 					(~SCB_SHCSR_BUSFAULTENA_Msk) |
 					(~SCB_SHCSR_MEMFAULTENA_Msk);
 }
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int BOARD_GetFaultType(void) {
 
 	if(SCB->CFSR & CPU_REG_NVIC_CFSR_DIVBYZERO) {
@@ -362,7 +376,14 @@ int BOARD_GetFaultType(void) {
 	return SCB->CFSR;
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void BOARD_CreateWDG(void) {
     const wdog_config_t wdogConfig =
     {
@@ -385,7 +406,14 @@ void BOARD_CreateWDG(void) {
 
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int BOARD_GenerateRandom(int min, int max) {
 	uint32_t randout;
 	RNGA_DRV_GetRandomData(0, &randout, sizeof(uint32_t));
@@ -393,7 +421,14 @@ int BOARD_GenerateRandom(int min, int max) {
 	return ((randout % (max - min + 1)) + min);
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void BOARD_CheckResetCause(void) {
 
 	uint32_t resetCause = RCM_HAL_GetSrcStatus(RCM, kRcmSrcAll);
@@ -435,7 +470,14 @@ void BOARD_CheckResetCause(void) {
 	}
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void BOARD_GpioWritePin(uint32_t pinName, bool value) {
 	if(value) {
 		GPIO_DRV_SetPinOutput(pinName);
@@ -444,35 +486,49 @@ void BOARD_GpioWritePin(uint32_t pinName, bool value) {
 	}
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void BOARD_CheckPeripheralFault() {
 	if(!GPIO_DRV_ReadPinInput(LcdVccOcf)) {
-		//ERR("LCD POWER FAULT \r\n");
+		ERR("LCD POWER FAULT \r\n");
 	}
 
 	if(!GPIO_DRV_ReadPinInput(LanPsuOcp)) {
-		//ERR("ETHERNET POWER FAULT \r\n");
+		ERR("ETHERNET POWER FAULT \r\n");
 	}
 
 	if(!GPIO_DRV_ReadPinInput(IoVccOcf)) {
-		//ERR("IO POWER FAULT \r\n");
+		ERR("IO POWER FAULT \r\n");
 	}
 
 	if(!GPIO_DRV_ReadPinInput(ModbusPsuOcp)) {
-		//ERR("MODBUS POWER FAULT \r\n");
+		ERR("MODBUS POWER FAULT \r\n");
 	}
 
 	if(!GPIO_DRV_ReadPinInput(SimVccOcf)) {
-		//ERR("WIRELESS POWER FAULT \r\n");
+		ERR("WIRELESS POWER FAULT \r\n");
 	}
 
 	int status = BOARD_IsExtSDCardDetected();
-	if(status != pAppObj->eStatus.Bits.bExtCD) {
+	if(status != pAppObj->sStatus.hwStat.Bits.bExtSdcardPlugged) {
 		external_card_detection();
 	}
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void DefaultISR(void) {
 	LREP("JUM TO DefaultISR \r\n");
 }

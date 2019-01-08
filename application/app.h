@@ -50,7 +50,7 @@
 
 /**************************** Type Definitions *******************************/
 typedef struct SApp_ {
-	USysErrStatus		eStatus;
+	SComStatus			sStatus;
 	ECtrlCode			eCtrlCode;
 	STransPC			sTransPc;
 	semaphore_t			semTransPc;
@@ -58,7 +58,6 @@ typedef struct SApp_ {
 	semaphore_t			semTransUi;
 	SModbus				sModbus;
 	SAnalogReader		sAnalogReader;
-	SDateTime			sDateTime;
 	SDigitalInputLog	sDI;
 	SDigitalOutputLog	sDO;
 	SAnalogInput		sAI;
@@ -100,6 +99,7 @@ int				App_InitIntFS(SApp *pApp);
 int 			App_InitExtFs(SApp *pApp);
 int				App_DeinitExtFs(SApp *pApp);
 void			App_WriteExtFs(SApp *pApp);
+int				App_DoCopyIntToExt(SApp *pApp);
 
 /* task body */
 void			App_InitTaskHandle(SApp *pApp);
@@ -131,7 +131,6 @@ void 			App_TcpClientRecvHandle(const uint8_t *data, int len);
 void			App_CommCalibAi(SApp *pApp, const uint8_t *data);
 void			App_CommCalibCurrPwr(SApp *pApp, const uint8_t *data);
 void 			App_CommTurnOnOffCurr(SApp *pApp, const uint8_t *data);
-
 
 // Modbus
 int				App_InitModbus(SApp *pApp);
