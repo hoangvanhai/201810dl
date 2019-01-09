@@ -40,6 +40,8 @@
 #include "app.h"
 extern void external_card_detection(void);
 
+static i2c_master_state_t master;
+
 #if BOARD_USE_VERSION == BOARD_FRDM_K64F
 /* Configuration for enter RUN mode. Core clock = 120MHz. */
 const clock_manager_user_config_t g_defaultClockConfigRun =
@@ -205,13 +207,35 @@ bool BOARD_IsIntSDCardDetected(void)
 
 
 /* Initialize debug console. */
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void dbg_uart_init(void)
 {
     configure_uart_pins(BOARD_DEBUG_UART_INSTANCE);
 
     DbgConsole_Init(BOARD_DEBUG_UART_INSTANCE, BOARD_DEBUG_UART_BAUD, kDebugConsoleUART);
 }
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int BOARD_InitI2CModule(void) {
+	configure_i2c_pins(BOARD_I2C_RTC_EEPROM_INSTANCE);
 
+	i2c_status_t retVal =  I2C_DRV_MasterInit(BOARD_I2C_RTC_EEPROM_INSTANCE, &master);
+	if(retVal != kStatus_I2C_Success)
+		return retVal;
+}
 
 /*****************************************************************************/
 /** @brief
@@ -532,6 +556,8 @@ void BOARD_CheckPeripheralFault() {
 void DefaultISR(void) {
 	LREP("JUM TO DefaultISR \r\n");
 }
+
+
 /*******************************************************************************
  * EOF
  ******************************************************************************/

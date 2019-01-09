@@ -65,6 +65,8 @@ void stat(int32_t argc, char **argv);
 void modbus(int32_t argc, char **argv);
 void select_ai(int32_t argc, char **argv);
 
+
+
 void my_shell_init(void);
 
 
@@ -256,7 +258,7 @@ void settime(int32_t argc, char **argv)
  *  @note
  */
 void print_tag(STag *pHandle) {
-	LREP("id: %d - en %d - report %d - iid %d - ctyp %d - name %s - o2c %.2f - temp_c %.2f "
+	LREP("id: %2d - en %d - report %d - iid %d - ctyp %d - name %s - o2c %.2f - temp_c %.2f "
 			"- press_c %.2f  - rmin %.2f - rmax %.2f - coef_a %.2f - coef_b %.2f \r\n",
 				pHandle->id,
 				pHandle->enable,
@@ -363,30 +365,30 @@ void print_sys(SSysCfg *pHandle) {
 
 void print_comm(SCommon *pHandle) {
 	LREP("dev_ip %d "
-		"dev_netmask %d "
-		"dev_dhcp %d "
-		"ftp_enable1 %d "
-		"ftp_enable2 %d \r\n"
-		"server_ftp_ip1 %d "
-		"server_ftp_port1 %d "
-		"server_ftp_ip2 %d "
-		"server_ftp_port2 %d "
-		"server_ctrl_ip %d "
-		"server_ctrl_port %d \r\n"
+		"nm %d "
+		"dhcp %d "
+		"ftpen1 %d "
+		"ftpen2 %d \r\n"
+		"ftpip1 %d "
+		"ftpp1 %d "
+		"ftpip2 %d "
+		"fptp2 %d "
+		"ctrlip %d "
+		"ctrlp %d \r\n"
 		"tinh %s "
 		"coso %s "
 		"tram %s \r\n"
-		"ftp_prefix1 %s "
-		"ftp_usrname1 %s "
-		"ftp_passwd1 %s "
-		"ftp_prefix2 %s "
-		"ftp_usrname2 %s "
-		"ftp_passwd2 %s "
-		"ctrl_usrname %s "
-		"ctrl_passwd %s \r\n"
-		"scan_dur %d "
-		"log_dur %d "
-		"modbus_brate %d\r\n",
+		"prefix1 %s "
+		"usrname1 %s "
+		"passwd1 %s "
+		"prefix2 %s "
+		"usrname2 %s "
+		"passwd2 %s "
+		"ctrl %s "
+		"passwd %s \r\n"
+		"scan %d "
+		"log %d "
+		"brate %d\r\n",
 			pHandle->dev_ip,
 			pHandle->dev_netmask,
 			pHandle->dev_dhcp,
@@ -426,7 +428,7 @@ void status(int32_t argc, char **argv) {
 	} else if(strcmp(argv[1], "conf") == 0) {
 		//LREP("sizeof name = %d\r\n", sizeof(pAppObj->sCfg.sTag[0].name));
 		print_sys(&pAppObj->sCfg);
-		//print_comm(&pAppObj->sCfg.sCom);
+		print_comm(&pAppObj->sCfg.sCom);
 		for(int i = 0; i < SYSTEM_NUM_TAG; i++) {
 			print_tag(&pAppObj->sCfg.sTag[i]);
 		}
@@ -688,7 +690,8 @@ void control(int32_t argc, char**argv) {
 			OSA_SleepMs(100);
 		}
 	} else if(strcmp(argv[1], "stat") == 0) {
-		pAppObj->sStatus.hwStat.Bits.bStatitics = !pAppObj->sStatus.hwStat.Bits.bStatitics;
+		pAppObj->sStatus.hwStat.Bits.bStatitics =
+				!pAppObj->sStatus.hwStat.Bits.bStatitics;
 		LREP("stat %d\r\n", pAppObj->sStatus.hwStat.Bits.bStatitics);
 	} else if(strcmp(argv[1], "server") == 0) {
 		for(int i = 0; i < 1000; i++)
@@ -747,6 +750,63 @@ void control(int32_t argc, char**argv) {
 		}
 	} else if(strcmp(argv[1], "lr") == 0) {
 		show_content_recursive("/");
+	} else if(strcmp(argv[1], "wr") == 0) {
+		if(!pAppObj->sStatus.hwStat.Bits.bI2CBusy) {
+			pAppObj->sStatus.hwStat.Bits.bI2CBusy = true;
+			uint16_t lev = atoi(argv[2]);
+			LREP("write to eeprom %x\r\n", lev);
+			uint8_t *data = OSA_FixedMemMalloc(512);
+			if(data != NULL) {
+				int rlen = 0;
+				for(int i = 0; i < 512; i++) data[i] = 0x55;
+				ASSERT(CONF_WriteData(lev, data, 512) == kStatus_I2C_Success);
+				OSA_SleepMs(100);
+				memset(data, 0, 512);
+				ASSERT(CONF_ReadData(lev, data, 512, &rlen) == kStatus_I2C_Success);
+				LREP("rdata: %d\r\n", rlen);
+				for(int i = 0; i < rlen; i++) {
+					LREP("%x ", data[i]);
+				}
+
+				OSA_FixedMemFree(data);
+			}
+			pAppObj->sStatus.hwStat.Bits.bI2CBusy = false;
+		}
+	} else if(strcmp(argv[1], "rd") == 0) {
+		if(!pAppObj->sStatus.hwStat.Bits.bI2CBusy) {
+			pAppObj->sStatus.hwStat.Bits.bI2CBusy = true;
+
+			LREP("read from eeprom \r\n");
+			uint16_t lev = atoi(argv[2]);
+			uint8_t *data = OSA_FixedMemMalloc(128);
+			if(data != NULL) {
+				int rlen = 0;
+				memset(data, 0, 128);
+				ASSERT(CONF_ReadData(lev, data, 128, &rlen) == kStatus_I2C_Success);
+				LREP("rdata: %d\r\n", rlen);
+				for(int i = 0; i < rlen; i++) {
+					LREP("%x ", data[i]);
+				}
+				LREP("\r\n");
+				OSA_FixedMemFree(data);
+			}
+			pAppObj->sStatus.hwStat.Bits.bI2CBusy = false;
+		}
+	} else if(strcmp(argv[1], "erall") == 0) {
+		if(!pAppObj->sStatus.hwStat.Bits.bI2CBusy) {
+			pAppObj->sStatus.hwStat.Bits.bI2CBusy = true;
+			ASSERT(CONF_EraseFlash() == kStatus_I2C_Success);
+			pAppObj->sStatus.hwStat.Bits.bI2CBusy = false;
+		} else {
+			LREP("I2C is bussy\r\n");
+		}
+	} else if(strcmp(argv[1], "ers") == 0) {
+		uint16_t lev = atoi(argv[2]);
+		CONF_EraseSector(lev, lev);
+	} else if(strcmp(argv[1], "ck") == 0) {
+		LREP("written = %d\r\n", CONF_CheckWrittenApp());
+	} else if(strcmp(argv[1], "wk") == 0) {
+		CONF_WriteKeyApp();
 	}
 }
 

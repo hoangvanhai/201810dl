@@ -69,6 +69,8 @@ void BOARD_GpioWritePin(uint32_t pinName, bool value);
 
 void BOARD_InitLPUART(void);
 
+int BOARD_InitI2CModule(void);
+
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */

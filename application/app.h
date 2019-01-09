@@ -40,6 +40,7 @@
 #include <ring_file.h>
 #include <dac_comm.h>
 #include <dac_out.h>
+#include <configure.h>
 
 /************************** Constant Definitions *****************************/
 #define CONFIG_FILE_PATH		"/conf/config.dat"
@@ -90,6 +91,7 @@ int				App_LoadConfig(SApp *pApp, const char* cfg_path);
 int 			App_SaveConfig(SApp *pApp, const char* cfg_path);
 int				App_GenDefaultConfig(SSysCfg *pHandle);
 int				App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx);
+int				App_VerifyCommConfig(SSysCfg *pHandle);
 int 			App_DefaultTag(STag *pHandle, uint8_t tagIdx);
 int 			App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial);
 int				App_GetConfig(SApp *pApp, uint8_t cfg, uint8_t idx, ECfgConnType type);

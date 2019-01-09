@@ -59,6 +59,7 @@
 #define LOGGER_WRITE_SUCCESS                0x07
 #define LOGGER_WRITE_DONE                   0x08
 #define LOGGER_SYSTEM_STATUS				0x09
+#define LOGGER_MAC_ADDR						0x0A
 
 #define LOGGER_LOGIN                        0x10
 #define LOGGER_LOGOUT                       0x11
@@ -194,7 +195,9 @@ typedef union USysStatus_ {
 		unsigned bReboot			: 	1;
 		unsigned bCopying			: 	1;
 
-		unsigned bReserves			: 	11;
+		unsigned bI2CBusy			: 	1;
+
+		unsigned bReserves			: 	10;
     }Bits;
 
 }USysHwStat;

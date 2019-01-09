@@ -84,6 +84,10 @@ void App_Init(SApp *pApp) {
 	int err;
 	pApp->sStatus.hwStat.all = 0;
 
+
+	err = BOARD_InitI2CModule();
+	ASSERT(err == kStatus_I2C_Success);
+
 	err = App_InitIntFS(pApp);
 
 	if(err == FR_OK) {
@@ -94,6 +98,7 @@ void App_Init(SApp *pApp) {
 		pApp->sStatus.hwStat.Bits.bIntSdcardWorking = false;
 	}
 
+#if CONFIG_STORE_IN == CONFIG_IN_FILE_SYSTEM
 	if(pApp->sStatus.hwStat.Bits.bIntSdcardWorking) {
 		err = App_LoadConfig(pApp, CONFIG_FILE_PATH);
 		if(err == FR_OK) {
@@ -106,6 +111,40 @@ void App_Init(SApp *pApp) {
 		LREP("internal sdcard not found, init default config for dry running\r\n");
 		App_GenDefaultConfig(&pApp->sCfg);
 	}
+#elif CONFIG_STORE_IN == CONFIG_IN_EEPROM
+	if(CONF_CheckWrittenApp()) {
+		int rlen = 0;
+		if(CONF_ReadData(EEPROM_PAGE_SIZE,
+				(uint8_t*)&pApp->sCfg, sizeof(SSysCfg), &rlen) ==
+				kStatus_I2C_Success) {
+			if(rlen != sizeof(SSysCfg)) {
+				ASSERT(false);
+				App_GenDefaultConfig(&pApp->sCfg);
+			}
+		} else {
+			App_GenDefaultConfig(&pApp->sCfg);
+		}
+	} else {
+		LREP("key not found, write key to eeprom\r\n");
+		CONF_WriteKeyApp();
+		App_GenDefaultConfig(&pApp->sCfg);
+		LREP("write default config to eeprom\r\n");
+		ASSERT(CONF_WriteData(EEPROM_PAGE_SIZE,
+				(uint8_t*)&pApp->sCfg, sizeof(SSysCfg)) ==
+				kStatus_I2C_Success);
+	}
+
+	if(App_VerifyCommConfig(&pApp->sCfg) != 0) {
+		CONF_WriteKeyApp();
+		App_GenDefaultConfig(&pApp->sCfg);
+		LREP("invalid config generate default \r\n");
+		ASSERT(CONF_WriteData(EEPROM_PAGE_SIZE,
+				(uint8_t*)&pApp->sCfg, sizeof(SSysCfg)) ==
+				kStatus_I2C_Success);
+	}
+#else
+#error must specify config store location
+#endif
 
 	if(App_InitExtFs(pApp) == FR_OK) {
 		LREP("app mount ext sdcard successfully\r\n");
@@ -336,7 +375,28 @@ int	App_VerifyTagConfig(STag *pHandle, uint8_t tagIdx) {
 	pHandle->std_unit[sizeof(pHandle->std_unit) - 1] = 0;
 	return 0;
 }
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+int App_VerifyCommConfig(SSysCfg *pHandle) {
+	if(Str_Len_N((CPU_CHAR*)pHandle->sCom.tinh, SYS_TINH_LENGTH + 3) >=
+			(SYS_TINH_LENGTH + 2))
+		return -1;
+	return 0;
+}
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int App_DefaultTag(STag *pHandle, uint8_t tagIdx) {
 
 	pHandle->id = tagIdx;
@@ -379,12 +439,10 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial) {
 	switch(pData[0]) {
 	case LOGGER_SET | LOGGER_COMMON:
 		if(pData[1] == sizeof(SCommon)) {
-			/*SCommon *comm = (SCommon*)OSA_FixedMemMalloc(sizeof(SCommon));
-			memcpy(comm, &pData[2], sizeof(SCommon));
-			print_comm(comm);
-			OSA_FixedMemFree((uint8_t*)comm);*/
+			uint8_t mac_addr[6];
+			memcpy(mac_addr, pApp->sCfg.sCom.dev_hwaddr, 6);
 			memcpy(&pApp->sCfg.sCom, &pData[2], sizeof(SCommon));
-
+			memcpy(pApp->sCfg.sCom.dev_hwaddr, mac_addr, 6);
 		} else {
 			ASSERT_NONVOID(FALSE, -1);
 		}
@@ -399,12 +457,6 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial) {
 				 * copy from data frame to config area can cause
 				 * crash (trans fifo error) */
 				if(idx <= SYSTEM_NUM_TAG - 1) {
-
-					/*STag *tag = (STag*)OSA_FixedMemMalloc(sizeof(STag));
-					memcpy(tag, &pData[3], sizeof(STag));
-					print_tag1(tag);
-					OSA_FixedMemFree((uint8_t*)tag);*/
-
 					memcpy(&pApp->sCfg.sTag[idx],
 							&pData[3], sizeof(STag));
 
@@ -452,9 +504,34 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial) {
 		}
 	break;
 
+	case LOGGER_SET | LOGGER_MAC_ADDR :
+		if(pData[1] == 6) {
+			LREP("set mac address \r\n");
+			for(int i = 0; i < 6; i++)
+				LREP("%x ", pData[i + 2]);
+
+			memcpy(pApp->sCfg.sCom.dev_hwaddr, &pData[2], 6);
+		} else {
+			break;
+		}
+
 	case LOGGER_SET | LOGGER_WRITE_DONE:
-		LREP("write config done\r\n");
+		LREP("config is writing ... \r\n");
+#if CONFIG_STORE_IN == CONFIG_IN_FILE_SYSTEM
 		App_SaveConfig(pApp, CONFIG_FILE_PATH);
+#elif CONFIG_STORE_IN == CONFIG_IN_EEPROM
+
+		while(pApp->sStatus.hwStat.Bits.bI2CBusy);
+		pApp->sStatus.hwStat.Bits.bI2CBusy = true;
+		ASSERT(CONF_WriteData(EEPROM_PAGE_SIZE,
+						(uint8_t*)&pApp->sCfg, sizeof(SSysCfg)) ==
+						kStatus_I2C_Success);
+		pApp->sStatus.hwStat.Bits.bI2CBusy = false;
+		LREP("write config done -> reset require !\r\n\r\n");
+
+#else
+#error here
+#endif
 		pApp->sStatus.hwStat.Bits.bReboot = true;
 	break;
 
@@ -674,7 +751,12 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	while(1) {
 		OSA_SleepMs(1000);
-		ASSERT(RTC_GetTimeDate(&pApp->sStatus.time) == kStatus_I2C_Success);
+
+		if(!pApp->sStatus.hwStat.Bits.bI2CBusy) {
+			pApp->sStatus.hwStat.Bits.bI2CBusy = true;
+			ASSERT(RTC_GetTimeDate(&pApp->sStatus.time) == kStatus_I2C_Success);
+			pApp->sStatus.hwStat.Bits.bI2CBusy = false;
+		}
 
 		App_DiReadAllPort(pApp);
 		App_UpdateTagContent(pApp);
@@ -964,7 +1046,7 @@ void App_TaskStartup(task_param_t arg) {
 
 			//WDOG_DRV_Refresh();
 		} else {
-			BOARD_CheckPeripheralFault();
+//			BOARD_CheckPeripheralFault();
 			/* Feed dog to prevent WDG reset */
 			WDOG_DRV_Refresh();
 		}
@@ -1013,6 +1095,7 @@ void App_SerialComRecvHandle(const uint8_t *data) {
 	case LOGGER_SET | LOGGER_DI:
 	case LOGGER_SET | LOGGER_DO:
 	case LOGGER_SET | LOGGER_WRITE_DONE:
+	case LOGGER_SET | LOGGER_MAC_ADDR:
 		App_SetConfig(pAppObj, data, true);
 		break;
 	case LOGGER_SET | LOGGER_TIME:
@@ -1137,6 +1220,7 @@ void App_TcpServerRecvHandle(const uint8_t *data) {
 	case LOGGER_SET | LOGGER_DI:
 	case LOGGER_SET | LOGGER_DO:
 	case LOGGER_SET | LOGGER_WRITE_DONE:
+	case LOGGER_SET | LOGGER_MAC_ADDR:
 		App_SetConfig(pAppObj, data, false);
 		break;
 	case LOGGER_SET | LOGGER_TIME:

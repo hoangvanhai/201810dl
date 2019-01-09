@@ -66,9 +66,11 @@ int main(void)
     hardware_init();
 
     LREP(logo_msg);
+
     LREP("Application started built time: " __TIME__ " " __DATE__ "\r\n");
 
     LREP("chip id = 0x%x\r\n", 		SIM_UIDL_UID(SIM_BASE_PTR));
+
     LREP("OS Tick rate = %d\r\n", 	OSCfg_TickRate_Hz);
 
     BOARD_CheckResetCause();
@@ -90,7 +92,6 @@ int main(void)
         LREP("Failed to create startup task\r\n\r\n");
         return -1;
     }
-
 
     OSA_Start();
 

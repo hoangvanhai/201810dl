@@ -88,7 +88,7 @@
 /* The CMP channel used for board. */
 #define BOARD_CMP_CHANNEL               	0
 /* The SW name for CMP example */
-#define BOARD_I2C_RTC_INSTANCE				1
+#define BOARD_I2C_RTC_EEPROM_INSTANCE				1
 
 
 #elif BOARD_USE_VERSION == BOARD_VERSION_1
@@ -138,7 +138,7 @@
 /* The CMP channel used for board. */
 #define BOARD_CMP_CHANNEL               	0
 /* The SW name for CMP example */
-#define BOARD_I2C_RTC_INSTANCE				1
+#define BOARD_I2C_RTC_EEPROM_INSTANCE		1
 #define BOARD_I2C_DAC_INSTANCE				3
 
 #endif

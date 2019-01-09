@@ -27,6 +27,12 @@
 /************************** Constant Definitions *****************************/
 
 
+// option
+
+#define CONFIG_IN_FILE_SYSTEM				0
+#define CONFIG_IN_EEPROM					1
+#define CONFIG_STORE_IN						CONFIG_IN_EEPROM
+
 // task prio
 #define TASK_MODBUS_PRIO          			3U
 #define TASK_PERIODIC_PRIO					4U
@@ -74,17 +80,17 @@
 
 
 
-#define NETWORK_MODULE_EN					0
-#define NETWORK_FTP_CLIENT_EN				1
+#define NETWORK_MODULE_EN					1
+#define NETWORK_FTP_CLIENT_EN				0
 #define NETWORK_FTP_CLIENT_WLESS_EN			1
-#define NETWORK_TCP_CLIENT_EN				1
+#define NETWORK_TCP_CLIENT_EN				0
 #define NETWORK_TCP_SERVER_EN				1
 
 
 
 #define APP_TASK_MODBUS_EN 					0
 #define APP_TASK_PC_EN						0
-#define APP_TASK_UI_EN						1
+#define APP_TASK_UI_EN						0
 #define APP_TASK_AI_EN						0
 #define APP_TASK_PERIODIC_EN				1
 #define APP_TASK_SHELL_EN					1

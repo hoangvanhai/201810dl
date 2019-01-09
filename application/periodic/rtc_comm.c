@@ -13,12 +13,12 @@
 static int cmd_read_date_time(uint8_t *recvData);
 
 SDateTime *pDateTime;
-static i2c_master_state_t master;
+
 // i2c slave info
 static i2c_device_t slave =
 {
     .address = I2C_RTOS_SLAVE_ADDRESS,
-    .baudRate_kbps = 100
+    .baudRate_kbps = 400
 };
 
 
@@ -33,12 +33,13 @@ static i2c_device_t slave =
  */
 int RTC_InitDateTime(SDateTime *time) {
 
-	configure_i2c_pins(BOARD_I2C_RTC_INSTANCE);
+//	configure_i2c_pins(BOARD_I2C_RTC_EEPROM_INSTANCE);
+//
+//	i2c_status_t retVal =  I2C_DRV_MasterInit(BOARD_I2C_RTC_EEPROM_INSTANCE, &master);
+//	if(retVal != kStatus_I2C_Success)
+//		return retVal;
 
-	i2c_status_t retVal =  I2C_DRV_MasterInit(BOARD_I2C_RTC_INSTANCE, &master);
-	if(retVal != kStatus_I2C_Success)
-		return retVal;
-
+	i2c_status_t retVal = kStatus_I2C_Success;
 	if(time != NULL) {
 		pDateTime = time;
 		pDateTime->tm_min = 0;
@@ -123,7 +124,7 @@ int RTC_SetTimeDate(SDateTime *time) {
 	DateTime[5] = DEC_TO_HEX_1BYTE(time->tm_mon);
 	DateTime[6] = DEC_TO_HEX_1BYTE(time->tm_year);
 
-	i2c_ret = I2C_DRV_MasterSendDataBlocking(BOARD_I2C_RTC_INSTANCE,
+	i2c_ret = I2C_DRV_MasterSendDataBlocking(BOARD_I2C_RTC_EEPROM_INSTANCE,
 			&slave, cmd, 1, DateTime, 7, 20);
 
 	if(i2c_ret != kStatus_I2C_Success) {
@@ -169,7 +170,7 @@ static int cmd_read_date_time(uint8_t *recvData)
     uint8_t cmd[1];
     cmd[0] = 0x00;
     // read from slave
-    i2c_ret = I2C_DRV_MasterReceiveDataBlocking(BOARD_I2C_RTC_INSTANCE,
+    i2c_ret = I2C_DRV_MasterReceiveDataBlocking(BOARD_I2C_RTC_EEPROM_INSTANCE,
                                       &slave, cmd, 1, recvData, 7, 20);
     if(i2c_ret != kStatus_I2C_Success) {
     	ASSERT(FALSE);
