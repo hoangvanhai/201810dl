@@ -42,6 +42,7 @@
 #include <dac_out.h>
 #include <configure.h>
 
+
 /************************** Constant Definitions *****************************/
 #define CONFIG_FILE_PATH		"/conf/config.dat"
 
@@ -158,6 +159,7 @@ bool			App_CheckNameExisted(SApp *pApp, const char *name);
 int 			App_GenerateLogFile(SApp *pApp, uint8_t server);
 int 			App_GenerateLogFileByName(SApp *pApp, const char *name, uint8_t server);
 int				App_GenerateFakeTime(SApp *pApp);
+void			App_PrintSystemStatus(SApp *pApp);
 
 int				App_InitNetworkModule(SApp *pApp);
 

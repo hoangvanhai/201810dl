@@ -7,6 +7,7 @@
 
 #include <tcp_server.h>
 #include <string.h>
+#include <board.h>
 
 
 
@@ -31,6 +32,7 @@ void tcp_server_listener(void *arg) {
 	struct sockaddr_in serveraddr; /* server's addr */
 	struct sockaddr_in clientaddr; /* client addr */
 	socklen_t clientlen;
+	int err_count = 0;
 
 	while(1) {
 
@@ -49,8 +51,12 @@ void tcp_server_listener(void *arg) {
 		if (pHandle->listen_fd < 0) {
 			LREP("error create socket\r\n");
 			OSA_TimeDelay(1000);
+
+			if(err_count++ > 10) BOARD_FatalError();
 			continue;
 		}
+
+		err_count = 0;
 
 		optval = 1;
 		setsockopt(pHandle->listen_fd, SOL_SOCKET, SO_REUSEADDR,
@@ -170,8 +176,13 @@ int tcp_server_send_nonblocking(TcpServer *pHandle, const uint8_t *data, int len
 			memcpy(pMsg->buf, data, len);
 			OSTaskQPost(pHandle->send_thread, (void*)pMsg,
 					sizeof(SMsg) + len, OS_OPT_POST_FIFO, &err);
+
 			if(err != OS_ERR_NONE) {
 				retVal = -2;
+			} else {
+				WARN("server added size = %d peak = %d\r\n",
+						pHandle->send_thread->MsgQ.NbrEntries,
+						pHandle->send_thread->MsgQ.NbrEntriesMax);
 			}
 		} else {
 			retVal = -1;

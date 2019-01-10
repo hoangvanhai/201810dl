@@ -52,7 +52,7 @@ sys_assert( const char *msg )
 #endif
 
     OSA_EnterCritical(kCriticalDisableInt);
-    LREP("\r\n\r\nDIE HERE\r\n\r\n\r\n");
+    LREP("\r\n\r\nWAIT FOREVER HERE\r\n\r\n\r\n");
     for(;;);
 }
 

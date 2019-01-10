@@ -95,9 +95,11 @@ bool Network_GetLinkStatus(bool *status) {
 			== kStatus_ENET_Success);
 
 	if(*status) {
-		nwkStt.activeIf |= NET_IF_ETHERNET;
+		netStt.activeIf |= NET_IF_ETHERNET;
+		netStt.status->hwStat.Bits.bEthernetPlugged = true;
 	} else {
-		nwkStt.activeIf &= ~(NET_IF_ETHERNET);
+		netStt.status->hwStat.Bits.bEthernetPlugged = false;
+		netStt.activeIf &= ~(NET_IF_ETHERNET);
 	}
 	return ret;
 }

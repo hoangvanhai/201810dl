@@ -38,12 +38,13 @@
 #include <fsl_wdog_driver.h>
 #include <hardware_profile.h>
 
-/* The usb use native port  */
-#define USBCFG_HOST_PORT_NATIVE         (1)
 
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
+
+#define 	BOARD_FatalError() 		{ 	ERR_LINE("FATAL ERROR\r\n\r\n"); \
+										NVIC_SystemReset();}
 
 void hardware_init(void);
 void dbg_uart_init(void);
@@ -66,7 +67,6 @@ void BOARD_CreateWDG(void);
 int BOARD_GenerateRandom(int min, int max);
 void BOARD_CheckResetCause(void);
 void BOARD_GpioWritePin(uint32_t pinName, bool value);
-
 void BOARD_InitLPUART(void);
 
 int BOARD_InitI2CModule(void);

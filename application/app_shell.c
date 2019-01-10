@@ -278,18 +278,18 @@ void print_tag(STag *pHandle) {
 void print_tag1(STag *pHandle) {
 	LREP("id  %d "
 		"desc %s "
-		"enable %d "
-		"report %d "
-		"has_calib %d "
-		"has_error %d "
-		"alarm_enable %d "
-		"input_type %d "
-		"input_id %d "
-		"slave_reg_addr %d "
-		"data_type %d "
-		"data_format %d "
-		"data_order %d "
-		"comp_type %d\r\n",
+		"en %d "
+		"rep %d "
+		"calib %d "
+		"error %d "
+		"alarm %d "
+		"itype %d "
+		"id %d "
+		"addr %d "
+		"type %d "
+		"format %d "
+		"order %d "
+		"comp %d\r\n",
 		pHandle->id,
 		pHandle->desc,
 		pHandle->enable,
@@ -306,23 +306,23 @@ void print_tag1(STag *pHandle) {
 		pHandle->comp_type);
 
 	LREP("name %s "
-		"raw_unit %s "
-		"std_unit %s "
-		"pin_calib %d "
-		"pin_error %d "
-		"input_o2 %d "
-		"input_temp %d "
-		"input_press %d "
+		"raw %s "
+		"std %s "
+		"calib %d "
+		"error %d "
+		"o2 %d "
+		"temp %d "
+		"press %d "
 		"o2_comp %.2f "
 		"temp_comp %.2f "
 		"press_comp %.2f "
-		"raw_min %.2f "
-		"raw_max %.2f "
-		"scratch_min %.2f "
-		"scratch_max %.2f "
+		"rmin %.2f "
+		"rmax %.2f "
+		"scr_min %.2f "
+		"scr_max %.2f "
 		"coef_a %.2f "
 		"coef_b %.2f "
-		"alarm_value %.2f\r\n",
+		"alvalue %.2f\r\n",
 		pHandle->name,
 		pHandle->raw_unit,
 		pHandle->std_unit,
@@ -364,18 +364,12 @@ void print_sys(SSysCfg *pHandle) {
 }
 
 void print_comm(SCommon *pHandle) {
-	LREP("dev_ip %d "
-		"nm %d "
-		"dhcp %d "
-		"ftpen1 %d "
-		"ftpen2 %d \r\n"
-		"ftpip1 %d "
-		"ftpp1 %d "
-		"ftpip2 %d "
-		"fptp2 %d "
-		"ctrlip %d "
-		"ctrlp %d \r\n"
-		"tinh %s "
+
+	LREP("ftpip1 %s\r\n", ipaddr_ntoa(&pHandle->server_ftp_ip1));
+	LREP("ftpip2 %s\r\n", ipaddr_ntoa(&pHandle->server_ftp_ip2));
+	LREP("ctrlip %s\r\n", ipaddr_ntoa(&pHandle->server_ctrl_ip));
+
+	LREP("tinh %s "
 		"coso %s "
 		"tram %s \r\n"
 		"prefix1 %s "
@@ -385,21 +379,7 @@ void print_comm(SCommon *pHandle) {
 		"usrname2 %s "
 		"passwd2 %s "
 		"ctrl %s "
-		"passwd %s \r\n"
-		"scan %d "
-		"log %d "
-		"brate %d\r\n",
-			pHandle->dev_ip,
-			pHandle->dev_netmask,
-			pHandle->dev_dhcp,
-			pHandle->ftp_enable1,
-			pHandle->ftp_enable2,
-			pHandle->server_ftp_ip1,
-			pHandle->server_ftp_port1,
-			pHandle->server_ftp_ip2,
-			pHandle->server_ftp_port2,
-			pHandle->server_ctrl_ip,
-			pHandle->server_ctrl_port,
+		"passwd %s \r\n",
 			pHandle->tinh,
 			pHandle->coso,
 			pHandle->tram,
@@ -410,10 +390,57 @@ void print_comm(SCommon *pHandle) {
 			pHandle->ftp_usrname2,
 			pHandle->ftp_passwd2,
 			pHandle->ctrl_usrname,
-			pHandle->ctrl_passwd,
-			pHandle->scan_dur,
-			pHandle->log_dur,
-			pHandle->modbus_brate);
+			pHandle->ctrl_passwd);
+//	LREP("dev_ip %d "
+//			"nm %d "
+//			"dhcp %d "
+//			"ftpen1 %d "
+//			"ftpen2 %d \r\n"
+//			"ftpip1 %s "
+//			"ftpp1 %d "
+//			"ftpip2 %d "
+//			"fptp2 %d "
+//			"ctrlip %d "
+//			"ctrlp %d \r\n"
+//			"tinh %s "
+//			"coso %s "
+//			"tram %s \r\n"
+//			"prefix1 %s "
+//			"usrname1 %s "
+//			"passwd1 %s "
+//			"prefix2 %s "
+//			"usrname2 %s "
+//			"passwd2 %s "
+//			"ctrl %s "
+//			"passwd %s \r\n"
+//			"scan %d "
+//			"log %d "
+//			"brate %d\r\n",
+//				pHandle->dev_ip,
+//				pHandle->dev_netmask,
+//				pHandle->dev_dhcp,
+//				pHandle->ftp_enable1,
+//				pHandle->ftp_enable2,
+//				ipaddr_ntoa(&pHandle->server_ftp_ip1),
+//				pHandle->server_ftp_port1,
+//				pHandle->server_ftp_ip2,
+//				pHandle->server_ftp_port2,
+//				pHandle->server_ctrl_ip,
+//				pHandle->server_ctrl_port,
+//				pHandle->tinh,
+//				pHandle->coso,
+//				pHandle->tram,
+//				pHandle->ftp_prefix1,
+//				pHandle->ftp_usrname1,
+//				pHandle->ftp_passwd1,
+//				pHandle->ftp_prefix2,
+//				pHandle->ftp_usrname2,
+//				pHandle->ftp_passwd2,
+//				pHandle->ctrl_usrname,
+//				pHandle->ctrl_passwd,
+//				pHandle->scan_dur,
+//				pHandle->log_dur,
+//				pHandle->modbus_brate);
 }
 
 void status(int32_t argc, char **argv) {
@@ -807,6 +834,9 @@ void control(int32_t argc, char**argv) {
 		LREP("written = %d\r\n", CONF_CheckWrittenApp());
 	} else if(strcmp(argv[1], "wk") == 0) {
 		CONF_WriteKeyApp();
+	} else if(strcmp(argv[1], "msg") == 0) {
+		App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG, argv[2], strlen(argv[2]), false);
+		LREP("send ui msg %s\r\n", argv[2]);
 	}
 }
 

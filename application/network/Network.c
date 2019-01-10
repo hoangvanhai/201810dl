@@ -25,7 +25,7 @@ uint8_t 		ftpclient_rx_ctrl_buf[FTP_CLIENT_BUFF_SIZE];
 uint8_t 		ftpclient_tx_ctrl_buf[FTP_CLIENT_BUFF_SIZE];
 uint8_t 		ftpclient_tx_data_buf[FTP_CLIENT_BUFF_SIZE];
 
-SNetworkStt	 	nwkStt;
+SNetworkStt	 	netStt;
 
 ring_file_handle_t g_retryTable[FTP_CLIENT_SERVER_NUM];
 
@@ -59,17 +59,9 @@ void static netif_link_changed_callback(struct netif* netif);
  *  @return Void.
  *  @note
  */
-void Network_InitTcpModule(SCommon *pCM) {
+void Network_InitTcpModule(SCommon *pCM, SComStatus *pStatus) {
 
 	tcpip_init(NULL,NULL);
-
-	/*pCM->dev_hwaddr[0] = defaultMAC_ADDR0;
-	pCM->dev_hwaddr[1] = defaultMAC_ADDR1;
-	pCM->dev_hwaddr[2] = defaultMAC_ADDR2;
-	pCM->dev_hwaddr[3] = defaultMAC_ADDR3;
-	pCM->dev_hwaddr[4] = defaultMAC_ADDR4;
-	pCM->dev_hwaddr[5] = defaultMAC_ADDR5; */
-
 
 	eth0.hwaddr[0] = pCM->dev_hwaddr[0];
 	eth0.hwaddr[1] = pCM->dev_hwaddr[1];
@@ -118,6 +110,14 @@ void Network_InitTcpModule(SCommon *pCM) {
 	tcpServer.active = false;
 	tcpClient.active = false;
 
+	netStt.activeIf = NET_IF_NONE;
+	//netStt.activeIf |= NET_IF_ETHERNET;
+	netStt.activeIf |= NET_IF_WIRELESS;
+
+	netStt.status = pStatus;
+	netStt.status->hwStat.Bits.bEthernetWorking = true;
+	netStt.status->fwStat.eth_ip = pCM->dev_ip;
+
 #if NETWORK_TCP_CLIENT_EN > 0
 	tcp_client_init(pCM->server_ctrl_ip, pCM->server_ctrl_port);
 #endif
@@ -125,9 +125,6 @@ void Network_InitTcpModule(SCommon *pCM) {
 	tcp_server_init(12345);
 #endif
 
-	nwkStt.activeIf = NET_IF_NONE;
-	//nwkStt.activeIf |= NET_IF_ETHERNET;
-	nwkStt.activeIf |= NET_IF_WIRELESS;
 
 	//TODO check network active status
 }
@@ -342,6 +339,25 @@ int ftp_client_init(SCommon *pCM) {
  *  @return Void.
  *  @note
  */
+void Network_Ftpclient_ClearWaitQueue(bool q1, bool q2) {
+	if(!q1) {
+		ring_file_flush(&g_retryTable[0]);
+		WARN("server 0 disabled, clear wait queue\r\n");
+	}
+	if(!q2) {
+		ring_file_flush(&g_retryTable[1]);
+		WARN("server 1 disabled, clear wait queue\r\n");
+	}
+}
+
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void Network_Register_TcpClient_Notify(NetworkConnNotify func) {
 	tcp_client_register_notify(&tcpClient, func);
 }
@@ -399,7 +415,14 @@ int Network_TcpClient_Send(const uint8_t *data, int len) {
 		return -4;
 	}
 }
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int Network_TcpClient_SendWLength(uint16_t cmd, const uint8_t *data, int len) {
 	int ret = -1;
 	uint32_t slen = len + 7;
@@ -509,9 +532,9 @@ int Network_GetWirelessStatus(void) {
 	result = ret;
 	ASSERT_NONVOID(ret == 0, -1);
 
-	nwkStt.rssi = g_modem_status.csq;
-	Str_Copy_N((CPU_CHAR*)nwkStt.simid, g_modem_status.iccid, 10);
-	Str_Copy_N((CPU_CHAR*)nwkStt.netid, g_modem_status.opn, 10);
+	netStt.rssi = g_modem_status.csq;
+	Str_Copy_N((CPU_CHAR*)netStt.simid, g_modem_status.iccid, 10);
+	Str_Copy_N((CPU_CHAR*)netStt.netid, g_modem_status.opn, 10);
 
 	return ret;
 

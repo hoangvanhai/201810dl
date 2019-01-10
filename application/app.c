@@ -163,7 +163,11 @@ void App_Init(SApp *pApp) {
     LREP("sizeof(SCtrlPort) 	%d\r\n",	sizeof(SCtrlPort));
     LREP("sizeof(STagValue) 	%d\r\n", 	sizeof(STagNode));
     LREP("sizeof(SSysCfg) 	%d\r\n", 		sizeof(SSysCfg));
-    LREP("sizeof(SComStatus) 	%d\r\n", 		sizeof(SComStatus));
+    LREP("sizeof(SComStatus) 	%d\r\n", 	sizeof(SComStatus));
+    LREP("sizeof(STagVArray) 	%d\r\n", 	sizeof(STagVArray));
+    LREP("sizeof(SAnalogInput) 	%d\r\n", 	sizeof(SAnalogInput));
+    LREP("sizeof(SDigitalOutputLog) 	%d\r\n", 	sizeof(SDigitalOutputLog));
+    LREP("sizeof(SDigitalInputLog) 	%d\r\n", 	sizeof(SDigitalInputLog));
 }
 
 /*****************************************************************************/
@@ -436,6 +440,9 @@ int App_DefaultTag(STag *pHandle, uint8_t tagIdx) {
  *  @note
  */
 int App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial) {
+
+	pApp->sStatus.hwStat.Bits.bCritical = true;
+	uint8_t retbyte = LOGGER_WRITE_SUCCESS;
 	switch(pData[0]) {
 	case LOGGER_SET | LOGGER_COMMON:
 		if(pData[1] == sizeof(SCommon)) {
@@ -443,6 +450,8 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial) {
 			memcpy(mac_addr, pApp->sCfg.sCom.dev_hwaddr, 6);
 			memcpy(&pApp->sCfg.sCom, &pData[2], sizeof(SCommon));
 			memcpy(pApp->sCfg.sCom.dev_hwaddr, mac_addr, 6);
+			LREP("recv common data \r\n");
+			print_comm(&pApp->sCfg.sCom);
 		} else {
 			ASSERT_NONVOID(FALSE, -1);
 		}
@@ -516,6 +525,10 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial) {
 		}
 
 	case LOGGER_SET | LOGGER_WRITE_DONE:
+
+		Network_Ftpclient_ClearWaitQueue(pApp->sCfg.sCom.ftp_enable1,
+				pApp->sCfg.sCom.ftp_enable2);
+
 		LREP("config is writing ... \r\n");
 #if CONFIG_STORE_IN == CONFIG_IN_FILE_SYSTEM
 		App_SaveConfig(pApp, CONFIG_FILE_PATH);
@@ -523,9 +536,13 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial) {
 
 		while(pApp->sStatus.hwStat.Bits.bI2CBusy);
 		pApp->sStatus.hwStat.Bits.bI2CBusy = true;
-		ASSERT(CONF_WriteData(EEPROM_PAGE_SIZE,
-						(uint8_t*)&pApp->sCfg, sizeof(SSysCfg)) ==
-						kStatus_I2C_Success);
+		if(CONF_WriteData(EEPROM_PAGE_SIZE,
+						(uint8_t*)&pApp->sCfg, sizeof(SSysCfg)) !=
+						kStatus_I2C_Success) {
+			ERR("write config error\r\n");
+			retbyte = LOGGER_WRITE_SUCCESS;
+		}
+
 		pApp->sStatus.hwStat.Bits.bI2CBusy = false;
 		LREP("write config done -> reset require !\r\n\r\n");
 
@@ -542,9 +559,9 @@ int App_SetConfig(SApp *pApp, const uint8_t *pData, bool serial) {
 
 	int ret;
 	if(serial)
-		ret = App_SendPC(pApp, LOGGER_SET | LOGGER_WRITE_SUCCESS, NULL, 0, false);
+		ret = App_SendPC(pApp, LOGGER_SET | retbyte, NULL, 0, false);
 	else
-		ret = App_SendPCNetworkClient(LOGGER_SET | LOGGER_WRITE_SUCCESS, NULL, 0);
+		ret = App_SendPCNetworkClient(LOGGER_SET | retbyte, NULL, 0);
 
 	return ret;
 }
@@ -752,6 +769,9 @@ void App_TaskPeriodic(task_param_t parg) {
 	while(1) {
 		OSA_SleepMs(1000);
 
+		if(pApp->sStatus.hwStat.Bits.bCritical)
+			continue;
+
 		if(!pApp->sStatus.hwStat.Bits.bI2CBusy) {
 			pApp->sStatus.hwStat.Bits.bI2CBusy = true;
 			ASSERT(RTC_GetTimeDate(&pApp->sStatus.time) == kStatus_I2C_Success);
@@ -948,6 +968,7 @@ void App_TaskUserInterface(task_param_t param)
 void App_TaskStartup(task_param_t arg) {
 
 	OS_ERR err;
+	int err_init;
 	CPU_TS	ts;
 	SApp *pApp = (SApp*)arg;
 
@@ -970,7 +991,7 @@ void App_TaskStartup(task_param_t arg) {
 
 #if NETWORK_MODULE_EN > 0
     uint32_t timeNow = sys_now();
-    Network_InitTcpModule(&pApp->sCfg.sCom);
+    Network_InitTcpModule(&pApp->sCfg.sCom, &pApp->sStatus);
 
 	Network_Register_TcpClient_Notify(Clb_NetTcpClientConnEvent);
 	Network_Register_TcpClient_DataEvent(Event_DataReceived, Clb_NetTcpClientRecvData);
@@ -988,6 +1009,7 @@ void App_TaskStartup(task_param_t arg) {
 #endif
 
 	while(1) {
+
 		OSSemPend(&pApp->hSem, 1000, OS_OPT_PEND_BLOCKING, &ts, &err);
 		if(err == OS_ERR_NONE) {
 
@@ -1004,29 +1026,37 @@ void App_TaskStartup(task_param_t arg) {
 					LREP("Ext card event = %d\r\n", pApp->sStatus.hwStat.Bits.bExtSdcardPlugged);
 					if(pAppObj->sStatus.hwStat.Bits.bExtSdcardPlugged) {
 						LREP("recv ctrl init ext sdcard\r\n");
-						int err = App_InitExtFs(pApp);
-						if(err != FR_OK) {
+
+						pApp->sStatus.hwStat.Bits.bCritical = true;
+						err_init = App_InitExtFs(pApp);
+						pApp->sStatus.hwStat.Bits.bCritical = false;
+
+						if(err_init != FR_OK) {
 							pApp->sStatus.hwStat.Bits.bExtSdcardWorking = false;
+							App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
+									(uint8_t*)&pAppObj->sStatus, sizeof(SComStatus), false);
 						} else {
 							pApp->sStatus.hwStat.Bits.bExtSdcardWorking = true;
-							OSA_SleepMs(100);
+							App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
+									(uint8_t*)&pAppObj->sStatus, sizeof(SComStatus), false);
+							//OSA_SleepMs(100);
 							// TODO: copy data from internal sd card to external
 
-							App_DoCopyIntToExt(pApp);
-
+							//App_DoCopyIntToExt(pApp);
 
 						}
 					} else {
 						LREP("unmount external card\r\n");
+						pApp->sStatus.hwStat.Bits.bCritical = true;
 						App_DeinitExtFs(pApp);
+						pApp->sStatus.hwStat.Bits.bCritical = false;
 						pApp->sStatus.hwStat.Bits.bExtSdcardWorking = false;
+						App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
+								(uint8_t*)&pAppObj->sStatus, sizeof(SComStatus), false);
 					}
 				}
+
 				App_ClearCtrlCode(pApp, CTRL_INIT_EXT_SDCARD);
-				App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
-						(uint8_t*)&pAppObj->sStatus, sizeof(SComStatus), false);
-
-
 
 
 			}
@@ -1046,7 +1076,7 @@ void App_TaskStartup(task_param_t arg) {
 
 			//WDOG_DRV_Refresh();
 		} else {
-//			BOARD_CheckPeripheralFault();
+			BOARD_CheckPeripheralFault();
 			/* Feed dog to prevent WDG reset */
 			WDOG_DRV_Refresh();
 		}
@@ -1081,6 +1111,7 @@ void App_SerialComRecvHandle(const uint8_t *data) {
 		if(normal || root) {
 			sendData[0] = LOGGER_SUCCESS;
 			LREP("login as %s user\r\n", root ? "root" : "normal");
+
 		} else {
 			sendData[0] = LOGGER_ERROR;
 			LREP("invalid username %s password %s\r\n",
@@ -1522,6 +1553,14 @@ void App_CommTurnOnOffCurr(SApp *pApp, const uint8_t *data) {
 	LREP("generate lev = %d\r\n", lev);
 	DAC_SetRefLevel(lev, false);
 
+	switch(point) {
+		case 0: pApp->sStatus.fwStat.curr_lev = 4.0; break;
+		case 1: pApp->sStatus.fwStat.curr_lev = 8.0; break;
+		case 2: pApp->sStatus.fwStat.curr_lev = 12.0; break;
+		case 3: pApp->sStatus.fwStat.curr_lev = 16.0; break;
+		case 4: pApp->sStatus.fwStat.curr_lev = 20.0; break;
+	}
+
 	App_SendUI(pApp, LOGGER_GET | LOGGER_SYSTEM_STATUS,
 						(uint8_t*)&pApp->sStatus, sizeof(SComStatus), false);
 }
@@ -1649,6 +1688,8 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 		App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
 						(uint8_t*)&pAppObj->sStatus, sizeof(SComStatus), false);
 
+		App_PrintSystemStatus(pAppObj);
+
 		OS_ERR err;
 		App_SetCtrlCode(pAppObj, CTRL_GET_WL_STT);
 	    OSSemPost(&pAppObj->hSem, OS_OPT_POST_1, &err);
@@ -1702,14 +1743,20 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 				OSA_FixedMemFree((uint8_t*)pMem);
 			}
 		} else if(counter % 4 == 1) {
+
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_AI,
 				  (uint8_t*)&pAppObj->sAI, sizeof(SAnalogInput), false);
+
+
 		} else if (counter % 4 == 2) {
+
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_DO,
 				  (uint8_t*)&pAppObj->sDO, sizeof(SDigitalOutputLog), false);
+
 		}
 
 		if(counter % 4 == 3) {
+
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_DI,
 				  (uint8_t*)&pAppObj->sDI, sizeof(SDigitalInputLog), false);
 		}
@@ -2155,7 +2202,7 @@ inline int	App_SendPC(SApp *pApp, uint8_t subctrl, uint8_t *data, uint8_t len, b
  *  @note
  */
 int	App_SendPCNetworkClient(uint8_t subctrl, uint8_t *data, uint8_t len) {
-	int ret = 0;
+	int ret = -1;
 	uint8_t *sdata = OSA_FixedMemMalloc(len + 2);
 	if(sdata != NULL) {
 		sdata[0] = subctrl;
@@ -2696,6 +2743,18 @@ int	App_GenerateFakeTime(SApp *pApp) {
 	}
 
 	return 0;
+}
+
+void App_PrintSystemStatus(SApp *pApp) {
+
+	SComStatus *stat = &pApp->sStatus;
+	LREP("system: \r\n");
+	LREP("sdw: %d \r\n", stat->hwStat.Bits.bExtSdcardWorking);
+	LREP("ethp: %d \r\n", stat->hwStat.Bits.bEthernetPlugged);
+	LREP("ethw: %d \r\n", stat->hwStat.Bits.bEthernetWorking);
+	LREP("ethip: %s\r\n", ipaddr_ntoa(&stat->fwStat.eth_ip));
+	LREP("wlw: %d \r\n", stat->hwStat.Bits.bWirelessWorking);
+	LREP("wlsq: %d \r\n", stat->fwStat.wl_rssi);
 }
 /*****************************************************************************/
 /** @brief

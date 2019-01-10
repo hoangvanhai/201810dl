@@ -76,6 +76,7 @@
 #define LOGGER_STREAM_VALUE					0x31
 #define LOGGER_STREAM_DI					0x32
 #define LOGGER_STREAM_DO					0x33
+#define LOGGER_STREAM_MSG					0x34
 
 #define STREAM_AI                           0x01
 #define STREAM_MB                           0x02
@@ -197,7 +198,9 @@ typedef union USysStatus_ {
 
 		unsigned bI2CBusy			: 	1;
 
-		unsigned bReserves			: 	10;
+		unsigned bCritical		: 	1;
+
+		unsigned bReserves			: 	9;
     }Bits;
 
 }USysHwStat;

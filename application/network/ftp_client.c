@@ -57,7 +57,7 @@ int ftp_start_ctrl_sock(FtpClient *pFC) {
 
 	pFC->fd_ctrl = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (pFC->fd_ctrl != INVALIDSOCK) {
-
+		netStt.status->hwStat.Bits.bEthernetWorking = true;
 		set_nonblocking(pFC->fd_ctrl);
 		//set_buffer_size(pEP->fd, pEP->tx_buf_size, pEP->rx_buf_size);
 
@@ -97,6 +97,8 @@ int ftp_start_ctrl_sock(FtpClient *pFC) {
 		if (err) {
 			ftp_close_ctrl_sock(pFC);
 		}
+	} else {
+		netStt.status->hwStat.Bits.bEthernetWorking = false;
 	}
 
 	if(err == 0) {
@@ -613,17 +615,23 @@ void ftp_client_sender(void *arg) {
 		pMsg = OSTaskQPend(1000, OS_OPT_PEND_BLOCKING, &msg_size, &ts, &err);
 		if(err == OS_ERR_NONE) {
 			if(pMsg) {
-				for(int i = 0; i < FTP_CLIENT_SERVER_NUM; i++) {
-					// check which server must send to
-					if(pFC->server_list[i].enable && (pMsg->server & (i + 1)))
-						ftp_send_to_server(pFC, i, pMsg);
+				if(!netStt.status->hwStat.Bits.bCritical) {
+					for(int i = 0; i < FTP_CLIENT_SERVER_NUM; i++) {
+						// check which server must send to
+						if(pFC->server_list[i].enable && (pMsg->server & (i + 1))) {
+							ftp_send_to_server(pFC, i, pMsg);
+
+						}
+					}
 				}
 				OSA_FixedMemFree((uint8_t*)pMsg);
 			}
 		} else {
-			for(int i = 0; i < FTP_CLIENT_SERVER_NUM; i++) {
-				if(pFC->server_list[i].enable)
-					ftp_try_resend_to_server(pFC, i);
+			if(!netStt.status->hwStat.Bits.bCritical) {
+				for(int i = 0; i < FTP_CLIENT_SERVER_NUM; i++) {
+					if(pFC->server_list[i].enable)
+						ftp_try_resend_to_server(pFC, i);
+				}
 			}
 		}
 	}
@@ -736,7 +744,7 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 
 	if(stat  && valid) {
 		// if ethernet interface is active
-		if(nwkStt.activeIf & NET_IF_ETHERNET) {
+		if(netStt.activeIf & NET_IF_ETHERNET) {
 			retryCount = 0;
 			WARN("enter send via ethernet %d\r\n", idx);
 			do {
@@ -755,7 +763,7 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 			if(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE) {
 				WARN("send via ethernet failed %d\r\n", idx);
 				// check wireless is active
-				if(nwkStt.activeIf & NET_IF_WIRELESS) {
+				if(netStt.activeIf & NET_IF_WIRELESS) {
 					WARN("try with wireless %d\r\n", idx);
 					retryCount = 0;
 					do {
@@ -770,7 +778,7 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 				}
 			}
 		} else { // if ethernet interface is not active
-			if(nwkStt.activeIf & NET_IF_WIRELESS) { // if wireless is now active
+			if(netStt.activeIf & NET_IF_WIRELESS) { // if wireless is now active
 				WARN("ethernet deactive try send via wireless %d\r\n", idx);
 				retryCount = 0;
 				do {
@@ -861,7 +869,7 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 
 		if(stat  && valid) {
 			// if ethernet interface is active
-			if(nwkStt.activeIf & NET_IF_ETHERNET) {
+			if(netStt.activeIf & NET_IF_ETHERNET) {
 				retryCount = 0;
 				WARN("enter send via ethernet %d\r\n", idx);
 				do {
@@ -880,7 +888,7 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 				if(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE) {
 					WARN("re-send via ethernet failed %d\r\n", idx);
 					// check wireless is active
-					if(nwkStt.activeIf & NET_IF_WIRELESS) {
+					if(netStt.activeIf & NET_IF_WIRELESS) {
 						WARN("try re-send with wireless %d\r\n", idx);
 						retryCount = 0;
 						do {
@@ -895,7 +903,7 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 					}
 				}
 			} else { // if ethernet interface is not active
-				if(nwkStt.activeIf & NET_IF_WIRELESS) { // if wireless is now active
+				if(netStt.activeIf & NET_IF_WIRELESS) { // if wireless is now active
 					WARN("ethernet deactive try re-send via wireless %d\r\n", idx);
 					retryCount = 0;
 					do {

@@ -28,14 +28,14 @@ typedef enum ActiveIf {
 }EActiveIf;
 
 typedef struct NetworkStt {
-	SCommon		*sSettings;
+	SComStatus  *status;
 	EActiveIf 	activeIf;
 	uint8_t		rssi;
 	uint8_t		simid[22];
 	uint8_t		netid[22];
 }SNetworkStt;
 
-void Network_InitTcpModule(SCommon *pCM);
+void Network_InitTcpModule(SCommon *pCM, SComStatus *pStatus);
 void Network_InitFtpModule(SCommon *pCM);
 
 void tcp_client_init(ip_addr_t ip, int port);
@@ -55,12 +55,13 @@ int Network_FtpClient_Send(const uint8_t *local_path,
 		const uint8_t *filename,  uint8_t server);
 
 int ftp_client_init(SCommon *pCM);
+void Network_Ftpclient_ClearWaitQueue(bool q1, bool q2);
 
 int Network_GetWirelessStatus(void);
 
 extern TcpClient	 		tcpClient;
 extern TcpServer 	 		tcpServer;
-extern SNetworkStt	 		nwkStt;
+extern SNetworkStt	 		netStt;
 extern ring_file_handle_t 	g_retryTable[FTP_CLIENT_SERVER_NUM];
 extern struct netif eth0;
 

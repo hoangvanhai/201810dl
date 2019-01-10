@@ -69,6 +69,7 @@ int CONF_WriteData(uint16_t addr, const uint8_t *data, int len) {
 		written_len += len_to_write;
 
 		if(written_len >= len) break;
+		OSA_SleepMs(100);
 	}
 
 	GPIO_DRV_SetPinOutput(EpromWp);
