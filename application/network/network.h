@@ -57,6 +57,7 @@ int ftp_client_init(SCommon *pCM);
 void Network_Ftpclient_ClearWaitQueue(bool q1, bool q2);
 
 int Network_GetWirelessStatus(void);
+bool Network_TcpClient_Initialized(void);
 
 extern TcpClient	 		tcpClient;
 extern TcpServer 	 		tcpServer;

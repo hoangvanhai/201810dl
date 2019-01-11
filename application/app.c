@@ -1711,6 +1711,9 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 
 	GPIO_DRV_TogglePinOutput(Led1);
 
+	if(pAppObj->sStatus.hwStat.Bits.bCritical)
+		return;
+
 	if(counter % 15 == 0) {
 		pAppObj->uiCounter = 0;
 
@@ -3003,14 +3006,20 @@ const char* msg_sendfailed_3G 	= "WIRELESS SEND FAILED";
 void Clb_NetFtpClientEvent(FtpStatus status,
 		Network_Interface interface, uint8_t server) {
 
-	LREP("ftp event: %d if: %d server %d\r\n", status, interface, server);
-
 	static uint32_t failed_count = 0;
+
+	if(interface == Interface_Wireless) {
+		if(!Network_TcpClient_Initialized()) {
+			return;
+		}
+	}
+
+	//LREP("ftp event: %d if: %d server %d\r\n", status, interface, server);
 
 	switch(status) {
 	case Ftp_Idle:
 		App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-				(uint8_t*)msg_idle, strlen(msg_idle), false);
+				(uint8_t*)msg_idle, Str_Len(msg_idle), false);
 		break;
 	case Ftp_Sending:
 		if(interface == Interface_Ethernet) {

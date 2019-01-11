@@ -307,7 +307,7 @@ int ftp_client_init(SCommon *pCM) {
     ftpClient.active = true;
 
 	
-
+    netStt.status->hwStat.Bits.bCritical = true;
 	ring_file_init(&g_retryTable[0], "/conf",
 			"retrytable0.dat", 5000,
 			sizeof(ring_file_record_t));
@@ -323,9 +323,12 @@ int ftp_client_init(SCommon *pCM) {
 	LREP("Ring file 1 Init Done!!!\r\n");
 
 	ring_file_print(&g_retryTable[1]);
+	netStt.status->hwStat.Bits.bCritical = false;
 
 #if NETWORK_FTP_CLIENT_WLESS_EN > 0
 	GPIO_DRV_SetPinOutput(SimVccEn);
+
+
 	ftpClient.modem_handler = modem_get_instance();
     modem_init(modem_get_instance());
     modem_ftp_init(&ftpClient);
@@ -562,8 +565,17 @@ int Network_GetWirelessStatus(void) {
 	return 0;
 }
 
-
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+bool Network_TcpClient_Initialized(void) {
+	return modem_ftp_is_initialized(&ftpClient);
+}
 
 
 
