@@ -225,6 +225,14 @@ modem_ftp_err_code_t modem_ftp_put_file_from_local(FtpClient *pFC, uint8_t index
 								char *local_path,
 								char *remote_path);
 
+/**
+ * Make dirirectory recursively
+ * @param pFC
+ * @param dir:
+ * @return
+ */
+modem_ftp_err_code_t modem_ftp_make_dir_recursive(FtpClient *pFC, const char* dir);
+
 #ifdef __cplusplus
 }
 #endif

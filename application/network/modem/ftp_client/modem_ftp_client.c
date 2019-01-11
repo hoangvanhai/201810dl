@@ -16,55 +16,6 @@
 //static modem_ftp_client_handle_t g_modem_ftp_client;
 static BOOL g_modemInitialized = FALSE;
 
-#if 0
-//modem_ftp_err_code_t modem_ftp_init(modem_ftp_client_handle_t *pHandle)
-modem_ftp_err_code_t modem_ftp_init(char* server, int port,  char* username, char* password)
-{
-	modem_ftp_err_code_t ret = FTP_ERR_UNKNOWN;
-
-	modem_ftp_client_handle_t *pHandle = &g_modem_ftp_client;
-
-	if(!pHandle)
-	{
-		PRINTF("FTP client handle is NULL");
-		return ret;
-	}
-
-
-	memset(pHandle->serveraddress, 0, sizeof(pHandle->serveraddress));
-	memset(pHandle->username, 0, sizeof(pHandle->username));
-	memset(pHandle->password, 0, sizeof(pHandle->password));
-
-	memcpy(pHandle->serveraddress, server, strlen(server));
-	memcpy(pHandle->username, username, strlen(username));
-	memcpy(pHandle->password, password, strlen(password));
-	pHandle->port = port;
-	pHandle->state = FTP_STATE_IDLE;
-	pHandle->busy = 0;
-	pHandle->ssl_enable = 0;
-
-	/* Configure modem  */
-	modem_init();
-	modem_send_at_command("ATE0\r\n", "OK", 1000, 1);
-	modem_delay_ms(1000);
-	modem_tx_data("+++", 3);
-	modem_delay_ms(1000);
-
-//	modem_send_at_command("AT+QIACT=0\r\n", "OK", 1000, 1);
-
-	modem_send_at_command("AT+QICSGP=1,1,\"\",\"\",\"\",1\r\n","OK", 1000, 1);
-//		AT+QIACT=1
-	modem_send_at_command("AT+QIACT=1\r\n", "OK", 15000, 1);
-//	modem_send_at_command("AT+QIACT?\r\n", "OK",  1000, 1);
-	modem_send_at_command("AT+QFTPCFG=\"contextid\",1\r\n", "OK", 500, 1);
-	modem_send_at_command("AT+QFTPCFG=\"filetype\",1\r\n", "OK", 500, 1);
-	modem_send_at_command("AT+QFTPCFG=\"transmode\",1\r\n", "OK",500, 1);
-	modem_send_at_command("AT+QFTPCFG=\"rsptimeout\",60\r\n", "OK", 500, 1);
-	g_modemInitialized = TRUE;
-	return ret;
-}
-#endif
-
 modem_ftp_err_code_t modem_ftp_init(FtpClient *pFC)
 {
 	modem_ftp_err_code_t ret = FTP_ERR_UNKNOWN;
@@ -76,16 +27,19 @@ modem_ftp_err_code_t modem_ftp_init(FtpClient *pFC)
 //	modem_tx_data("+++", 3);
 //	modem_delay_ms(1000);
 
-//	modem_send_at_command("AT+QIACT=0\r\n", "OK", 1000, 1);
+//	modem_send_at_command(pFC->modem_handler, "AT+QIACT=0\r\n", "OK", 1000, 1);
 
-	modem_send_at_command("AT+QICSGP=1,1,\"\",\"\",\"\",1\r\n","OK", 1000, 1);
+	modem_send_at_command(pFC->modem_handler, "AT+QICSGP=1,1,\"\",\"\",\"\",1\r\n","OK", 1000, 1);
 //		AT+QIACT=1
-	modem_send_at_command("AT+QIACT=1\r\n", "OK", 15000, 1);
+	modem_send_at_command(pFC->modem_handler, "AT+QIACT=1\r\n", "OK", MODEM_AT_DEFAULT_TIMEOUT_MSEC, 1);
 //	modem_send_at_command("AT+QIACT?\r\n", "OK",  1000, 1);
-	modem_send_at_command("AT+QFTPCFG=\"contextid\",1\r\n", "OK", 500, 1);
-	modem_send_at_command("AT+QFTPCFG=\"filetype\",1\r\n", "OK", 500, 1);
-	modem_send_at_command("AT+QFTPCFG=\"transmode\",1\r\n", "OK",500, 1);
-	modem_send_at_command("AT+QFTPCFG=\"rsptimeout\",20\r\n", "OK", 500, 1);
+	modem_send_at_command(pFC->modem_handler, "AT+QFTPCFG=\"contextid\",1\r\n", "OK", 500, 1);
+	modem_send_at_command(pFC->modem_handler, "AT+QFTPCFG=\"filetype\",1\r\n", "OK", 500, 1);
+	modem_send_at_command(pFC->modem_handler, "AT+QFTPCFG=\"transmode\",1\r\n", "OK",500, 1);
+
+	char cmd[128] = {0};
+	sprintf(cmd, "AT+QFTPCFG=\"rsptimeout\",%d\r\n", MODEM_AT_DEFAULT_TIMEOUT_SEC);
+	modem_send_at_command(pFC->modem_handler, cmd, "OK", 500, 1);
 	g_modemInitialized = TRUE;
 
 	return FTP_ERR_NONE;
@@ -119,7 +73,12 @@ modem_ftp_err_code_t modem_ftp_connect(FtpClient *pFC, uint8_t channel)
 			pFC->server_list[pFC->curr_sv_idx].username,
 			pFC->server_list[pFC->curr_sv_idx].passwd);
 
-	if (modem_send_at_command(cmd, "OK", 500, 1) != TRUE)
+	MODEM_DEBUG("[FTP] connecting... server: %s, un: %s, pwd: %s",
+			ipaddr_ntoa((const ip_addr_t*)&pFC->server_list[pFC->curr_sv_idx].ip),
+			pFC->server_list[pFC->curr_sv_idx].username,
+			pFC->server_list[pFC->curr_sv_idx].passwd);
+
+	if (modem_send_at_command(pFC->modem_handler, cmd, "OK", 500, 1) != TRUE)
 	{
 		OSA_FixedMemFree(cmd);
 		return FTP_ERR_AUTHEN;
@@ -130,20 +89,22 @@ modem_ftp_err_code_t modem_ftp_connect(FtpClient *pFC, uint8_t channel)
 			ipaddr_ntoa((const ip_addr_t*)&pFC->server_list[pFC->curr_sv_idx].ip),
 			pFC->server_list[pFC->curr_sv_idx].port);
 
-	if (modem_send_at_command(cmd, "+QFTPOPEN: 0,0", 30000, 1) == TRUE)
+	if (modem_send_at_command(pFC->modem_handler, cmd, "+QFTPOPEN: 0,0", MODEM_AT_FTP_CONNECT_TIMEOUT_MSEC, 1) == TRUE)
 	{
 		OSA_FixedMemFree(cmd);
+		MODEM_DEBUG("[FTP] connected");
 		return FTP_ERR_NONE;
 	}
 	else
 	{
+		MODEM_DEBUG_ERROR("[FTP] connect timed out");
 		OSA_FixedMemFree(cmd);
 		return FTP_ERR_TIMEOUT;
 	}
 }
 
 
-#if 1
+#if 0
 
 
 modem_ftp_err_code_t modem_ftp_cwd(FtpClient *pFC, const char *dir)
@@ -240,13 +201,18 @@ modem_ftp_err_code_t modem_ftp_change_working_dir(FtpClient *pFC, char* working_
 	memset (cmd, 0, sizeof(cmd));
 
 	sprintf(cmd, "AT+QFTPCWD=\"%s\"\r\n", working_dir);
-	if (modem_send_at_command(cmd, "+QFTPCWD: 0,0", 15000, 1) == TRUE)
+
+	MODEM_DEBUG("[FTP] CWD to: %s", working_dir);
+
+	if (modem_send_at_command(pFC->modem_handler, cmd, "+QFTPCWD: 0,0", MODEM_AT_FTP_CWDIR_TIMEOUT_MSEC, 1) == TRUE)
 	{
 		OSA_FixedMemFree(cmd);
+		MODEM_DEBUG("[FTP] CWD: %s OK!", working_dir);
 		return FTP_ERR_NONE;
 	}
 	else
 	{
+		MODEM_DEBUG_ERROR("[FTP] CWD: %s FAILED!", working_dir);
 		OSA_FixedMemFree(cmd);
 		return FTP_ERR_CD;
 	}
@@ -268,18 +234,23 @@ modem_ftp_err_code_t modem_ftp_disconnect(FtpClient *pFC)
 
 	memset (cmd, 0, sizeof(cmd));
 	sprintf(cmd, "AT+QFTPCLOSE\r\n");
-//	if(modem_send_at_command(cmd, "+QFTPCLOSE: 0,0", 1000, 3) == FALSE)
-	if(modem_send_at_command(cmd, "+QFTPCLOSE:", 15000, 1) == FALSE)
+
+	MODEM_DEBUG("[FTP] disconnecting ...");
+
+	if(modem_send_at_command(pFC->modem_handler, cmd, "+QFTPCLOSE:", MODEM_AT_FTP_DISCONNECT_TIMEOUT_MSEC, 1) == FALSE)
 	{
 		OSA_FixedMemFree(cmd);
+		MODEM_DEBUG_ERROR("[FTP] disconnect timed out");
 		return FTP_ERR_UNKNOWN;
 	}
 	OSA_FixedMemFree(cmd);
+	MODEM_DEBUG("[FTP] disconnected");
+
 	return FTP_ERR_NONE;
 
 //	memset (cmd, 0, sizeof(cmd));
 //	sprintf(cmd, "AT+QIDEACT=1\r\n");
-//	if (modem_send_at_command(cmd, "OK", 15000, 1) == TRUE)
+//	if (modem_send_at_command(pFC->modem_handler, cmd, "OK", MODEM_AT_DEFAULT_TIMEOUT_MSEC, 1) == TRUE)
 //		return FTP_ERR_NONE;
 //	else
 //		return FTP_ERR_TIMEOUT;
@@ -418,7 +389,7 @@ modem_ftp_err_code_t modem_ftp_put_file(FtpClient *pFC,  char* filename, uint8_t
 	memset (cmd, 0, sizeof(cmd));
 	sprintf(cmd, "AT+QFTPPUT=\"%s\",\"COM:\",0\r\n", filename);
 
-	if(modem_send_at_command(cmd, "CONNECT", 15000, 1) == TRUE)
+	if(modem_send_at_command(pFC->modem_handler, cmd, "CONNECT", MODEM_AT_DEFAULT_TIMEOUT_MSEC, 1) == TRUE)
 	{
 		MODEM_DEBUG("Begin Putting File");
 
@@ -426,7 +397,7 @@ modem_ftp_err_code_t modem_ftp_put_file(FtpClient *pFC,  char* filename, uint8_t
 
 		modem_delay_ms(2000);
 
-		if(modem_send_at_command("+++", "OK", 15000, 1) == TRUE)
+		if(modem_send_at_command(pFC->modem_handler, "+++", "OK", MODEM_AT_DEFAULT_TIMEOUT_MSEC, 1) == TRUE)
 			ret = FTP_ERR_NONE;
 
 		MODEM_DEBUG("End Putting File");
@@ -449,19 +420,7 @@ modem_ftp_err_code_t modem_ftp_put_file(FtpClient *pFC,  char* filename, uint8_t
 modem_ftp_err_code_t modem_ftp_make_dir(FtpClient *pFC, char* dir)
 {
 	modem_ftp_err_code_t ret = FTP_ERR_UNKNOWN;
-//	modem_ftp_client_handle_t *pHandle = &g_modem_ftp_client;
-//	if(!pHandle || !dir)
-//	{
-//		PRINTF("Param invalid!!!");
-//		ret = FTP_ERR_INVALID_PARAM;
-//		return ret;
-//	}
 
-
-//	AT+QFTPMKDIR="2018/12"
-//	OK
-//
-//	+QFTPMKDIR: 0,0
 	uint8_t *cmd = OSA_FixedMemMalloc(128);
 	if(!cmd)
 	{
@@ -471,20 +430,22 @@ modem_ftp_err_code_t modem_ftp_make_dir(FtpClient *pFC, char* dir)
 
 	memset (cmd, 0, sizeof(cmd));
 	sprintf(cmd, "AT+QFTPMKDIR=\"%s\"\r\n", dir);
+//	MODEM_DEBUG("cmd: %s", cmd);
 
-	if(modem_send_at_command((const char *)cmd, "+QFTPMKDIR: 0,0", 15000, 1) == TRUE)
+	if(modem_send_at_command(pFC->modem_handler, (const char *)cmd, "+QFTPMKDIR: 0,0", MODEM_AT_FTP_MKDIR_TIMEOUT_MSEC, 1) == TRUE)
 	{
-		PRINTF("Create DIR OK!\r\n");
-			ret = FTP_ERR_NONE;
+		MODEM_DEBUG("Create DIR %s OK!", dir);
+		ret = FTP_ERR_NONE;
 	}
 	else
 	{
-		PRINTF("Create DIR FAILED!\r\n");
+		MODEM_DEBUG_WARNING("Create DIR %s FAILED", dir);
 		ret = FTP_ERR_MKD;
 	}
 	OSA_FixedMemFree(cmd);
 	return ret;
 }
+
 
 modem_ftp_err_code_t modem_ftp_remove_dir(FtpClient *pFC, char* dir)
 {
@@ -508,7 +469,7 @@ modem_ftp_err_code_t modem_ftp_remove_dir(FtpClient *pFC, char* dir)
 	memset (cmd, 0, sizeof(cmd));
 	sprintf(cmd, "AT+QFTPRMDIR=\"%s\"\r\n", dir);
 
-	if(modem_send_at_command(cmd, "+QFTPRMDIR: 0,0", 15000, 1) == TRUE)
+	if(modem_send_at_command(pFC->modem_handler, cmd, "+QFTPRMDIR: 0,0", MODEM_AT_DEFAULT_TIMEOUT_MSEC, 1) == TRUE)
 	{
 		PRINTF("Remove DIR OK!\r\n");
 			ret = FTP_ERR_NONE;
@@ -545,7 +506,7 @@ modem_ftp_err_code_t modem_ftp_rename(FtpClient *pFC, char* old_name, char* new_
 	memset (cmd, 0, sizeof(cmd));
 	sprintf(cmd, "AT+QFTPRENAME=\"%s\",\"%s\"\r\n", old_name, new_name);
 
-	if(modem_send_at_command(cmd, "+QFTPRENAME: 0,0", 15000, 1) == TRUE)
+	if(modem_send_at_command(pFC->modem_handler, cmd, "+QFTPRENAME: 0,0", MODEM_AT_DEFAULT_TIMEOUT_MSEC, 1) == TRUE)
 	{
 		PRINTF("Remove DIR OK!\r\n");
 			ret = FTP_ERR_NONE;
@@ -585,49 +546,63 @@ modem_ftp_put_file_from_local(FtpClient *pFC, uint8_t index,
 	UINT br; // number of read bytes
 	FRESULT fr; // FatFS return code
 	size_t len; // written length
-
+	char buf[256] = {0};
 	modem_ftp_err_code_t mdm_ret = FTP_ERR_UNKNOWN;
 	if(modem_ftp_is_initialized(pFC) != TRUE)
 	{
-		MODEM_DEBUG_WARNING("Modem FTP CLIENT is not configured yet, try again later!");
+//		MODEM_DEBUG_WARNING("Modem FTP CLIENT is not configured yet, try again later!");
 		return FTP_ERR_UNKNOWN;
 	}
 	// TODO: Step 1: Check the connection, if not connect connect and try
+//	pFC->modem_handler->busy = true;
+	if (MODEM_ENTER_CRITIAL(pFC->modem_handler, MODEM_AT_DEFAULT_TIMEOUT_MSEC) != kStatus_OSA_Success)
+	{
+		ret = FTP_ERR_TIMEOUT;
+		MODEM_DEBUG_CRITICAL("Push file failed (modem  busy)");
+		return ret;
+	}
 
 	// Step 1: Connect to the server if not connected
 	// TODO: manhbt - try to reconnect FTP server if necessary
-	modem_switch_to_command_mode();
+	modem_switch_to_command_mode(pFC->modem_handler);
 	mdm_ret = modem_ftp_connect(pFC, index);
 	if(mdm_ret != FTP_ERR_NONE)
 	{
 		MODEM_DEBUG_WARNING("FTP connect timed out!");
 		//modem_ftp_disconnect();
 		modem_tx_data("AT+QFTPCLOSE\r\n", strlen("AT+QFTPCLOSE\r\n"));
+//		pFC->modem_handler->busy = false;
+		MODEM_EXIT_CRITIAL(pFC->modem_handler);
 		return FTP_ERR_TIMEOUT;
 	}
 	// Step 2: Change to directory, check if it exists?
 
 	// TODO: [manhbt] Change directory or make (then change) new if not exist
-	mdm_ret = modem_ftp_change_working_dir(pFC, remote_path);
-	if( mdm_ret == FTP_ERR_NONE)
-	{
-		MODEM_DEBUG("Change to directory %s\r\n", remote_path);
-	}
-	else
-	{
-		ret = modem_ftp_make_dir(pFC, remote_path);
-		if( mdm_ret == FTP_ERR_NONE)
-		{
-			mdm_ret = modem_ftp_change_working_dir(pFC, remote_path);
-		}
+
+	memset(buf, 0, 256);
+	sprintf(buf, "%s%s", pFC->server_list[pFC->curr_sv_idx].prefix, remote_path);
+//	MODEM_DEBUG("Change dir to %s", buf);
+	mdm_ret = modem_ftp_change_working_dir(pFC, buf);
+	if( mdm_ret != FTP_ERR_NONE) {
+//		ret = modem_ftp_make_dir(pFC, remote_path);
+		ret = modem_ftp_make_dir_recursive(pFC, buf);
+
+		// FIXME: nghi van cho nay cd tiep se bi loi long thu muc
+//		if( mdm_ret == FTP_ERR_NONE)
+//		{
+//			mdm_ret = modem_ftp_change_working_dir(pFC, remote_path);
+//		}
 		modem_tx_data("AT+QFTPCLOSE\r\n", strlen("AT+QFTPCLOSE\r\n"));
+//		pFC->modem_handler->busy = false;
+		MODEM_EXIT_CRITIAL(pFC->modem_handler);
 		return FTP_ERR_CD;
+
 	}
 
 	// Step 3: Connected, try to send file to server
 	// Write data to file in server
 
-	char buf[256] = {0};
+	memset(buf, 0, 256);
 	sprintf(buf, "%s%s", local_path, file_name);
 	MODEM_DEBUG("opening file %s", buf);
 #ifdef ENABLE_FTP_FILE_TEST
@@ -644,7 +619,7 @@ modem_ftp_put_file_from_local(FtpClient *pFC, uint8_t index,
 		memset (cmd, 0, sizeof(cmd));
 		sprintf(cmd, "AT+QFTPPUT=\"%s\",\"COM:\",0\r\n", &file_name[1]);
 		MODEM_DEBUG("Sending AT command '%s'", cmd);
-		if(modem_send_at_command(cmd, "CONNECT", 15000, 1) == TRUE)
+		if(modem_send_at_command(pFC->modem_handler, cmd, "CONNECT", MODEM_AT_FTP_CONNECT_TIMEOUT_MSEC, 1) == TRUE)
 		{
 			MODEM_DEBUG("Begin put file content");
 			do {
@@ -653,6 +628,8 @@ modem_ftp_put_file_from_local(FtpClient *pFC, uint8_t index,
 				fr = f_read(&fil, buf, btr, &br);
 				if (fr != FR_OK) {
 					MODEM_DEBUG("LWFTP read file failed\r\n");
+//					pFC->modem_handler->busy = false;
+					MODEM_EXIT_CRITIAL(pFC->modem_handler);
 					return FTP_ERR_FILE;
 				}
 				if (br > 0) {
@@ -664,7 +641,7 @@ modem_ftp_put_file_from_local(FtpClient *pFC, uint8_t index,
 
 			modem_delay_ms(2000);
 			MODEM_DEBUG("Sending terminate sequence");
-			if(modem_send_at_command("+++", "OK", 10000, 1) == TRUE)
+			if(modem_send_at_command(pFC->modem_handler, "+++", "OK", MODEM_AT_FTP_TERM_TIMEOUT_MSEC, 1) == TRUE)
 				ret = FTP_ERR_NONE;
 		}
 		else {
@@ -675,6 +652,8 @@ modem_ftp_put_file_from_local(FtpClient *pFC, uint8_t index,
 
 	else {
 		MODEM_DEBUG("Open file failed\r\n");
+//		pFC->modem_handler->busy = false;
+		MODEM_EXIT_CRITIAL(pFC->modem_handler);
 		return FTP_ERR_FILE;
 	}
 	// close the file
@@ -682,7 +661,133 @@ modem_ftp_put_file_from_local(FtpClient *pFC, uint8_t index,
 	modem_ftp_disconnect(pFC);
 //	modem_tx_data("AT+QFTPCLOSE\r\n", strlen("AT+QFTPCLOSE\r\n"));
 	MODEM_DEBUG("Goodbye\r\n");
-
+//	pFC->modem_handler->busy = false;
+	MODEM_EXIT_CRITIAL(pFC->modem_handler);
 	return ret;
 }
 
+#if (0)
+int chdir_up_a_level(const char* path, char* up_dir, char* sub_dir)
+{
+	printf ("dir: %s\r\n", path);
+
+	char* p = strrchr(path,'/');
+
+	if(p == NULL) {
+		//printf("can not find '/'\r\n");
+		return -1;
+	}
+
+	//printf ("p: %s\r\n, loc: %d", p, p - argv[1] + 1);
+	memcpy(up_dir, path, p - path);
+
+	memcpy(sub_dir, p+1, strlen(p+1));
+
+	//printf ("up dir: %s\r\n", updir);
+	return 0;
+}
+
+
+
+int modem_ftp_change_dir(FtpClient *pFC, char* dir) {
+
+	ASSERT_NONVOID(pFC, -1);
+	char updir[128] = {0};
+	char subdir[128] ={0};
+	modem_ftp_err_code_t mdm_ret = modem_ftp_change_working_dir(pFC, dir);
+	if( mdm_ret == FTP_ERR_NONE)
+	{
+//		if(modem_ftp_change_working_dir(pFC, subdir) == FTP_ERR_NONE){
+//			MODEM_DEBUG("Change to directory %s/%s OK\r\n", dir, subdir);
+//		} else {
+//
+//		}
+		MODEM_DEBUG("Change to directory %s OK\r\n", dir);
+	}
+	else
+	{
+		ret = modem_ftp_make_dir(pFC, dir);
+		if( mdm_ret == FTP_ERR_NONE)
+		{
+			mdm_ret = modem_ftp_change_working_dir(pFC, remote_path);
+		}
+		else {
+
+			int res = chdir_up_a_level((const char *)working_dir,updir, subdir);
+			if (res == 0) {
+
+				MODEM_DEBUG("Change directory up a level %s OK\r\n", working_dir);
+			} else {
+				MODEM_DEBUG("Change dir up a level failed!");
+			}
+		}
+		modem_tx_data("AT+QFTPCLOSE\r\n", strlen("AT+QFTPCLOSE\r\n"));
+		return FTP_ERR_CD;
+	}
+
+//	while(chdir_up_a_level((const char *)))
+}
+#endif
+
+
+
+modem_ftp_err_code_t modem_ftp_make_dir_recursive(FtpClient *pFC, const char* dir)
+{
+	modem_ftp_err_code_t ret = FTP_ERR_UNKNOWN;
+
+
+	ASSERT_NONVOID(pFC,  FTP_ERR_INVALID_PARAM);
+
+	ASSERT_NONVOID(strlen(dir) < 256, FTP_ERR_INVALID_PARAM);
+
+	// copy dir
+
+	uint8_t *cpydir = OSA_FixedMemMalloc(strlen(dir));
+	if(!cpydir) {
+		MODEM_DEBUG_CRITICAL("Unable to allocate memory");
+		return FTP_ERR_MEM;
+	}
+
+	memcpy(cpydir, dir, strlen(dir));
+
+	uint8_t	*tmpDir = OSA_FixedMemMalloc(128);
+	if (!tmpDir) {
+		MODEM_DEBUG_CRITICAL("Unable to allocate memory");
+		OSA_FixedMemFree(cpydir);
+		return FTP_ERR_MEM;
+	}
+
+	memset(tmpDir, 0, 128);
+
+	char *token = strtok(cpydir, "/");
+
+	// Keep printing tokens while one of the
+	// delimiters present in str[].
+#if (0)
+	if(token != NULL){
+
+		strcat(tmpDir, token);
+//		printf("token: %s, dir: %s\n", token, tmpDir);
+		token = strtok(NULL, "/");
+//		if(modem_ftp_change_working_dir(pFC, tmpDir) != FTP_ERR_NONE) {
+//			modem_ftp_make_dir(pFC, tmpDir);
+//		}
+		modem_ftp_make_dir(pFC, tmpDir);
+	}
+#endif
+	while (token != NULL)
+	{
+		strcat(tmpDir, "/");
+		strcat(tmpDir, token);
+//		printf("token: %s, dir: %s\n", token, tmpDir);
+//		if(modem_ftp_change_working_dir(pFC, tmpDir) != FTP_ERR_NONE) {
+//			modem_ftp_make_dir(pFC, tmpDir);
+//		}
+		modem_ftp_make_dir(pFC, tmpDir);
+		token = strtok(NULL, "/");
+	}
+
+	OSA_FixedMemFree(cpydir);
+	OSA_FixedMemFree(tmpDir);
+	return FTP_ERR_NONE;
+}

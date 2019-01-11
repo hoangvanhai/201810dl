@@ -43,38 +43,27 @@ extern UART_HandleTypeDef huart2;	// debug port
 #include "fsl_debug_console.h"
 #include <app_cfg.h>
 
-#if 0
-#define MODEM_ENTER_CRITIAL()		OSA_MutexLock(&g_modem_tx_mtx, 1000)
-#define MODEM_EXIT_CRITIAL()		OSA_MutexUnlock(&g_modem_tx_mtx)
-#else
-#define MODEM_ENTER_CRITIAL()		kStatus_OSA_Success
-#define MODEM_EXIT_CRITIAL()
-#endif
 //#define MODEM_UART_INSTANCE_AT		4
 //
 //#define MODEM_UART_INSTANCE_DBG		0
 
 typedef void (*modem_uart_rx_callback)(void* data, uint16_t len);
 //typedef void (*NetworkDataEvent)(const uint8_t* data, int length);
-//#if 1
-//#define modem_tx_data(data, len) 		{\
-//											ASSERT_NONVOID(MODEM_ENTER_CRITIAL() == kStatus_OSA_Success, 1 ); \
-//											UART_DRV_SendData(BOARD_SIM_UART_INSTANCE, data, len); \
-//											while (UART_DRV_GetTransmitStatus(BOARD_SIM_UART_INSTANCE, NULL) == kStatus_UART_TxBusy); \
-//											 MODEM_EXIT_CRITIAL(); \
-//											 return 0; \
-//										}
-//#else
-//#define modem_tx_data(data, len) 		{\
-//											UART_DRV_SendDataBlocking(BOARD_MODEM_UART_INSTANCE, data, len, 1000); \
-//										}
-//#endif
+#if 1
+#define modem_tx_data(data, len) 		{\
+											UART_DRV_SendData(BOARD_SIM_UART_INSTANCE, data, len); \
+											while (UART_DRV_GetTransmitStatus(BOARD_SIM_UART_INSTANCE, NULL) == kStatus_UART_TxBusy); \
+										}
+#else
+#define modem_tx_data(data, len) 		{\
+											UART_DRV_SendDataBlocking(BOARD_MODEM_UART_INSTANCE, data, len, 1000); \
+										}
+#endif
 
 //
 #define modem_debug(msg) 				{\
 											PRINTF(msg); \
 										}
-uint8_t modem_tx_data(data, len);
 
 //void modem_hw_init();
 void modem_delay_ms(uint16_t ms);

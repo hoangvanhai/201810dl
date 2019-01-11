@@ -30,6 +30,7 @@ typedef enum ActiveIf {
 typedef struct NetworkStt {
 	SComStatus  *status;
 	EActiveIf 	activeIf;
+	modem_status_t modem_stat;
 }SNetworkStt;
 
 void Network_InitTcpModule(SCommon *pCM, SComStatus *pStatus);

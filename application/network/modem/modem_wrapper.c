@@ -18,7 +18,6 @@ modem_uart_rx_callback modem_rx_cb = NULL;
 
 void uart_rx_callback(uint32_t instance, void * uartState) {
 	uart_state_t *state = (uart_state_t*) uartState;
-//	PRINTF("%c", state->rxBuff[0]);
 	if(modem_rx_cb != NULL)
 		modem_rx_cb(state->rxBuff, 1);
 }
@@ -65,33 +64,6 @@ void modem_hw_init(void)
 void modem_hw_add_rx_callback(modem_uart_rx_callback cb)
 {
 	modem_rx_cb = cb;
-}
-
-//#if 1
-//#define modem_tx_data(data, len) 		{\
-//											ASSERT_NONVOID(MODEM_ENTER_CRITIAL() == kStatus_OSA_Success, 1 ); \
-//											UART_DRV_SendData(BOARD_SIM_UART_INSTANCE, data, len); \
-//											while (UART_DRV_GetTransmitStatus(BOARD_SIM_UART_INSTANCE, NULL) == kStatus_UART_TxBusy); \
-//											 MODEM_EXIT_CRITIAL(); \
-//											 return 0; \
-//										}
-//#else
-//#define modem_tx_data(data, len) 		{\
-//											UART_DRV_SendDataBlocking(BOARD_MODEM_UART_INSTANCE, data, len, 1000); \
-//										}
-//#endif
-
-//
-#define modem_debug(msg) 				{\
-											PRINTF(msg); \
-										}
-uint8_t modem_tx_data(data, len)
-{
-	ASSERT_NONVOID(MODEM_ENTER_CRITIAL() == kStatus_OSA_Success, 1 );
-	UART_DRV_SendData(BOARD_SIM_UART_INSTANCE, data, len);
-	while (UART_DRV_GetTransmitStatus(BOARD_SIM_UART_INSTANCE, NULL) == kStatus_UART_TxBusy);
-	MODEM_EXIT_CRITIAL();
-	return 0;
 }
 
 

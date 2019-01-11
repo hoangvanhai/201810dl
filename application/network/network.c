@@ -262,6 +262,7 @@ void tcp_server_init(int port) {
 int ftp_client_init(SCommon *pCM) {
 
 	ServerInfo server;
+	int count = 0;
 
 	ftp_client_init_handle(&ftpClient,
 			ftpclient_tx_ctrl_buf,
@@ -305,6 +306,7 @@ int ftp_client_init(SCommon *pCM) {
 
     ftpClient.active = true;
 
+	
 
 	ring_file_init(&g_retryTable[0], "/conf",
 			"retrytable0.dat", 5000,
@@ -324,9 +326,16 @@ int ftp_client_init(SCommon *pCM) {
 
 #if NETWORK_FTP_CLIENT_WLESS_EN > 0
 	GPIO_DRV_SetPinOutput(SimVccEn);
-
-    modem_init();
+	ftpClient.modem_handler = modem_get_instance();
+    modem_init(modem_get_instance());
     modem_ftp_init(&ftpClient);
+
+    netStt.status->hwStat.Bits.bCritical = true;
+    do {
+    	Network_GetWirelessStatus();
+    	OSA_SleepMs(1000);
+    } while(netStt.modem_stat.csq == 0 && count++ < 10);
+    netStt.status->hwStat.Bits.bCritical = false;
 #endif
 
     return result;
@@ -540,27 +549,17 @@ int Network_FtpClient_Send(const uint8_t *local_path,
  */
 int Network_GetWirelessStatus(void) {
 
-	static uint8_t result = 1;
+	modem_get_status(modem_get_instance(), &netStt.modem_stat);
 
-	if (result == 0) return result;
-
-	uint8_t ret = modem_get_status(&g_modem_status);
-	result = ret;
-
-
-	netStt.status->fwStat.wl_rssi = g_modem_status.csq;
+	netStt.status->fwStat.wl_rssi = netStt.modem_stat.csq;
 	Str_Copy_N((CPU_CHAR*)netStt.status->fwStat.wl_simid,
-			g_modem_status.iccid, 10);
+			netStt.modem_stat.iccid, 10);
 	Str_Copy_N((CPU_CHAR*)netStt.status->fwStat.wl_netid,
-			g_modem_status.opn, 10);
+			netStt.modem_stat.opn, 10);
 
-	ERR("g_modem_status.csq = %d \r\n", g_modem_status.csq);
+	ERR("csq = %d\r\n", netStt.status->fwStat.wl_rssi);
 
-	ASSERT_NONVOID(ret == 0, -1);
-
-	return ret;
-
-
+	return 0;
 }
 
 

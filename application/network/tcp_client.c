@@ -169,7 +169,7 @@ void tcp_client_listener(void *arg)  {
 
 	while(1) {
 		// try connect to server
-		err = tcp_client_open_connection(pEP, 2000);
+		err = tcp_client_open_connection(pEP, 1000);
 		if(err != 0) {
 			PRINTF("connect to %s:%d failed try again\r\n",
 					ipaddr_ntoa(&pEP->ip), pEP->port);

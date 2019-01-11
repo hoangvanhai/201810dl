@@ -740,8 +740,7 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	SApp *pApp = (SApp *)parg;
 
-	//int log_min = pApp->sCfg.sCom.log_dur > 0 ? pApp->sCfg.sCom.log_dur : 1;
-	int log_min = 20;
+	int log_min = pApp->sCfg.sCom.log_dur > 0 ? pApp->sCfg.sCom.log_dur : 1;
 	int last_min = 0;
 	bool logged = false;
 
@@ -1688,7 +1687,7 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 
 	GPIO_DRV_TogglePinOutput(Led1);
 
-	if(counter % 30 == 0) {
+	if(counter % 15 == 0) {
 		pAppObj->uiCounter = 0;
 
 		App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
@@ -2979,75 +2978,98 @@ const char* msg_sendfailed_3G 	= "WIRELESS SEND FAILED";
 
 void Clb_NetFtpClientEvent(FtpStatus status,
 		Network_Interface interface, uint8_t server) {
+
 	LREP("ftp event: %d if: %d server %d\r\n", status, interface, server);
+
+	static uint32_t failed_count = 0;
+
 	switch(status) {
 	case Ftp_Idle:
-		App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG, msg_idle, strlen(msg_idle), false);
+		App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+				(uint8_t*)msg_idle, strlen(msg_idle), false);
 		break;
 	case Ftp_Sending:
 		if(interface == Interface_Ethernet) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sending_eth,
-					strlen(msg_sending_eth), false);
+					(uint8_t*)msg_sending_eth,
+					Str_Len(msg_sending_eth), false);
 		} else {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sending_3G,
-					strlen(msg_sending_eth), false);
+					(uint8_t*)msg_sending_3G,
+					Str_Len(msg_sending_3G), false);
 		}
 		break;
 	case Ftp_SendFailed:
 		if(interface == Interface_Ethernet) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sendfailed_eth,
-					strlen(msg_sendfailed_eth), false);
+					(uint8_t*)msg_sendfailed_eth,
+					Str_Len(msg_sendfailed_eth), false);
+			pAppObj->sStatus.hwStat.Bits.bEthernetWorking = false;
 		} else {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sendfailed_3G,
-					strlen(msg_sendfailed_3G), false);
+					(uint8_t*)msg_sendfailed_3G,
+					Str_Len(msg_sendfailed_3G), false);
+			pAppObj->sStatus.hwStat.Bits.bWirelessWorking = false;
+			failed_count++;
+			ERR("send failed count = %d\r\n", failed_count);
 		}
 		break;
 	case Ftp_SendSuccess:
+
 		if(interface == Interface_Ethernet) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sendok_eth,
-					strlen(msg_sendok_eth), false);
+					(uint8_t*)msg_sendok_eth,
+					Str_Len(msg_sendok_eth), false);
+			pAppObj->sStatus.hwStat.Bits.bEthernetWorking = true;
 		} else {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sendok_3G,
-					strlen(msg_sendok_3G), false);
+					(uint8_t*)msg_sendok_3G,
+					Str_Len(msg_sendok_3G), false);
+			pAppObj->sStatus.hwStat.Bits.bWirelessWorking = true;
+			failed_count = 0;
 		}
 		break;
 	case Ftp_ReSending:
 		if(interface == Interface_Ethernet) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sending_eth,
-					strlen(msg_sending_eth), false);
+					(uint8_t*)msg_sending_eth,
+					Str_Len(msg_sending_eth), false);
 		} else {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sending_3G,
-					strlen(msg_sending_eth), false);
+					(uint8_t*)msg_sending_3G,
+					Str_Len(msg_sending_3G), false);
 		}
 		break;
 	case Ftp_ReSendFailed:
 		if(interface == Interface_Ethernet) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sendfailed_eth,
-					strlen(msg_sendfailed_eth), false);
+					(uint8_t*)msg_sendfailed_eth,
+					Str_Len(msg_sendfailed_eth), false);
+			pAppObj->sStatus.hwStat.Bits.bEthernetWorking = false;
 		} else {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sendfailed_3G,
-					strlen(msg_sendfailed_3G), false);
+					(uint8_t*)msg_sendfailed_3G,
+					Str_Len(msg_sendfailed_3G), false);
+			pAppObj->sStatus.hwStat.Bits.bWirelessWorking = false;
+			failed_count++;
+			ERR("resend failed count = %d\r\n", failed_count);
+			if(failed_count >= 20) {
+
+			}
 		}
 		break;
 	case Ftp_ReSendSuccess:
 		if(interface == Interface_Ethernet) {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sendok_eth,
-					strlen(msg_sendok_eth), false);
+					(uint8_t*)msg_sendok_eth,
+					Str_Len(msg_sendok_eth), false);
+			pAppObj->sStatus.hwStat.Bits.bEthernetWorking = true;
 		} else {
 			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
-					msg_sendok_3G,
-					strlen(msg_sendok_3G), false);
+					(uint8_t*)msg_sendok_3G,
+					Str_Len(msg_sendok_3G), false);
+			pAppObj->sStatus.hwStat.Bits.bWirelessWorking = true;
+			failed_count = 0;
 		}
 		break;
 

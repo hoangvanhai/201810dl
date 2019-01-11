@@ -12,6 +12,7 @@
 #include <lib_str.h>
 #include <network_cfg.h>
 #include <common/ring_file.h>
+#include <modem.h>
 
 enum FtpCode {
 	FTP_ERR_NONE = 0,
@@ -50,7 +51,7 @@ typedef struct ServerInfo_ {
 
 typedef struct FtpMsg_ {
 	uint8_t	server;
-	uint8_t local_path[120];
+	uint8_t local_path[128];
 	uint8_t file_name[128];
 }FtpMsg;
 
@@ -73,6 +74,7 @@ typedef struct FtpClient_ {
 	sys_thread_t		send_thread;
 	bool				active;
 	FtpEvent			fClbEvent;
+	modem_handle_t		*modem_handler;
 }FtpClient;
 
 

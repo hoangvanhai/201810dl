@@ -49,7 +49,7 @@ uint8_t ftp_get_curr_server(FtpClient *pFC) {
 
 int ftp_start_ctrl_sock(FtpClient *pFC) {
 
-	int timeout = 2000;
+	int timeout = 1000;
 	int err = -3;
 	bool status = true;
 
@@ -102,8 +102,6 @@ int ftp_start_ctrl_sock(FtpClient *pFC) {
 		if (err) {
 			ftp_close_ctrl_sock(pFC);
 		}
-	} else {
-		netStt.status->hwStat.Bits.bEthernetWorking = false;
 	}
 
 	if(err == 0) {
@@ -122,7 +120,7 @@ int	ftp_close_ctrl_sock(FtpClient *pFC) {
 }
 
 int ftp_start_data_sock(FtpClient *pFC, int port) {
-	int timeout = 2000;
+	int timeout = 1000;
 	int err = -3;
 	bool status = true;
 
@@ -597,7 +595,7 @@ int ftp_send_ctrl_msg(FtpClient *pFC, const char *msg) {
 int ftp_recv_ctrl_msg(FtpClient *pFC, int timeout) {
 	int rlen = -1;
 	OSA_SleepMs(timeout);
-	int event = wait_event(pFC->fd_ctrl, 2000, true, false);
+	int event = wait_event(pFC->fd_ctrl, 1000, true, false);
 	if(event & Event_Readable) {
 		memset(pFC->rx_buff_ctrl, 0, 256);
 		rlen = recv(pFC->fd_ctrl, pFC->rx_buff_ctrl, 256, 0);
