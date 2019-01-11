@@ -1491,7 +1491,18 @@ void App_CommCalibAi(SApp *pApp, const uint8_t *data) {
 	}
 
 	if(isSave) {
-		App_SaveConfig(pApp, CONFIG_FILE_PATH);
+		while(pApp->sStatus.hwStat.Bits.bI2CBusy);
+		pApp->sStatus.hwStat.Bits.bI2CBusy = true;
+		if(CONF_WriteData(EEPROM_PAGE_SIZE,
+						(uint8_t*)&pApp->sCfg, sizeof(SSysCfg)) !=
+						kStatus_I2C_Success) {
+			ERR("write config error\r\n");
+		}
+
+		pApp->sStatus.hwStat.Bits.bI2CBusy = false;
+		LREP("write config done -> reset require !\r\n\r\n");
+
+		//App_SaveConfig(pApp, CONFIG_FILE_PATH);
 	}
 }
 
@@ -1528,6 +1539,19 @@ void App_CommCalibCurrPwr(SApp *pApp, const uint8_t *data) {
 
 	LREP("new coeff = %f\r\n", new_coeff);
 	pApp->sCfg.sCurrOutCoeff[point] = new_coeff;
+
+	while(pApp->sStatus.hwStat.Bits.bI2CBusy);
+	pApp->sStatus.hwStat.Bits.bI2CBusy = true;
+	if(CONF_WriteData(EEPROM_PAGE_SIZE,
+					(uint8_t*)&pApp->sCfg, sizeof(SSysCfg)) !=
+					kStatus_I2C_Success) {
+		ERR("write config error\r\n");
+	}
+
+	pApp->sStatus.hwStat.Bits.bI2CBusy = false;
+	LREP("write config done -> reset require !\r\n\r\n");
+
+
 }
 /*****************************************************************************/
 /** @brief
