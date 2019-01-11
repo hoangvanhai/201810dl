@@ -50,6 +50,7 @@ void Clb_NetTcpServerConnEvent(Network_Status event,
 void Clb_NetTcpServerRecvData(const uint8_t* data, int length);
 void Clb_NetTcpServerSentData(const uint8_t* data, int length);
 void Clb_NetTcpServerError(const uint8_t* data, int length);
+void Clb_NetFtpClientEvent(FtpStatus status, Network_Interface interface, uint8_t server);
 
 /************************** Variable Definitions *****************************/
 SApp sApp;
@@ -739,7 +740,8 @@ void App_TaskPeriodic(task_param_t parg) {
 
 	SApp *pApp = (SApp *)parg;
 
-	int log_min = pApp->sCfg.sCom.log_dur > 0 ? pApp->sCfg.sCom.log_dur : 1;
+	//int log_min = pApp->sCfg.sCom.log_dur > 0 ? pApp->sCfg.sCom.log_dur : 1;
+	int log_min = 20;
 	int last_min = 0;
 	bool logged = false;
 
@@ -784,7 +786,10 @@ void App_TaskPeriodic(task_param_t parg) {
         if(pApp->sStatus.time.tm_min != last_min && logged) {
             logged = false;
         }
-		if((logged == false) && (pApp->sStatus.time.tm_min % log_min == 0)) {
+
+		if((logged == false) && (pApp->sStatus.time.tm_min % log_min == 0))
+        //if((pApp->sStatus.time.tm_sec % 20) == 0)
+		{
 			// To ensure has valid data before log to file
 			if(pApp->aiReadCount > 0 && pApp->mbReadCount > 0)
 			{
@@ -933,7 +938,7 @@ void App_TaskUserInterface(task_param_t param)
 
 	OSTmrCreate(&pApp->hCtrlTimer,
 				(CPU_CHAR *)"timer",
-				(OS_TICK)0,
+				(OS_TICK)200,
 				(OS_TICK)100,
 				(OS_OPT)OS_OPT_TMR_PERIODIC,
 				(OS_TMR_CALLBACK_PTR) Clb_TimerControl,
@@ -1002,6 +1007,7 @@ void App_TaskStartup(task_param_t arg) {
 	Network_Register_TcpServer_DataEvent(Event_DataReceived, Clb_NetTcpServerRecvData);
 	Network_Register_TcpServer_DataEvent(Event_DataSendDone, Clb_NetTcpServerSentData);
 	Network_Register_TcpServer_DataEvent(Event_DataError, Clb_NetTcpServerError);
+	Network_Register_FtpClient_Event(Clb_NetFtpClientEvent);
 
 	Network_InitFtpModule(&pApp->sCfg.sCom);
 	WARN("FTP client wakeup spend %d ms\r\n", sys_now() - timeNow);
@@ -1070,7 +1076,7 @@ void App_TaskStartup(task_param_t arg) {
 			if(App_IsCtrlCodePending(pApp, CTRL_GET_WL_STT)) {
 				//LREP("recv ctrl get wireless status\r\n");
 
-				//Network_GetWirelessStatus();
+				Network_GetWirelessStatus();
 				App_ClearCtrlCode(pApp, CTRL_GET_WL_STT);
 			}
 
@@ -1111,7 +1117,6 @@ void App_SerialComRecvHandle(const uint8_t *data) {
 		if(normal || root) {
 			sendData[0] = LOGGER_SUCCESS;
 			LREP("login as %s user\r\n", root ? "root" : "normal");
-
 		} else {
 			sendData[0] = LOGGER_ERROR;
 			LREP("invalid username %s password %s\r\n",
@@ -1224,6 +1229,7 @@ void App_TcpServerRecvHandle(const uint8_t *data) {
 	switch(data[0]) {
 
 	case LOGGER_LOGIN: {
+
 		bool normal = (Str_Cmp_N((CPU_CHAR*)pAppObj->sCfg.sAccount.username,
 					(CPU_CHAR*)&data[2], SYS_CFG_USER_LENGTH) == 0) &&
 					(Str_Cmp_N((CPU_CHAR*)pAppObj->sCfg.sAccount.password,
@@ -1682,7 +1688,7 @@ void Clb_TimerControl(void *p_tmr, void *p_arg) {
 
 	GPIO_DRV_TogglePinOutput(Led1);
 
-	if(counter % 20 == 0) {
+	if(counter % 30 == 0) {
 		pAppObj->uiCounter = 0;
 
 		App_SendUI(pAppObj, LOGGER_GET | LOGGER_SYSTEM_STATUS,
@@ -2952,7 +2958,7 @@ void Clb_NetTcpServerSentData(const uint8_t* data, int length) {
  *  @note
  */
 void Clb_NetTcpServerError(const uint8_t* data, int length) {
-
+	ERR("tcp server send error %d\r\n", length);
 }
 /*****************************************************************************/
 /** @brief
@@ -2962,7 +2968,94 @@ void Clb_NetTcpServerError(const uint8_t* data, int length) {
  *  @return Void.
  *  @note
  */
+const char* msg_idle = " ";
+const char* msg_sending_eth 	= "EHTHERNET SENDING";
+const char* msg_sendok_eth 		= "EHTHERNET SEND OK";
+const char* msg_sendfailed_eth 	= "EHTHERNET SEND FAILED";
 
+const char* msg_sending_3G 		= "WIRELESS SENDING";
+const char* msg_sendok_3G 		= "WIRELESS SEND OK";
+const char* msg_sendfailed_3G 	= "WIRELESS SEND FAILED";
+
+void Clb_NetFtpClientEvent(FtpStatus status,
+		Network_Interface interface, uint8_t server) {
+	LREP("ftp event: %d if: %d server %d\r\n", status, interface, server);
+	switch(status) {
+	case Ftp_Idle:
+		App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG, msg_idle, strlen(msg_idle), false);
+		break;
+	case Ftp_Sending:
+		if(interface == Interface_Ethernet) {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sending_eth,
+					strlen(msg_sending_eth), false);
+		} else {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sending_3G,
+					strlen(msg_sending_eth), false);
+		}
+		break;
+	case Ftp_SendFailed:
+		if(interface == Interface_Ethernet) {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sendfailed_eth,
+					strlen(msg_sendfailed_eth), false);
+		} else {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sendfailed_3G,
+					strlen(msg_sendfailed_3G), false);
+		}
+		break;
+	case Ftp_SendSuccess:
+		if(interface == Interface_Ethernet) {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sendok_eth,
+					strlen(msg_sendok_eth), false);
+		} else {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sendok_3G,
+					strlen(msg_sendok_3G), false);
+		}
+		break;
+	case Ftp_ReSending:
+		if(interface == Interface_Ethernet) {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sending_eth,
+					strlen(msg_sending_eth), false);
+		} else {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sending_3G,
+					strlen(msg_sending_eth), false);
+		}
+		break;
+	case Ftp_ReSendFailed:
+		if(interface == Interface_Ethernet) {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sendfailed_eth,
+					strlen(msg_sendfailed_eth), false);
+		} else {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sendfailed_3G,
+					strlen(msg_sendfailed_3G), false);
+		}
+		break;
+	case Ftp_ReSendSuccess:
+		if(interface == Interface_Ethernet) {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sendok_eth,
+					strlen(msg_sendok_eth), false);
+		} else {
+			App_SendUI(pAppObj, LOGGER_GET | LOGGER_STREAM_MSG,
+					msg_sendok_3G,
+					strlen(msg_sendok_3G), false);
+		}
+		break;
+
+	default:
+
+		break;
+	}
+}
 /*****************************************************************************/
 /** @brief
  *

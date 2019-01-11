@@ -40,9 +40,20 @@ typedef enum ENetwork_Interface {
 	Interface_All,
 }Network_Interface;
 
+
+typedef enum EFtpStatus {
+	Ftp_Idle = 0,
+	Ftp_Sending,
+	Ftp_SendFailed,
+	Ftp_SendSuccess,
+	Ftp_ReSending,
+	Ftp_ReSendFailed,
+	Ftp_ReSendSuccess
+}FtpStatus;
+
 typedef void (*NetworkDataEvent)(const uint8_t* data, int length);
 typedef void (*NetworkConnNotify)(Network_Status status, Network_Interface interface);
-
+typedef void (*FtpEvent)(FtpStatus status, Network_Interface interface, uint8_t server);
 
 typedef struct SMsg_ {
 	uint8_t 	type;

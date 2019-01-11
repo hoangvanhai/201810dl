@@ -54,6 +54,9 @@ typedef struct FtpMsg_ {
 	uint8_t file_name[128];
 }FtpMsg;
 
+
+
+
 typedef struct FtpClient_ {
 	int 				fd_ctrl;
 	int 				fd_data;
@@ -69,12 +72,13 @@ typedef struct FtpClient_ {
 	ServerInfo			server_list[FTP_CLIENT_SERVER_NUM];
 	sys_thread_t		send_thread;
 	bool				active;
-
+	FtpEvent			fClbEvent;
 }FtpClient;
 
 
 int 	ftp_client_init_handle(	FtpClient *pFC,  uint8_t *tx_ctrl_buff,
 								uint8_t *rx_ctrl_buff, uint8_t *tx_data_buff);
+void 	ftp_client_register_event(FtpClient *pFC, FtpEvent func);
 
 int 	ftp_client_add_server(FtpClient *pFC, ServerInfo *server, uint8_t index);
 uint8_t ftp_get_curr_server(FtpClient *pFC);

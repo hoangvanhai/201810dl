@@ -101,7 +101,7 @@ int tcp_client_send_blocking(TcpClient *pEP, const uint8_t *data,
 	if(data == NULL || len <= 0)
 		return -2;
 
-	int event = wait_event(pEP->fd, 100, false, true);
+	int event = wait_event(pEP->fd, 2000, false, true);
 	if(event & Event_Writeable) {
 		err = send(pEP->fd, data, len, 0);
 	}
@@ -186,7 +186,7 @@ void tcp_client_listener(void *arg)  {
 		PRINTF("start listener \r\n");
 		while(1) {
 			//OSA_TimeDelay(100);
-			int event = wait_event(pEP->fd, 100, true, false);
+			int event = wait_event(pEP->fd, 1000, true, false);
 			if(event & Event_Readable) {
 				rlen = recv(pEP->fd, pEP->rx_buff, 512, 0);
 				if(rlen > 0) {

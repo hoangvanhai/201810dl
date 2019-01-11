@@ -30,9 +30,6 @@ typedef enum ActiveIf {
 typedef struct NetworkStt {
 	SComStatus  *status;
 	EActiveIf 	activeIf;
-	uint8_t		rssi;
-	uint8_t		simid[22];
-	uint8_t		netid[22];
 }SNetworkStt;
 
 void Network_InitTcpModule(SCommon *pCM, SComStatus *pStatus);
@@ -45,6 +42,7 @@ void Network_Register_TcpClient_Notify(NetworkConnNotify func);
 void Network_Register_TcpClient_DataEvent(Network_DataEvent evt, NetworkDataEvent func);
 void Network_Register_TcpServer_Notify(NetworkConnNotify func);
 void Network_Register_TcpServer_DataEvent(Network_DataEvent evt, NetworkDataEvent func);
+void Network_Register_FtpClient_Event(FtpEvent func);
 
 
 int Network_TcpClient_Send(const uint8_t *data, int len);

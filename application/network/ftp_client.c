@@ -38,13 +38,18 @@ int ftp_client_add_server(FtpClient *pFC, ServerInfo *server, uint8_t index) {
 	return 0;
 }
 
+void ftp_client_register_event(FtpClient *pFC, FtpEvent func) {
+	if(func)
+		pFC->fClbEvent = func;
+}
+
 uint8_t ftp_get_curr_server(FtpClient *pFC) {
 	return pFC->curr_sv_idx;
 }
 
 int ftp_start_ctrl_sock(FtpClient *pFC) {
 
-	int timeout = 1000;
+	int timeout = 2000;
 	int err = -3;
 	bool status = true;
 
@@ -117,7 +122,7 @@ int	ftp_close_ctrl_sock(FtpClient *pFC) {
 }
 
 int ftp_start_data_sock(FtpClient *pFC, int port) {
-	int timeout = 1000;
+	int timeout = 2000;
 	int err = -3;
 	bool status = true;
 
@@ -490,7 +495,6 @@ int ftp_remote_put(FtpClient *pFC, uint8_t index,
 					err = FTP_ERR_SEND_DATA_MSG;
 					break;
 				}
-				OSA_SleepMs(100);
 			}
 		} while(fr == FR_OK && read > 0);
 	} else {
@@ -548,7 +552,7 @@ int ftp_remote_send_data(FtpClient *pFC, const uint8_t *data, int len) {
 	if(data == NULL || len <= 0)
 		return -2;
 
-	int event = wait_event(pFC->fd_data, 500, false, true);
+	int event = wait_event(pFC->fd_data, 2000, false, true);
 	if(event & Event_Writeable) {
 		err = send(pFC->fd_data, data, len, 0);
 
@@ -580,7 +584,7 @@ int ftp_send_ctrl_msg(FtpClient *pFC, const char *msg) {
 
 	len = Str_Len_N((CPU_CHAR*)msg, 100);
 
-	int event = wait_event(pFC->fd_ctrl, 100, false, true);
+	int event = wait_event(pFC->fd_ctrl, 2000, false, true);
 	if(event & Event_Writeable) {
 		err = send(pFC->fd_ctrl, msg, len, 0);
 		LREP("send msg %s", msg);
@@ -593,7 +597,7 @@ int ftp_send_ctrl_msg(FtpClient *pFC, const char *msg) {
 int ftp_recv_ctrl_msg(FtpClient *pFC, int timeout) {
 	int rlen = -1;
 	OSA_SleepMs(timeout);
-	int event = wait_event(pFC->fd_ctrl, 100, true, false);
+	int event = wait_event(pFC->fd_ctrl, 2000, true, false);
 	if(event & Event_Readable) {
 		memset(pFC->rx_buff_ctrl, 0, 256);
 		rlen = recv(pFC->fd_ctrl, pFC->rx_buff_ctrl, 256, 0);
@@ -747,6 +751,7 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 		if(netStt.activeIf & NET_IF_ETHERNET) {
 			retryCount = 0;
 			WARN("enter send via ethernet %d\r\n", idx);
+			pFC->fClbEvent(Ftp_Sending, Interface_Ethernet, idx);
 			do {
 				retVal = ftp_remote_put(pFC, idx, (char*)msg->file_name,
 						(char*)msg->local_path, (char*)msg->local_path);
@@ -762,8 +767,10 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 			// ethernet is now active but send via ethernet failed
 			if(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE) {
 				WARN("send via ethernet failed %d\r\n", idx);
+				pFC->fClbEvent(Ftp_SendFailed, Interface_Ethernet, idx);
 				// check wireless is active
 				if(netStt.activeIf & NET_IF_WIRELESS) {
+					pFC->fClbEvent(Ftp_Sending, Interface_Wireless, idx);
 					WARN("try with wireless %d\r\n", idx);
 					retryCount = 0;
 					do {
@@ -775,11 +782,19 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 						retryCount++;
 					} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
 							retryCount < FTP_CLIENT_WIRELESS_RETRY);
+					if(retVal != FTP_ERR_NONE  && retVal != FTP_ERR_FILE) {
+						pFC->fClbEvent(Ftp_SendFailed, Interface_Wireless, idx);
+					} else {
+						pFC->fClbEvent(Ftp_SendSuccess, Interface_Wireless, idx);
+					}
 				}
+			} else {
+				pFC->fClbEvent(Ftp_SendSuccess, Interface_Ethernet, idx);
 			}
 		} else { // if ethernet interface is not active
 			if(netStt.activeIf & NET_IF_WIRELESS) { // if wireless is now active
 				WARN("ethernet deactive try send via wireless %d\r\n", idx);
+				pFC->fClbEvent(Ftp_Sending, Interface_Wireless, idx);
 				retryCount = 0;
 				do {
 				retVal = modem_ftp_put_file_from_local(pFC, idx, (char*)msg->file_name,
@@ -790,9 +805,17 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 					retryCount++;
 				} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
 						retryCount < FTP_CLIENT_WIRELESS_RETRY);
+
+				if(retVal != FTP_ERR_NONE  && retVal != FTP_ERR_FILE) {
+					pFC->fClbEvent(Ftp_SendFailed, Interface_Wireless, idx);
+				} else {
+					pFC->fClbEvent(Ftp_SendSuccess, Interface_Wireless, idx);
+				}
+
 			} else {
 				WARN("no such interface is active, put file to retry table %d\r\n", idx);
 				ftp_put_to_retry_table(msg->local_path, msg->file_name, idx);
+				pFC->fClbEvent(Ftp_SendFailed, Interface_All, idx);
 			}
 		}
 
@@ -801,7 +824,7 @@ int ftp_send_to_server(FtpClient *pFC, uint8_t idx, FtpMsg *msg) {
 			LREP("totally send failed, put to retry table %d\r\n", idx);
 			ftp_put_to_retry_table(msg->local_path, msg->file_name, idx);
 		} else {
-			LREP("\r\nSEND TO SERVER %d SUCCESSFULLY !\r\n", idx);
+			LREP("SEND TO SERVER %d SUCCESSFULLY !\r\n", idx);
 		}
 	}
 
@@ -871,6 +894,7 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 			// if ethernet interface is active
 			if(netStt.activeIf & NET_IF_ETHERNET) {
 				retryCount = 0;
+				pFC->fClbEvent(Ftp_ReSending, Interface_Ethernet, idx);
 				WARN("enter send via ethernet %d\r\n", idx);
 				do {
 					retVal = ftp_remote_put(pFC, idx, (char*)pRecord->file_name,
@@ -887,10 +911,12 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 				// ethernet is now active but send via ethernet failed
 				if(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE) {
 					WARN("re-send via ethernet failed %d\r\n", idx);
+					pFC->fClbEvent(Ftp_ReSendFailed, Interface_Ethernet, idx);
 					// check wireless is active
 					if(netStt.activeIf & NET_IF_WIRELESS) {
 						WARN("try re-send with wireless %d\r\n", idx);
 						retryCount = 0;
+						pFC->fClbEvent(Ftp_ReSending, Interface_Wireless, idx);
 						do {
 						retVal = modem_ftp_put_file_from_local(pFC, idx, (char*)pRecord->file_name,
 							(char*)pRecord->dir_path, (char*)pRecord->dir_path);
@@ -900,12 +926,20 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 							retryCount++;
 						} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
 								retryCount < FTP_CLIENT_WIRELESS_RETRY);
+						if(retVal != FTP_ERR_NONE  && retVal != FTP_ERR_FILE) {
+							pFC->fClbEvent(Ftp_ReSendFailed, Interface_Wireless, idx);
+						} else {
+							pFC->fClbEvent(Ftp_ReSendSuccess, Interface_Wireless, idx);
+						}
 					}
+				} else {
+					pFC->fClbEvent(Ftp_ReSendSuccess, Interface_Ethernet, idx);
 				}
 			} else { // if ethernet interface is not active
 				if(netStt.activeIf & NET_IF_WIRELESS) { // if wireless is now active
 					WARN("ethernet deactive try re-send via wireless %d\r\n", idx);
 					retryCount = 0;
+					pFC->fClbEvent(Ftp_ReSending, Interface_Wireless, idx);
 					do {
 					retVal = modem_ftp_put_file_from_local(pFC, idx, (char*)pRecord->file_name,
 						(char*)pRecord->dir_path, (char*)pRecord->dir_path);
@@ -915,6 +949,12 @@ int ftp_try_resend_to_server(FtpClient *pFC, uint8_t idx) {
 						}
 					} while(retVal != FTP_ERR_NONE && retVal != FTP_ERR_FILE &&
 							retryCount < FTP_CLIENT_WIRELESS_RETRY);
+
+					if(retVal != FTP_ERR_NONE  && retVal != FTP_ERR_FILE) {
+						pFC->fClbEvent(Ftp_ReSendFailed, Interface_Wireless, idx);
+					} else {
+						pFC->fClbEvent(Ftp_ReSendSuccess, Interface_Wireless, idx);
+					}
 				}
 			}
 

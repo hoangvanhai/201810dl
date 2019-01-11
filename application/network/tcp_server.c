@@ -24,7 +24,14 @@ int tcp_server_config(TcpServer *pHandle, int port,
 	pHandle->status = Status_Disconnected;
 	return 0;
 }
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void tcp_server_listener(void *arg) {
 	TcpServer *pHandle = (TcpServer*)arg;
 	uint32_t optval;
@@ -109,7 +116,7 @@ void tcp_server_listener(void *arg) {
 				pHandle->notify(pHandle->status, Interface_Ethernet);
 
 			while(1) {
-				int event = wait_event(pHandle->peer_fd, 100, true, false);
+				int event = wait_event(pHandle->peer_fd, 1000, true, false);
 				if(event & Event_Readable) {
 					rlen = recv(pHandle->peer_fd, pHandle->rx_buffer, 512, 0);
 					if(rlen > 0) {
@@ -136,7 +143,14 @@ void tcp_server_listener(void *arg) {
 		}
 	}
 }
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int tcp_server_stop(TcpServer *pHandle) {
 	close(pHandle->listen_fd);
 	close(pHandle->peer_fd);
@@ -144,11 +158,25 @@ int tcp_server_stop(TcpServer *pHandle) {
 	pHandle->peer_fd = INVALIDSOCK;
 	return 0;
 }
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int tcp_server_get_status(TcpServer *pHandle) {
 	return pHandle->status;
 }
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int tcp_server_send_blocking(TcpServer *pHandle, const uint8_t *data, int len) {
 	int err = -3;
 	if(pHandle->status != Status_Connected)
@@ -157,14 +185,22 @@ int tcp_server_send_blocking(TcpServer *pHandle, const uint8_t *data, int len) {
 	if(data == NULL || len <= 0)
 		return -2;
 
-	int event = wait_event(pHandle->peer_fd, 100, false, true);
+	int event = wait_event(pHandle->peer_fd, 1000, false, true);
+
 	if(event & Event_Writeable) {
 		err = send(pHandle->peer_fd, data, len, 0);
 	}
 
 	return err;
 }
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 int tcp_server_send_nonblocking(TcpServer *pHandle, const uint8_t *data, int len) {
 	int retVal = 0;
 	if(pHandle->status == Status_Connected) {
@@ -179,10 +215,6 @@ int tcp_server_send_nonblocking(TcpServer *pHandle, const uint8_t *data, int len
 
 			if(err != OS_ERR_NONE) {
 				retVal = -2;
-			} else {
-				WARN("server added size = %d peak = %d\r\n",
-						pHandle->send_thread->MsgQ.NbrEntries,
-						pHandle->send_thread->MsgQ.NbrEntriesMax);
 			}
 		} else {
 			retVal = -1;
@@ -192,12 +224,26 @@ int tcp_server_send_nonblocking(TcpServer *pHandle, const uint8_t *data, int len
 	}
 	return retVal;
 }
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void tcp_server_register_notify(TcpServer *pHandle, NetworkConnNotify func) {
 	if(func)
 		pHandle->notify = func;
 }
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 void tcp_server_register_data_event(TcpServer *pHandle,
 		Network_DataEvent evt, NetworkDataEvent func) {
 	switch(evt) {
@@ -214,7 +260,14 @@ void tcp_server_register_data_event(TcpServer *pHandle,
 	}
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
 
 void tcp_server_sender(void *arg) {
 	TcpServer *pHandle = (TcpServer*)arg;
@@ -234,12 +287,14 @@ void tcp_server_sender(void *arg) {
 						pHandle->send_handler(pMsg->buf, pMsg->length);
 					}
 				} else {
+					LREP("err = %d\r\n", retVal);
 					if(pHandle->error_handler) {
 						pHandle->error_handler(pMsg->buf, pMsg->length);
 					}
 				}
 
 				OSA_FixedMemFree((uint8_t*)pMsg);
+				//OSA_SleepMs(100);
 			}
 		}
 	}

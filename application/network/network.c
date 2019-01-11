@@ -47,6 +47,7 @@ struct netif eth0;
 void Clb_Default_DataEvent(const uint8_t *data, int len);
 void Clb_Default_Notify(Network_Status status,
 		Network_Interface intf);
+void Clb_Default_FtpEvent(FtpStatus status, Network_Interface interface, uint8_t server);
 
 void static netif_changed_callback(struct netif* netif);
 void static netif_link_changed_callback(struct netif* netif);
@@ -399,7 +400,17 @@ void Network_Register_TcpServer_DataEvent(Network_DataEvent evt, NetworkDataEven
 	tcp_server_register_data_event(&tcpServer, evt, func);
 }
 
-
+/*****************************************************************************/
+/** @brief
+ *
+ *
+ *  @param
+ *  @return Void.
+ *  @note
+ */
+void Network_Register_FtpClient_Event(FtpEvent func) {
+	ftp_client_register_event(&ftpClient, func);
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -483,6 +494,11 @@ void Clb_Default_Notify(Network_Status status,
 	LREP("default notify\r\n");
 }
 
+
+void Clb_Default_FtpEvent(FtpStatus status,
+		Network_Interface interface, uint8_t server) {
+	LREP("default ftp event \r\n");
+}
 /*****************************************************************************/
 /** @brief
  *
@@ -530,11 +546,17 @@ int Network_GetWirelessStatus(void) {
 
 	uint8_t ret = modem_get_status(&g_modem_status);
 	result = ret;
-	ASSERT_NONVOID(ret == 0, -1);
 
-	netStt.rssi = g_modem_status.csq;
-	Str_Copy_N((CPU_CHAR*)netStt.simid, g_modem_status.iccid, 10);
-	Str_Copy_N((CPU_CHAR*)netStt.netid, g_modem_status.opn, 10);
+
+	netStt.status->fwStat.wl_rssi = g_modem_status.csq;
+	Str_Copy_N((CPU_CHAR*)netStt.status->fwStat.wl_simid,
+			g_modem_status.iccid, 10);
+	Str_Copy_N((CPU_CHAR*)netStt.status->fwStat.wl_netid,
+			g_modem_status.opn, 10);
+
+	ERR("g_modem_status.csq = %d \r\n", g_modem_status.csq);
+
+	ASSERT_NONVOID(ret == 0, -1);
 
 	return ret;
 
